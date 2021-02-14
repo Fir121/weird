@@ -1,0 +1,9 @@
+# Tools
+
+- kernel density estimation
+- quantiles
+- depth measures
+- pairwise distances, knn and approximation NN
+- extreme value theory
+- PCA
+- MDS

@@ -19,3 +19,32 @@ twitter-handle: robjhyndman
 
 # Preface {-}
 
+
+### Outline {-}
+
+1. Introduction
+2. Tools
+3. One dimensional methods
+4. Bivariate methods
+5. Multivariate methods
+6. Non-euclidean spaces
+7. Time series anomalies
+8. Spatial, network and graph data
+9. Video data
+10. Categorical and text data
+11. Applications: network intrusion, fraud detection
+
+
+### References {-}
+
+- [https://github.com/pridiltal/ctv-AnomalyDetection](https://github.com/pridiltal/ctv-AnomalyDetection)
+-
+
+### Examples {-}
+
+- Don Bradman average
+- Old Faithful eruption durations: [https://geysertimes.org/archive/](https://geysertimes.org/archive/)
+- US crime data
+- [https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/](https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/)
+- [https://github.com/rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday)
+-

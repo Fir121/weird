@@ -1,0 +1,8 @@
+# Introduction
+
+- outliers and anomalies
+- one and several dimensions
+- distance vs density approaches
+- statistical vs machine learning approaches
+- Some simple approaches: box plots, z scores
+-
