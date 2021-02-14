@@ -1,0 +1,5 @@
+book_filename: "weird"
+chapter_name: "Chapter "
+before_chapter_script: ["before-each-chapter.R"]
+output_dir: "public"
+delete_merged_file: true

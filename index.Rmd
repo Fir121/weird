@@ -1,0 +1,21 @@
+---
+knit: "bookdown::render_book"
+title: "That's weird: Anomaly&nbsp;detection&nbsp;using&nbsp;R"
+author:
+  name: "Rob J Hyndman"
+  affiliation: Monash University, Australia
+site: bookdown::bookdown_site
+output:
+  bookdown::gitbook:
+    highlight: tango
+bibliography: [weird.bib]
+biblio-style: authoryear-comp
+geometry: left=1.3cm
+subparagraph: yes
+link-citations: yes
+url: 'https\://Otexts.com/weird/'
+twitter-handle: robjhyndman
+---
+
+# Preface {-}
+
