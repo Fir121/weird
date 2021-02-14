@@ -6,8 +6,6 @@ gitbook:
 
 deploy:
 	cp .htaccess public
-	cp 404.html public
-	cp -r extrafiles public/
 	rsync -zrvce 'ssh -p 18765' public/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
 
 clean:
