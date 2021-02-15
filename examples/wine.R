@@ -1,7 +1,9 @@
-library(tidyverse)
-wine <- read_csv(here::here("data/winemag-data-130k-v2.csv"))
+remotes::install_github("robjhyndman/weird-package")
+library(weird)
 
-wine %>%
+wine_reviews %>%
+  filter(variety %in% c("Shiraz", "Syrah")) %>%
   select(points, price) %>%
-  mutate(logprice = log(price)) %>%
-  pairs()
+  ggplot(aes(y=price, x=points)) +
+  geom_jitter(height=0, alpha=0.4) +
+  scale_y_log10()

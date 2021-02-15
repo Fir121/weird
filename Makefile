@@ -2,7 +2,6 @@ all: gitbook
 
 gitbook:
 	Rscript -e 'bookdown::render_book("index.Rmd", "bookdown::gitbook", quiet=FALSE)'
-	sed -i -f htmlreplace.sed public/*.html
 
 deploy:
 	cp .htaccess public

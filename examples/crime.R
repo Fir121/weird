@@ -15,9 +15,11 @@ offences2018 <- readxl::read_excel(
   mutate(across(violent_crime:arson2, ~ ./population*1e3))
 
 offences2018 %>%
-  ggplot(aes(x=violent_crime)) +
-  geom_boxplot()
+  ggplot(aes(x=violent_crime, y=rape1)) +
+  geom_point() +
+  scale_x_log10() + scale_y_log10()
 
 library(lookout)
 
+# Very slow!
 lookout(offences2018 %>% select(violent_crime) %>% filter(!is.na(violent_crime)))

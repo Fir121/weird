@@ -1,6 +1,7 @@
-library(cricketdata)
-batting <- fetch_cricinfo(matchtype="test", sex="men", activity="batting", type="career")
+remotes::install_github("robjhyndman/weird-package")
+library(weird)
 
-batting %>%
+cricket_batting %>%
+  filter(Gender=="Men", Innings > 20) %>%
   select(Innings, Runs, Average, Hundreds, Ducks) %>%
   GGally::ggpairs()
