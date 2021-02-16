@@ -52,3 +52,72 @@ $$
 Rather than label these using integers ($L_2,L_3,\dots$), Tukey proposed using letters ($L_F,L_E,L_D,\dots$) where $F=$ fourths, $E=$ eighths, $D=$ sixteenths, and so on. 
 
 Because each depth is roughly half the previous depth, the letter values provide estimates of the quantiles with probabilities $p=1/2,1/4,1/8,\dots$.
+  
+## Kernel density estimation {#sec:kde}
+
+Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
+
+Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to estimate their probability density function. The kernel estimate is given by
+\begin{equation}
+  \hat{f}(y) = \frac{1}{nh} \sum_{i=1}^n K\left(\frac{y-y_i}{h}\right)
+  (\#eq:kde)
+\end{equation}
+where $h$ is a bandwidth to be determined and $K$ is a kernel function.
+
+To help understand this equation, let's suppose $K$ is the standard normal density function given by
+$$
+ K(x) = \frac{1}{\sqrt{2\pi}} e^{x^2},
+$$
+and let $h=20$. We'll come back to these choices later.
+
+```{r include=FALSE}
+of2021 <- oldfaithful %>%
+  filter(as.Date(time) > "2021-01-01")  %>%
+  mutate(eruption = row_number())
+```
+
+Now we will apply \@ref(eq:kde) to the `r NROW(of2021)` Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$.
+
+```{r kde1, fig.asp=0.1, echo=FALSE}
+h <- 10
+k <- tibble(x = seq(-3*h,3*h,l=100)) %>% mutate(y = dnorm(x, 0, h))
+of2021kde <- of2021 %>%
+  mutate(k = list(k)) %>%
+  unnest(k) %>%
+  mutate(x = x + duration)
+of2021kde %>%
+  ggplot(aes(x=x,y=y,group=eruption)) +
+  geom_line(col='gray') +
+  geom_rug(data = of2021, mapping=aes(x=duration, y=0), sides='b') +
+  labs(x="Duration (seconds)")
+```
+
+
+
+
+Let's now plot the kernel density estimate for these data. (Section \@ref(sec:kde) contains a brief introduction to kernel density estimation.)
+
+```{r oldfaithful3, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+oldfaithful %>%
+  filter(duration < 6000) %>%
+  ggplot(aes(x=duration)) +
+  geom_density() + 
+  geom_rug() +
+  labs(x="Duration (seconds)")  
+```
+
+
+The kernel function can be any probability density
+
+## Depth measures
+
+## Pairwise distances and nearest neighbours
+
+ * Approximate NN
+
+## Extreme value theory
+
+## Principal component analysis
+
+## Multi-dimensional scaling
+
