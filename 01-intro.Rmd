@@ -24,102 +24,78 @@ Many analysts have thrown away apparent outliers because they were assumed to be
 
 > Add story of ozone layer
 
-### Example: Test cricket batting averages {-}
+## Strip plots and scatterplots
 
-Let's start with some simple examples using only one variable.
+When there are no more than a few thousand observations, it is useful to start with simple plots that allow you to look at the observations directly with no processing or modelling to hide what is going on.
+
+Let's start with some examples using only one or two variables. These examples will be revisited in the next couple of chapters as we introduce new anomaly detection tools and graphics.
+
+### Example: Test cricket batting averages {-}
 
 ```{r cricket0, echo=FALSE}
 batting <- cricket_batting %>%
-  filter(Gender=="Men", Innings > 20)
+  filter(Innings > 20)
+donave <- max(batting$Average)
 ```
 
-Don Bradman was an Australian cricketer in the first half of the 20th century, and is renowned as the best batsman to ever play the game. The most common measure of a batsman's ability is their career average --- the total number of runs made divided by the number of times they were dismissed. Figure \@ref(fig:cricket1) shows a boxplot of the career average for all `r NROW(batting)` men to have played test cricket and batted more than 20 times.
+Don Bradman was an Australian cricketer in the first half of the 20th century, and is renowned as the best batsman to ever play the game. The most common measure of a batter's ability is their career average --- the total number of runs made divided by the number of times they were dismissed. Figure \@ref(fig:cricket1) shows a strip plot of the career averages for all `r NROW(batting)` men and women to have played test cricket and batted more than 20 times.
 
-```{r cricket1, fig.asp=0.25, fig.cap="Boxplot of career batting averages for all men to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged 99.94 over his career."}
+(ref:cricket1) Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged `r round(donave, 2)` over his career.
+
+```{r cricket1, fig.asp=0.2, fig.cap="(ref:cricket1)"}
 cricket_batting %>%
-  filter(Gender=="Men", Innings > 20) %>%
-  ggplot(aes(x=Average)) + geom_boxplot()
+  filter(Innings > 20) %>%
+  ggplot(aes(x=Average, y=1)) + 
+  geom_jitter(width=0, alpha=0.5) +
+  scale_y_discrete() + 
+  labs(y="", x="Career batting average")
 ```
 
-The point on the right is Don Bradman who averaged `r round(max(batting$Average),2)` over his career. The rest of the data is displayed using the box and whiskers on the left. Clearly, Don Bradman was much better than any of the other men (and women) who have played cricket. 
-
-> **Recap:** Boxplots were invented by John Tukey as a quick summary of small to medium size data sets like this. The middle line in the box shows the median, and the ends of the box are the quartiles (Q1 and Q3). Half of all observations lie within the box. The width of the box is called the "interquartile range", defined by IQR = Q3 - Q1. Any points more than 1.5*IQR outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
-
-While boxplots are very useful for many data analyses, they are limited in at least two respects.
-
-1. For large data sets, boxplots show too many points as anomalies, and it is hard to distinguish them. 
-2. Boxplots assume that the distribution of the data is unimodal, and so they fail to detect "inliers".
-
-```{r standardnormal, echo=FALSE}
-q1 <- qnorm(0.25)
-q3 <- qnorm(0.75)
-iqr <- q3 - q1
-whisker1 <- q1 - 1.5*iqr
-whisker2 <- q3 + 1.5*iqr
-```
-
-To understand the effect of the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). Since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, Q1 $= `r round(q1,2)`$, Q3 $= `r round(q3,2)`$, IQR $= `r round(iqr,2)`$, and so any observations less than $`r round(q1,2)` - 1.5\times `r round(iqr,2)` = `r round(whisker1, 2)`$ or greater than $`r round(q3,2)` + 1.5\times `r round(iqr,2)` = `r round(whisker2, 2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r round(whisker2, 2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with 100000 observations, we would have $`r round(100000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
-
-The second problem arises in data sets where some regions of the sample space tend to have few observations. 
+The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r round(donave,2)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket. 
 
 ### Example: Old Faithful Geyser eruptions {-}
 
+Some anomalies are not so obvious, and occur within the range of the rest of the data.
+
 A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions recorded since 2015. 
 
-```{r oldfaithful1, fig.asp=0.25, fig.cap="Boxplot of Old Faithful eruption durations since 2015. The anomaly is an eruption on 7&nbsp;December 2015 which lasted nearly two hours."}
+```{r oldfaithful1, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015. The large anomaly is an eruption on 7&nbsp;December 2015 which lasted nearly two hours."}
 oldfaithful %>%
-  ggplot(aes(x=duration)) +
-  geom_boxplot() + 
-  labs(x="Duration (seconds)") +
+  ggplot(aes(x=duration, y=1)) +
+  geom_jitter(width=0, alpha=0.5) + 
+  labs(y="", x="Duration (seconds)") +
   scale_y_discrete() 
 ```
 
-The big outlier on the right was an eruption that lasted nearly two hours on 7 December 2015. This makes it difficult to see any detail in the rest of the data, so let's omit it so we can look at the remaining data more clearly.
+The big anomaly on the right was an eruption that lasted nearly two hours on 7 December 2015. This makes it difficult to see any detail in the rest of the data, so let's omit it so we can look at the remaining data more clearly.
 
-```{r oldfaithful2, fig.asp=0.25, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+```{r oldfaithful2, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
   filter(duration < 6000) %>%
-  ggplot(aes(x=duration)) +
-  geom_boxplot() + 
-  labs(x="Duration (seconds)") +
+  ggplot(aes(x=duration, y=1)) +
+  geom_jitter(width=0, alpha=0.5) + 
+  labs(y="", x="Duration (seconds)") +
   scale_y_discrete() 
 ```
 
-We see that almost all the remaining eruptions were between 100 and 300 seconds in length. There was one extremely short duration (of 1 second), but otherwise the data appear to all come from the same process.
-
-Let's now plot the kernel density estimate for these data. (Section \@ref(sec:kde) contains a brief introduction to kernel density estimation.)
-
-```{r oldfaithful3, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
-oldfaithful %>%
-  filter(duration < 6000) %>%
-  ggplot(aes(x=duration)) +
-  geom_density() + 
-  geom_rug() +
-  labs(x="Duration (seconds)")  
-```
-
-This reveals that there is something else going on. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Very few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
-
-In this example, a boxplot failed to identify the unusual durations of around 140--180 seconds in length. We will need to find anomaly detection algorithms and graphics that find and highlight such observations rather than hiding them like a boxplot.
-
-## Anomalies in several dimensions
-
-Once we have more than one variable in our data set, anomalies can occur due to the combination of variables which may not appear anomalous in any one of the variables. For example, suppose we observed height and age for a large number of people. A height of 180 cm would not be identified as anomalous in the distribution of height, and an age of 4 years would not be identified as anomalous in the distribution of age. However, a 180cm 4-year-old would be an anomaly due to the unusual combination of height and age.
+We see that almost all the remaining eruptions were between 100 and 300 seconds in length, with one extremely short anomalous duration (of 1 second). However, the plot reveals another feature of the data. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Very few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
 
 ### Example: wine prices and quality {-}
 
-Scatterplots can be used to visualize bivariate anomalies. Figure \@ref(fig:shiraz) shows data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
+Once we have more than one variable in our data set, anomalies can occur due to the combination of variables which may not appear anomalous in any one of the variables. For example, suppose we observed height and age for a large number of people. A height of 180 cm would not be identified as anomalous in the distribution of height, and an age of 4 years would not be identified as anomalous in the distribution of age. However, a 180cm 4-year-old would be an anomaly due to the unusual combination of height and age.
+
+Figure \@ref(fig:shiraz) shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
 ```{r shiraz, fig.cap="Wine prices and review points for Shiraz and Syrah wines."}
 wine_reviews %>%
   filter(variety %in% c("Shiraz", "Syrah")) %>%
   select(points, price) %>%
   ggplot(aes(y=price, x=points)) +
-  geom_jitter(height=0) +
+  geom_jitter(height=0, width=0.3, alpha=0.5) +
   scale_y_log10()
 ```
 
-The jittering in the horizontal direction helps avoid too much overplotting since points is always an integer value. This adds a small amount of random noise to the points variable, but not so much that it overlaps with the neighbouring values.
+The jittering in the horizontal direction helps reduce overplotting as `points` is always an integer value. This adds a small amount of random noise to the points variable, but not so much that it overlaps with the neighbouring values. The price is shown on a log scale to allow all the points to be seen more clearly.
 
 Here the most interesting observations are the ones that have an unusual price given their points value. For example, the lowest priced wine above 95 points is a 2007 Syrah from the Rulo vineyard in the Columbia Valley, Washington. It is an anomaly given its high points value and low price, although neither the price nor the points value are particularly unusual.
 
@@ -135,7 +111,7 @@ wine_reviews %>%
 
 A similar phenomenon occurs whenever you add variables. An anomaly in three dimensions may not appear anomalous in any of the 2-dimensional sets of variables. As the number of dimensions increases, there are more ways for observations to be anomalous, but it is increasingly difficult to find them. 
 
-While scatterplots are useful for finding anomalies in two dimensions, we will need alternative tools once we have three or more variables. 
+While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two dimensions, we will need alternative tools once we have three or more variables, or there is too much data to plot directly.
 
 ## Distance and density-based approaches
 
