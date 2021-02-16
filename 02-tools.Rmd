@@ -1,9 +1,54 @@
 # Tools
 
-- kernel density estimation
-- quantiles
-- depth measures
-- pairwise distances, knn and approximation NN
-- extreme value theory
-- PCA
-- MDS
+This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. 
+
+## Sample quantiles
+
+A quantile is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
+
+Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, it makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{q}_p$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{q}_p$ and $100(1-p)$% of the intervals lie to the right of $\hat{q}_p$.
+
+Equivalently, let $k^+ = (n-1)p+1$ and
+$$
+  \hat{q}_{p} = (1-\gamma) y_{(k)} - \gamma y_{(k+1)},
+$$
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder.
+
+A few special cases give some well-known summary statistics.
+
+  * When $p=0$, then $k=1$ and $\gamma = 0$, so $\hat{q}_{0}$ is the minimum.
+  * When $p=1$, then $k=n$ and $\gamma = 0$, so $\hat{q}_{1}$ is the maximum.
+  * When $p=0.5$ and $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{q}_{0.5}$ is the average of the middle two observations.
+  * When $p=0.5$ and $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{q}_{0.5}$ is the middle observation.
+
+### Quartiles, depths and letter values {-}
+
+The sample quantiles $\hat{q}_{0.25}$ and $\hat{q}_{0.75}$ are known as the **quartiles**. Closely related are the "**fourths**" (or "hinges") introduced by @Tukey1977-xd. These are alternative (simpler) estimates of the quartiles given by
+$$
+  L_F = y_{(\ell)} 
+  \qquad\text{and}\qquad 
+  U_F = y_{(u)},
+$$
+where $\ell = (\lfloor n/2 \rfloor + 1)/2$ and $u = n+1 - (\lfloor n/2 \rfloor + 1)/2$. These order statistics are based on depth values.
+
+For univariate data, the **depth** of an observation is a measure of how deeply buried it is when all observations are ordered. That is, how far would you need to count from either the smallest or largest observation until you encountered the observation of interest. So the minimum and maximum both have depth 1, while the median has the largest depth of $(n+1)/2$.
+
+Tukey's fourths are at half the depth of the median. In other words, $L_F$ is the median of the observations below the median, while $L_U$ is the median of the observations above the median.
+
+**Letter values** [@Tukey1977-xd;@hoaglin1983letter] are a generalization of fourths. These are order statistics with specific depths, defined recursively starting with the median. The depth of the median is $d_1 = (1+n)/2$. The depths of successive letter values are defined recursively as $d_i = (1+\lfloor d_{i-1}\rfloor)/2$, $i=2,3,\dots$. The corresponding letter values are defined as
+$$
+  L_i = y_{(\lfloor d_i\rfloor)} 
+  \qquad\text{and}\qquad 
+  U_i = y_{(\lfloor n-d_i+1\rfloor)} 
+$$
+when the depth is an integer. Otherwise the depth is an integer plus 1/2, and the letter values are given by
+$$
+  L_i = (y_{(\lfloor d_i\rfloor)} + y_{(\lfloor d_i\rfloor+1)})/2 
+  \qquad\text{and}\qquad
+  U_i = (y_{(\lfloor n-d_i+1\rfloor)} + y_{n-(\lfloor d_i\rfloor+1)+1})/2 .
+$$
+Rather than label these using integers ($L_2,L_3,\dots$), Tukey proposed using letters ($L_F,L_E,L_D,\dots$) where $F=$ fourths, $E=$ eighths, $D=$ sixteenths, and so on. 
+
+Because each depth is roughly half the previous depth, the letter values provide estimates of the quantiles with probabilities $p=1/2,1/4,1/8,\dots$.
