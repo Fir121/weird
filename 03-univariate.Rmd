@@ -1,0 +1,99 @@
+# Univariate methods
+
+In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable. 
+
+## Boxplots
+
+Boxplots were invented by John Tukey as a quick summary of medium sized data sets. They are widely used to identify anomalies, which are shown as separate points in the plot.
+
+Figure \@ref(fig:cricketbox) shows a boxplot of the cricket batting average data, previously shown in  \@ref(fig:cricket1).
+
+```{r cricketbox, fig.asp=0.2, fig.cap="(ref:cricket1)"}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  ggplot(aes(x=Average, y=1)) +
+  geom_boxplot() +
+  scale_y_discrete() +
+  labs(y="", x="Career batting average")
+```
+
+The middle line in the box shows the median, and the ends of the box are the fourths ($L_F$ and $U_F$). Half of all observations lie within the box. The width of the box is called the "interquartile range", defined by $IQR = U_F - L_F$. Any points more than $1.5*IQR$ outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
+
+Originally, Tukey proposed two levels of outliers --- those more than $1.5*IQR$ beyond the box were labelled "outside" values, while those more than $3*IQR$ beyond the box were labelled "far out" values. Most software implementations of boxplots do not distinguish between these groups.
+
+In this cricket batting example, the boxplot works well because the data set is not too large or small, and the distribution of points other than the anomaly is unimodal.
+
+However, boxplots can be misleading, and are they are limited in at least two respects.
+
+1. For large data sets, boxplots show too many points as anomalies, and it is hard to distinguish them.
+2. Boxplots assume that the distribution of the data is unimodal.
+
+```{r standardnormal, echo=FALSE}
+q1 <- qnorm(0.25)
+q3 <- qnorm(0.75)
+iqr <- q3 - q1
+whisker1 <- q1 - 1.5*iqr
+whisker2 <- q3 + 1.5*iqr
+```
+
+To better understand the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). Figure \@ref(fig:normalboxplot) shows an example with 10000 points.
+
+```{r normalboxplot, fig.asp=0.2, fig.cap="Boxplot of 10000 draws from a standard normal distribution."}
+tibble(x = rnorm(10000)) %>%
+  ggplot(aes(x=x, y=1)) +
+  geom_boxplot() +
+  scale_y_discrete() +
+  labs(y="")
+```
+
+Many anomalies are shown, but since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, Q1 $= `r round(q1,2)`$, Q3 $= `r round(q3,2)`$, IQR $= `r round(iqr,2)`$, and so any observations less than $`r round(q1,2)` - 1.5\times `r round(iqr,2)` = `r round(whisker1, 2)`$ or greater than $`r round(q3,2)` + 1.5\times `r round(iqr,2)` = `r round(whisker2, 2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r round(whisker2, 2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with 10000 observations, we would have $`r round(10000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
+
+The second problem is demonstrated using the Old Faithful eruption duration data, shown in Figure \@ref(fig:oldfaithful1). As before, we will omit the largest value so we can see the details in the remaining data.
+
+```{r oldfaithful2a, fig.asp=0.2, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+oldfaithful %>%
+  filter(duration < 6000) %>%
+  ggplot(aes(x=duration, y=1)) +
+  geom_boxplot() +
+  labs(y="", x="Duration (seconds)") +
+  scale_y_discrete()
+```
+
+Quite a few anomalies are shown, including the one-second eruption we identified earlier. But the remaining "anomalies" are not particularly unusual observations. All the points below 180 seconds are identified as anomalies, even though we know that observations in the region between 100 and 140 are not unusual for this geyser. Because the boxplot does not allow for more than one mode, all the points in the second smaller cluster are identified as anomalies. The points around 300 seconds are also not really anomalies --- these are just values in the upper tail of the distribution for eruptions.
+
+## Letter value plots
+
+The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend 
+
+These can be produced using the `lvplot` package.
+
+```{r cricketboxlv, fig.asp=0.2, fig.cap="Letter value plot of career batting averages for all men and women who played test cricket and batter more than 20 times."}
+library(lvplot)
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  ggplot(aes(x=1,y=Average)) +
+  geom_lv(aes(fill=..LV..)) +
+  scale_x_discrete() +
+  coord_flip() +
+  labs(x="", y="Career batting average") +
+  theme(legend.key.height = unit(.2,"cm")) 
+```
+
+```{r lv, echo=FALSE}
+lv <- cricket_batting %>%
+  filter(Innings > 20) %>%
+  stat_lv(mapping = aes(y=Average))
+```
+
+Here the median is given by M, the fourths by F, and so on. So the middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on. 
+
+In this example, the most extreme box (labelled Z) is bounded by the points that fall within the 1/256 letter values. So it contains all but 2/256 of the data, and shows $2 / 256 \times `r NROW(filter(cricket_batting, Innings > 20))` = `r round(2/256*NROW(filter(cricket_batting, Innings > 20)))`$ points as anomalies. 
+
+The stopping rule used in the letter value plot is to show the boxes up to letter value $k$, where
+$$
+  0.5\sqrt{2d_k} z_{1-\alpha/2} > d_{k+1}
+$$
+and $z_{1-\alpha/2}$ is the $1-\alpha/2$ quantile of a standard Gaussian distribution. This choice means that there should be fewer than $2z^2_{1-\alpha/2}$ legitimate observations in the tails. The Gaussian distribution arises because the quantile estimate has an approximate Gaussian distribution due to the Central Limit Theorem. By default, $\alpha=0.05$, so there should on average be fewer than $2 \times (`r qnorm(1-0.05/2)`)^2 = `r round(2* qnorm(1-0.05/2)^2,1)`$ legitimate observations in the tails, regardless of the size of the data set.
+
+In this cricketing example, it looks like there is one true anomaly (Don Bradman) and the remaining 8 identified "anomalies" are simply in the tails of the distribution of the remaining data.
+
