@@ -6,7 +6,7 @@ This chapter covers various statistical and computational tools that will be use
 
 A quantile is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
 
-Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, it makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, which variation you use makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
 
 Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{q}_p$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{q}_p$ and $100(1-p)$% of the intervals lie to the right of $\hat{q}_p$.
 
@@ -64,11 +64,12 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to 
   \hat{f}(y) = \frac{1}{nh} \sum_{i=1}^n K\left(\frac{y-y_i}{h}\right),
   (\#eq:kde)
 \end{equation}
-where $h$ is a bandwidth to be determined and $K$ is a "kernel" function --- a non-negative symmetric function which integrates to 1. That is, we require $K$ to satisfy the properties
+where $h$ is a bandwidth to be determined and $K$ is a "kernel" function, satisfying the properties 
 \begin{equation}
-  K(u) \ge 0, \qquad K(u) = K(-u), \qquad \int K(u) du = 1.
+K(u) \ge 0, \qquad \int K(u) du = 1, \qquad \int uK(u)du = 0, \qquad\text{and}\qquad \int u^2K(u) du = 1.
   (\#eq:kernels)
 \end{equation}
+An example of such a kernel function is the standard normal density function given by $K(u) = \exp(-u^2)/\sqrt{2\pi}$. In fact, any probability density function with mean zero and variance one will be a suitable kernel function. Note that some of these properties can be relaxed [see @WJ1995], but for our purposes it is easier to work with \@ref(eq:kernels).
 
 ```{r include=FALSE}
 of2021 <- oldfaithful %>%
@@ -79,11 +80,7 @@ of2021 <- oldfaithful %>%
 
 Now we will apply \@ref(eq:kde) to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K(0)/nh$.
 
-Let's suppose $K$ is the standard normal density function given by
-$$
- K(x) = \frac{1}{\sqrt{2\pi}} e^{x^2},
-$$
-and let $h=15$. Then we get the following set of kernel functions.
+Let's suppose $K$ is the standard normal density function and let $h=15$. Then we get the following set of kernel functions.
 
 ```{r kde1, fig.asp=0.2, echo=FALSE}
 h <- 15
@@ -104,7 +101,6 @@ The vertical ticks show the location of the ten observations, while the grey lin
 
 These functions are then added together, as in \@ref(eq:kde), to give the density estimate.
 
-
 ```{r kde2, fig.asp=0.5, echo=FALSE}
 ggplot() +
   geom_line(data = of2021kde, aes(x=x,y=y,group=eruption), col='gray') +
@@ -113,11 +109,8 @@ ggplot() +
   labs(x="y = Duration (seconds)", y = "Density")
 ```
 
-We made two choices when producing this estimate: the value of $h$ and the type of kernel $K$. If either was replaced with a different choice, the estimate would be different. Any symmetric kernel function that is, itself, a probability density function can be used as it will satisfy the properties \@ref(eq:kernels). For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel or the quadratic Epanechnikov kernel given by
-$$
-  K(u) = \frac{3}{4}(1-u^2)_+
-$$
-where $(x)_+ = \max(x,0)$. The `geom_density()` function uses the Gaussian kernel by default, although other choices are available.
+We made two choices when producing this estimate: the value of $h$ and the type of kernel $K$. If either was replaced with a different choice, the estimate would be different. Any symmetric kernel function that is, itself, a probability density function can be used as it will satisfy the properties \@ref(eq:kernels). For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
+
 
 The choice of $h$ is more difficult and will change the shape of the density plot substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
 
@@ -135,13 +128,16 @@ of2021 %>%
   geom_label(x=320, y=.004, label="h = 40", col="#009E73")
 ```
 
-When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. The default choice in `geom_density()` function uses Silverman's "rule-of-thumb" [@Silverman1986,48]:
-$$
+When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ uses Silverman's "rule-of-thumb" [@Silverman1986,48]:
+\begin{equation}
   h = 0.9 \min(s, \text{IQR}/1.34) n^{-1/5},
-$$
+  (\#eq:ruleofthumb)
+\end{equation}
 where $s$ is the sample standard deviation and $\text{IQR} = \hat{q}_{0.75} - \hat{q}_{0.25}$. This tends to work reasonably well for most data sets.
 
 The preceding example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
+
+We will use the `geom_density()` function, which uses the Gaussian kernel and Silverman's rule-of-thumb by default, although other choices are available.
 
 ```{r oldfaithful3, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
@@ -154,7 +150,24 @@ oldfaithful %>%
 
 Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
 
+The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @Scott2015. For our purposes, the important things to note are that it is a consistent estimator of the underlying density $f$ when $h = O(n^{-1/5})$. That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
+
 ### Multivarate density estimation {-}
+
+Suppose our observations are $d$-dimensional vectors, $\bm{y}_1,\dots,\bm{y}_n$. Then the multivariate version of \@ref(eq:kde) is given by [@Scott2015]
+\begin{equation}
+  \hat{f}(\bm{y}) = \frac{1}{n|\bm{H}|} \sum_{i=1}^n K\left(\bm{H}^{-1}(\bm{y} - \bm{y}_i)\right)
+  (\#eq:mkde)
+\end{equation}
+where $\bm{H}$ is a $d\times d$ bandwidth matrix and $K$ is a multivariate probability density satisfying
+$$
+  \int K(\bm{u}) d\bm{u} = 1,\qquad
+  \int \bm{u}K(\bm{u}) d\bm{u} = \bm{0}_d,\qquad\text{and}\qquad
+  \int \bm{u}\bm{u}'K(\bm{u}) d\bm{u} = \bm{I}_d,
+$$
+where $\bm{0}_d$ is a $d$-vector of zeros and $\bm{I}_d$ is a $d\times d$ identity matrix.
+
+
 
 ## Depth measures
 
