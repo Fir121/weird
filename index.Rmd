@@ -34,7 +34,6 @@ I will also assume you already know how to use R and are familiar with the [tidy
 All R examples in the book assume you have loaded the `weird` package first:
 
 ```{r library, eval=FALSE}
-#WARNING: This package is still private.
 #remotes::install_github("robjhyndman/weird-package")
 library(weird)
 ```
@@ -56,16 +55,20 @@ This will load the relevant data sets and functions from the packages needed to 
 11. Applications: network intrusion, fraud detection
 
 
-### References {-}
+### Task view {-}
 
 - [https://github.com/pridiltal/ctv-AnomalyDetection](https://github.com/pridiltal/ctv-AnomalyDetection)
 -
 
-### Examples {-}
+### Additional Examples {-}
 
-- Don Bradman average
-- Old Faithful eruption durations: [https://geysertimes.org/archive/](https://geysertimes.org/archive/)
-- US crime data
 - [https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/](https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/)
 - [https://github.com/rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday)
 -
+
+
+&nbsp;<br><br><br>
+
+Rob J Hyndman <br>
+`r format(Sys.Date(), "%B %Y")`
+
