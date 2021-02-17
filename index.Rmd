@@ -21,10 +21,6 @@ twitter-handle: robjhyndman
 
 > This book is under development. Please don't ask me when it will be finished --- I have to fit this around my other work. In the meantime, I hope the incomplete book is useful.
 
-Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that describe how most of the data behave. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data.
-
-Anomalies are often a nuisance. For example, they may be simply recording errors that are contaminating our data. We want to find them, remove them, and get on with analysing the bulk of the data. At other times, anomalies are the interesting observations. They tell us things that might otherwise go unnoticed if we only consider how the majority of observations behave.
-
 This book is about tools and techniques for finding and understanding anomalies. We will begin with some simple data sets with only one variable, and build up slowly to much more complicated data.
 
 The book is written for two audiences: (1)&nbsp;people finding themselves doing data analysis in business when they may not have had any formal training in the area; and (2)&nbsp;students studying data science.
