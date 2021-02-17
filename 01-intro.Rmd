@@ -73,7 +73,7 @@ The big anomaly on the right was an eruption that lasted nearly two hours on 7 D
 
 ```{r oldfaithful2, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
-  filter(duration < 6000) %>%
+  filter(duration < 7000) %>%
   ggplot(aes(x=duration, y=1)) +
   geom_jitter(width=0, alpha=0.5) + 
   labs(y="", x="Duration (seconds)") +
@@ -81,6 +81,8 @@ oldfaithful %>%
 ```
 
 We see that almost all the remaining eruptions were between 100 and 300 seconds in length, with one extremely short anomalous duration (of 1 second). However, the plot reveals another feature of the data. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Very few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
+
+The two clusters of observations characterise two eruption modes for the Old Faithful geyser: short durations (around 2 minutes in length) and long durations (between 3 and 5 minutes in length). There was a local earthquake in 1998 which changed the distribution of durations. Before 1998, the durations were more evenly split between the two clusters, but currently the long durations are much more common.
 
 ### Example: wine prices and quality {-}
 

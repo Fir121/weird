@@ -57,8 +57,6 @@ Because each depth is roughly half the previous depth, the letter values provide
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
-### Univariate density estimation {-}
-
 Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to estimate their probability density function. The kernel estimate is given by
 \begin{equation}
   \hat{f}(y) = \frac{1}{nh} \sum_{i=1}^n K\left(\frac{y-y_i}{h}\right),
@@ -66,24 +64,29 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to 
 \end{equation}
 where $h$ is a bandwidth to be determined and $K$ is a "kernel" function, satisfying the properties 
 \begin{equation}
-K(u) \ge 0, \qquad \int K(u) du = 1, \qquad \int uK(u)du = 0, \qquad\text{and}\qquad \int u^2K(u) du = 1.
+  K(u) \ge 0, \quad 
+  \int K(u) du = 1, \quad 
+  \int uK(u)du = 0, \quad\text{and}\quad 
+  \int u^2K(u) du = 1.
   (\#eq:kernels)
 \end{equation}
 An example of such a kernel function is the standard normal density function given by $K(u) = \exp(-u^2)/\sqrt{2\pi}$. In fact, any probability density function with mean zero and variance one will be a suitable kernel function. Note that some of these properties can be relaxed [see @WJ1995], but for our purposes it is easier to work with \@ref(eq:kernels).
 
-```{r include=FALSE}
+```{r of2021, include=FALSE}
 of2021 <- oldfaithful %>%
   filter(as.Date(time) > "2021-01-01")  %>%
   head(10) %>%
   mutate(eruption = row_number())
+s <- sd(of2021$duration)
+iqr <- IQR(of2021$duration)
+h <- 0.9 * min(s, iqr/1.34)*NROW(of2021)^(-1/5)
 ```
 
 Now we will apply \@ref(eq:kde) to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K(0)/nh$.
 
-Let's suppose $K$ is the standard normal density function and let $h=15$. Then we get the following set of kernel functions.
+Let's suppose $K$ is the standard normal density function and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
 
-```{r kde1, fig.asp=0.2, echo=FALSE}
-h <- 15
+```{r kde1, fig.asp=0.2, echo=FALSE, dependson="of2021"}
 k <- tibble(x = seq(-3*h, 3*h, l = 1000)) %>%
   mutate(y = dnorm(x, 0, h)/10)
 of2021kde <- of2021 %>%
@@ -101,7 +104,7 @@ The vertical ticks show the location of the ten observations, while the grey lin
 
 These functions are then added together, as in \@ref(eq:kde), to give the density estimate.
 
-```{r kde2, fig.asp=0.5, echo=FALSE}
+```{r kde2, fig.asp=0.5, echo=FALSE, dependson="kde1"}
 ggplot() +
   geom_line(data = of2021kde, aes(x=x,y=y,group=eruption), col='gray') +
   geom_rug(data = of2021, mapping=aes(x=duration, y=0), sides='b', size=1) +
@@ -109,12 +112,11 @@ ggplot() +
   labs(x="y = Duration (seconds)", y = "Density")
 ```
 
-We made two choices when producing this estimate: the value of $h$ and the type of kernel $K$. If either was replaced with a different choice, the estimate would be different. Any symmetric kernel function that is, itself, a probability density function can be used as it will satisfy the properties \@ref(eq:kernels). For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
-
+We made two choices when producing this estimate: the value of $h$ and the type of kernel $K$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
 
 The choice of $h$ is more difficult and will change the shape of the density plot substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
 
-```{r kde3, fig.asp=0.5, echo=FALSE}
+```{r kde3, fig.asp=0.5, echo=FALSE, dependson="of2021"}
 of2021 %>%
   ggplot(aes(x=duration)) +
   geom_rug(sides='b', size=1) +
@@ -133,7 +135,7 @@ When $h$ is too small, the density estimate is very rough with many peaks and tr
   h = 0.9 \min(s, \text{IQR}/1.34) n^{-1/5},
   (\#eq:ruleofthumb)
 \end{equation}
-where $s$ is the sample standard deviation and $\text{IQR} = \hat{q}_{0.75} - \hat{q}_{0.25}$. This tends to work reasonably well for most data sets.
+where $s$ is the sample standard deviation and $\text{IQR} = \hat{q}_{0.75} - \hat{q}_{0.25}$. This tends to work reasonably well for most data sets. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used above.
 
 The preceding example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
 
@@ -141,32 +143,95 @@ We will use the `geom_density()` function, which uses the Gaussian kernel and Si
 
 ```{r oldfaithful3, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
-  filter(duration < 6000) %>%
+  filter(duration < 7000) %>%
   ggplot(aes(x=duration)) +
   geom_density() +
   geom_rug() +
   labs(x="Duration (seconds)")
 ```
 
-Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
+```{r ofbw2, include=FALSE}
+of <- oldfaithful %>%
+  filter(duration < 7000)
+s <- sd(of$duration)
+iqr <- IQR(of$duration)
+h <- 0.9 * min(s, iqr/1.34)*NROW(of)^(-1/5)
+```
 
-The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @Scott2015. For our purposes, the important things to note are that it is a consistent estimator of the underlying density $f$ when $h = O(n^{-1/5})$. That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
+As this is a much bigger data set (with `r NROW(of)` observations), the selected bandwidth is smaller and is now $h = `r round(h, 2)`$. Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
 
-### Multivarate density estimation {-}
+
+
+The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. For our purposes, the important things to note are that it is a consistent estimator of the underlying density $f$ when $h = O(n^{-1/5})$. That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
+
+## Multivarate kernel density estimation
 
 Suppose our observations are $d$-dimensional vectors, $\bm{y}_1,\dots,\bm{y}_n$. Then the multivariate version of \@ref(eq:kde) is given by [@Scott2015]
 \begin{equation}
-  \hat{f}(\bm{y}) = \frac{1}{n|\bm{H}|} \sum_{i=1}^n K\left(\bm{H}^{-1}(\bm{y} - \bm{y}_i)\right)
+  \hat{f}(\bm{y}) = \frac{1}{n|\bm{H}|} \sum_{i=1}^n K\left(\bm{H}^{-1}(\bm{y} - \bm{y}_i)\right),
   (\#eq:mkde)
 \end{equation}
 where $\bm{H}$ is a $d\times d$ bandwidth matrix and $K$ is a multivariate probability density satisfying
 $$
-  \int K(\bm{u}) d\bm{u} = 1,\qquad
-  \int \bm{u}K(\bm{u}) d\bm{u} = \bm{0}_d,\qquad\text{and}\qquad
+  K(\bm{u}) \ge 0, \quad
+  \int K(\bm{u}) d\bm{u} = 1,\quad
+  \int \bm{u}K(\bm{u}) d\bm{u} = \bm{0}_d,\quad\text{and}\quad
   \int \bm{u}\bm{u}'K(\bm{u}) d\bm{u} = \bm{I}_d,
 $$
 where $\bm{0}_d$ is a $d$-vector of zeros and $\bm{I}_d$ is a $d\times d$ identity matrix.
 
+```{r bivariatebandwidths, include=FALSE}
+h1 <- MASS::bandwidth.nrd(of2021$duration)
+h2 <- MASS::bandwidth.nrd(of2021$waiting)
+```
+
+We will illustrate the idea using a simple bivariate example of 10 observations: the same 10 eruption durations discussed above, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{cc}`r round(h1,0)` & 0 \\ 0 & `r round(h2,0)`\end{array}\right]$.
+
+```{r ofdw, dependson="of2021", echo=FALSE, warning=FALSE}
+h <- c(13,300)
+k <- expand_grid(
+    x = seq(-3*h[1], 3*h[1], l = 100),
+    y = seq(-3*h[2], 3*h[2], l = 100)
+  ) %>%
+  mutate(z = dnorm(x, 0, h[1]) * dnorm(y, 0, h[2]))
+of2021kde <- of2021 %>%
+  mutate(k = list(k)) %>%
+  unnest(k) %>%
+  mutate(x = x + duration, y=y+waiting)
+ggplot() +
+  geom_contour(data = of2021kde, aes(x=x,y=y,group=eruption,z=z), bins=4, col='gray') +
+  geom_point(data = of2021, mapping=aes(x=duration, y=waiting)) +
+  labs(x="Duration (seconds)", y = "Waiting time (seconds)") +
+  xlim(147,287) + ylim(3070,6860)
+```
+
+If we add the bivariate kernel functions as in \@ref(eq:mkde), we obtain the bivariate kernel density estimate shown below.
+
+```{r ofbivariate1, dependson="of2021", echo=FALSE}
+of2021 %>% 
+  ggplot(aes(x=duration, y=waiting)) +
+  geom_point() +
+  geom_density_2d() +
+  labs(x="Duration (seconds)", y="Waiting time (seconds)") +
+  xlim(147,287) + ylim(3070,6860)
+```  
+
+Now we will apply the method to the full data set, other than the 2 hour eruption and observations where the subsequent waiting time is more than 2 hours (which are likely to be data errors). 
+
+We will use the `geom_density_2d()` function, which uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are 4.7 times the size of Silverman's rule-of-thumb \@ref(eq:ruleofthumb) for univariate density estimation.
+
+```{r ofbivariate2, fig.cap="Bivariate kernel density estimate."}
+oldfaithful %>% 
+  filter(duration < 7000, waiting < 7000) %>%
+  ggplot(aes(x=duration, y=waiting)) +
+  geom_point(color='gray') +
+  geom_density_2d() +
+  labs(x="Duration (seconds)")
+```  
+
+Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There is one anomalous eruption where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
+
+## Highest density regions
 
 
 ## Depth measures
