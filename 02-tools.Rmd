@@ -25,7 +25,9 @@ A few special cases give some well-known summary statistics.
 
 ### Quartiles, depths and letter values {-}
 
-The sample quantiles $\hat{q}_{0.25}$ and $\hat{q}_{0.75}$ are known as the **quartiles**. Closely related are the "**fourths**" (or "hinges") introduced by @Tukey1977-xd. These are alternative (simpler) estimates of the quartiles given by
+The sample quantiles $\hat{q}_{0.25}$ and $\hat{q}_{0.75}$ are known as the **quartiles**, and the difference between them is the **IQR** or "interquartile range". The latter is often used as an alternative to the standard deviation for estimating the spread of the data as it is unaffected by any outliers in the data. When used in this way, the IQR is usually divided by 1.34 to make it an estimate of the standard deviation assuming a normal distribution. The scaling factor will be different for other distributions.
+
+Closely related are the "**fourths**" (or "hinges") introduced by @Tukey1977-xd. These are alternative (simpler) estimates of the quartiles given by
 $$
   L_F = y_{(\ell)}
   \qquad\text{and}\qquad
@@ -57,20 +59,12 @@ Because each depth is roughly half the previous depth, the letter values provide
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
-Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to estimate their probability density function. The kernel estimate is given by
+Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to estimate their probability density function. The kernel estimate [see @WJ1995] is given by
 \begin{equation}
-  \hat{f}(y) = \frac{1}{nh} \sum_{i=1}^n K\left(\frac{y-y_i}{h}\right),
+  \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
   (\#eq:kde)
 \end{equation}
-where $h$ is a bandwidth to be determined and $K$ is a "kernel" function, satisfying the properties 
-\begin{equation}
-  K(u) \ge 0, \quad 
-  \int K(u) du = 1, \quad 
-  \int uK(u)du = 0, \quad\text{and}\quad 
-  \int u^2K(u) du = 1.
-  (\#eq:kernels)
-\end{equation}
-An example of such a kernel function is the standard normal density function given by $K(u) = \exp(-u^2)/\sqrt{2\pi}$. In fact, any probability density function with mean zero and variance one will be a suitable kernel function. Note that some of these properties can be relaxed [see @WJ1995], but for our purposes it is easier to work with \@ref(eq:kernels).
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. 
 
 ```{r of2021, include=FALSE}
 of2021 <- oldfaithful %>%
@@ -82,9 +76,9 @@ iqr <- IQR(of2021$duration)
 h <- 0.9 * min(s, iqr/1.34)*NROW(of2021)^(-1/5)
 ```
 
-Now we will apply \@ref(eq:kde) to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K(0)/nh$.
+Now we will apply \@ref(eq:kde) to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
 
-Let's suppose $K$ is the standard normal density function and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
+Let's suppose $K_h$ is a Gaussian density function and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
 
 ```{r kde1, fig.asp=0.2, echo=FALSE, dependson="of2021"}
 k <- tibble(x = seq(-3*h, 3*h, l = 1000)) %>%
@@ -97,10 +91,10 @@ ggplot() +
   geom_line(data = of2021kde, aes(x=x,y=y,group=eruption), col='gray') +
   geom_rug(data = of2021, mapping=aes(x=duration, y=0),
            size=1, length=unit(0.06,"npc"), sides='b') +
-  labs(x="y = Duration (seconds)", y = latex2exp::TeX("$K((y - y_i)/h)/(nh)$"))
+  labs(x="y = Duration (seconds)", y = latex2exp::TeX("$K_h(y - y_i)/n$"))
 ```
 
-The vertical ticks show the location of the ten observations, while the grey lines show $\frac{1}{nh}K((y - y_i)/h)$ for $i=1,\dots,n$.
+The vertical ticks show the location of the ten observations, while the grey lines show $\frac{1}{n}K_h(y - y_i)$ for $i=1,\dots,n$.
 
 These functions are then added together, as in \@ref(eq:kde), to give the density estimate.
 
@@ -112,9 +106,9 @@ ggplot() +
   labs(x="y = Duration (seconds)", y = "Density")
 ```
 
-We made two choices when producing this estimate: the value of $h$ and the type of kernel $K$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
+We made two choices when producing this estimate: the value of $h$ and the type of kernel $K_h$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
 
-The choice of $h$ is more difficult and will change the shape of the density plot substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
+The choice of $h$ is more difficult and will change the shape of the density estimate substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
 
 ```{r kde3, fig.asp=0.5, echo=FALSE, dependson="of2021"}
 of2021 %>%
@@ -162,23 +156,22 @@ As this is a much bigger data set (with `r NROW(of)` observations), the selected
 
 
 
-The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. For our purposes, the important things to note are that it is a consistent estimator of the underlying density $f$ when $h = O(n^{-1/5})$. That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
+The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. For our purposes, one important thing to note is that it is a consistent estimator of the underlying density $f$ when 
+$$
+  \lim_{n\rightarrow\infty} h = 0
+  \qquad\text{and}\qquad
+  \lim_{n\rightarrow\infty} nh = \infty.
+$$
+That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
 
 ## Multivarate kernel density estimation
 
 Suppose our observations are $d$-dimensional vectors, $\bm{y}_1,\dots,\bm{y}_n$. Then the multivariate version of \@ref(eq:kde) is given by [@Scott2015]
 \begin{equation}
-  \hat{f}(\bm{y}) = \frac{1}{n|\bm{H}|} \sum_{i=1}^n K\left(\bm{H}^{-1}(\bm{y} - \bm{y}_i)\right),
+  \hat{f}(\bm{y}) = \frac{1}{n} \sum_{i=1}^n K_h(\bm{y} - \bm{y}_i),
   (\#eq:mkde)
 \end{equation}
-where $\bm{H}$ is a $d\times d$ bandwidth matrix and $K$ is a multivariate probability density satisfying
-$$
-  K(\bm{u}) \ge 0, \quad
-  \int K(\bm{u}) d\bm{u} = 1,\quad
-  \int \bm{u}K(\bm{u}) d\bm{u} = \bm{0}_d,\quad\text{and}\quad
-  \int \bm{u}\bm{u}'K(\bm{u}) d\bm{u} = \bm{I}_d,
-$$
-where $\bm{0}_d$ is a $d$-vector of zeros and $\bm{I}_d$ is a $d\times d$ identity matrix.
+where $K_h$ is a multivariate probability density with covariance matrix $\bm{H}$. We will use a multivariate Gaussian kernel whenever we estimate a multivariate kernel density estimate.
 
 ```{r bivariatebandwidths, include=FALSE}
 h1 <- MASS::bandwidth.nrd(of2021$duration)
@@ -218,7 +211,7 @@ of2021 %>%
 
 Now we will apply the method to the full data set, other than the 2 hour eruption and observations where the subsequent waiting time is more than 2 hours (which are likely to be data errors). 
 
-We will use the `geom_density_2d()` function, which uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are 4.7 times the size of Silverman's rule-of-thumb \@ref(eq:ruleofthumb) for univariate density estimation.
+We will use the `geom_density_2d()` function, which by default uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are 4.7 times the size of Silverman's rule-of-thumb \@ref(eq:ruleofthumb) for univariate density estimation.
 
 ```{r ofbivariate2, fig.cap="Bivariate kernel density estimate."}
 oldfaithful %>% 
@@ -231,13 +224,48 @@ oldfaithful %>%
 
 Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There is one anomalous eruption where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
 
-## Highest density regions
+If $\bm{H}$ is diagonal with values $h_1,\dots,h_d$, then the estimator is consistent when
+$$
+  \lim_{n\rightarrow\infty} h = 0
+  \qquad\text{and}\qquad
+  \lim_{n\rightarrow\infty} nh^d = \infty,
+$$
+where $h = (h_1h_2\dots,h_d)^{1/d}$ is the geometric mean of the diagonal values of $\bm{H}$. The default values for `geom_density_2d()` satisfy this property.
+
+Note that the diagonal values $h_1,\dots,h_d$ tend to be larger than the values used in the corresponding univariate density estimates, as the convergence properties of the estimate are slower for larger $d$.
+
+## Highest and lowest density regions
+
+As already indicated, one way to think of an anomaly is a value with low probability density. That leads to the idea of finding all values with density above or below a given threshold.
+
+A **highest density region** is defined as the region of the sample space where the density is higher than a given threshold [@HDR96]. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
+$$
+  R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
+$$
+where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
+
+Let's illustrate the idea with some simple examples.
+
+
+```{r hdr, eval=FALSE}
+# remotes::install_github("ropenscilabs/gghdr")
+library(gghdr)
+oldfaithful %>%
+  filter(duration < 7000) %>%
+  ggplot() +
+  geom_point(aes(x=0, y=duration)) +
+  geom_hdr_boxplot(aes(y=duration), prob=c(0.5, 0.99)) +
+  labs(y="Duration (seconds)") +
+  coord_flip()
+```
+
 
 
 ## Depth measures
 
 ## Pairwise distances and nearest neighbours
 
+ * kNN
  * Approximate NN
 
 ## Extreme value theory

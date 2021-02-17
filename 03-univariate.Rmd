@@ -2,6 +2,102 @@
 
 In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable. 
 
+## Z scores and related tests
+
+Let's start with some bad ideas that are still sometimes used. Probably the most widely used is the idea of $z$-scores which assume the data come from a normal distribution. If our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
+$$z_i = (y_i - \bar{y})/s_y$$
+where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observations.
+
+Some books recommended that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
+
+1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
+2. The assumption of normality is very unlikely to be satisfied with most real data. 
+
+Let's see what happens when we apply this test to the two simple examples introduced in Chapter \@ref(ch:intro).
+
+```{r zscore1}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  mutate(z = (Average - mean(Average))/sd(Average)) %>%
+  filter(abs(z) > 3) %>%
+  select(Player, Average, z)
+
+oldfaithful %>%
+  mutate(z = (duration - mean(duration, na.rm=TRUE))/sd(duration, na.rm=TRUE)) %>%
+  filter(abs(z) > 3)
+```
+
+In the first example, Don Bradman is correctly identified as the only outlier in the data, but in the second example only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length. If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain even worse results:
+
+```{r zscore2}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  mutate(z = (Average - median(Average))/
+                (IQR(Average)/1.34)) %>%
+  filter(abs(z) > 3) %>%
+  select(Player, Average, z)
+
+oldfaithful %>%
+  mutate(z = (duration - median(duration, na.rm=TRUE))/
+                (IQR(duration, na.rm=TRUE)/1.34)) %>%
+  filter(abs(z) > 3)
+```
+
+Now there are 209 out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below 5 minutes. 
+
+In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an outlier. 
+
+### Peirce's criterion {-}
+
+Benjamin Peirce was a Harvard mathematician in the mid 1800s. In 1852 he proposed a test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be identified as outliers, where $c$ is such that the probability of 
+
+### Chauvenet's criterion {-}
+
+A very old approach due to the astrophysicist William Cauvenet is to identify any point where 
+$$
+  z_{max} > 
+$$
+
+### Maximum z-score test {-}
+
+@Thompson1935 proposed a test using extreme $z$-scores, where an observation is considered an anomaly if
+$$
+\max_i |z_i| > c_\alpha
+$$
+where $c_\alpha$ is a threshold that depends on the size of the test $\alpha$. The idea was quickly picked up by Egon Pearson and Chandra Sekar who proposed [@Pearson1936] setting
+$$
+  c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}},
+$$
+where $t_{\alpha/n, n-2}$ is the $1-\alpha/n$ quantile of the $t$ distribution with $n-2$ degrees of freedom. Later, this was extended by [@Grubbs1950] to handle multiple outliers, and the test is often now called "Grubbs' test".
+
+
+$$
+\max_i |z_i| > \frac{n-1}{\sqrt{n}}\sqrt{\frac{t^2_{\alpha/(n(n-1)), n-2}}{n-2 + t^2_{\alpha/(n(n-1)), n-2}}}
+$$
+where $t_{\alpha/(2n), n-2}$ is the $1-\alpha/(2n)$ quantile of the $t$ distribution with $n-2$ degrees of freedom.
+
+The test was meant to be applied iteratively, where observations were removed from the data if determined to be anomalies, and the test re-applied to the remaining data. This process continues until no more anomalies are found.
+
+We can apply the test using the `grubbs.test()` function from the `outliers` package.
+
+```{r}
+library(outliers)
+grubbs.test(cricket_batting %>%
+              filter(Innings > 20) %>%
+              pull(Average)
+)
+```
+
+## Statistical tests for univariate anomalies
+
+### Dixon's Q test
+
+If $y_{(1)},\dots,y_{(n)}$ denote the ordered values of our sample, then Dixon's Q statistic [@Dixon1950] is given by
+$$
+  Q = \frac{y_{(n)} - y_{(n-1)}}{y_{(n)} - y_{(1)}},
+$$
+the ratio of the difference between the two largest values to the range of the data. A variant of the statistic uses $y_{(2)}-y_{(1)}$ in the denominator instead, the difference between the second smallest and minimum observations. For samples sizes $n$ in the range 3 to 30, we can use the `dixon.test()` function from the `outliers` package to perform the test. For larger sample sizes, critical values are not available for this test.
+
 ## Boxplots
 
 Boxplots were invented by John Tukey as a quick summary of medium sized data sets. They are widely used to identify anomalies, which are shown as separate points in the plot.
@@ -93,7 +189,9 @@ The stopping rule used in the letter value plot is to show the boxes up to lette
 $$
   0.5\sqrt{2d_k} z_{1-\alpha/2} > d_{k+1}
 $$
-and $z_{1-\alpha/2}$ is the $1-\alpha/2$ quantile of a standard Gaussian distribution. This choice means that there should be fewer than $2z^2_{1-\alpha/2}$ legitimate observations in the tails. The Gaussian distribution arises because the quantile estimate has an approximate Gaussian distribution due to the Central Limit Theorem. By default, $\alpha=0.05$, so there should on average be fewer than $2 \times (`r qnorm(1-0.05/2)`)^2 = `r round(2* qnorm(1-0.05/2)^2,1)`$ legitimate observations in the tails, regardless of the size of the data set.
+and $z_{1-\alpha/2}$ is the $1-\alpha/2$ quantile of a standard Gaussian distribution. This choice is based on the idea that the edges of the boxes are quantile estimates, and the confidence interval for each  quantile estimate that is displayed should not overlap the subsequent quantile estimate. The Gaussian distribution arises because the quantile estimate has an approximate Gaussian distribution due to the Central Limit Theorem. This stopping rule means that, on average, there should be fewer than $2z^2_{1-\alpha/2}$ legitimate observations in the tails. By default, $\alpha=0.05$, so that, on average, there should be fewer than $2 \times (`r qnorm(1-0.05/2)`)^2 = `r round(2* qnorm(1-0.05/2)^2,1)`$ legitimate observations in the tails, regardless of the size of the data set.
 
 In this cricketing example, it looks like there is one true anomaly (Don Bradman) and the remaining 8 identified "anomalies" are simply in the tails of the distribution of the remaining data.
+
+## HDR boxplots
 

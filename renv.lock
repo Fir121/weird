@@ -856,8 +856,8 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "cd0e6704f14b9968df17349129eb86657a1bb22a",
-      "Hash": "3edbb90aaed78c35a53624a800e14d57"
+      "RemoteSha": "d007a1544b6087573601fa742d62ab92f59afeb6",
+      "Hash": "48e8a45c6708531397b9c638ab109835"
     },
     "whisker": {
       "Package": "whisker",
