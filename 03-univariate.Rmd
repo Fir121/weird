@@ -195,3 +195,9 @@ In this cricketing example, it looks like there is one true anomaly (Don Bradman
 
 ## HDR boxplots
 
+## Lookout
+
+Denote the kernel density estimate of $y_i$ by $f_i$ and the leave-one-out kde of $y_i$ (by leaving out $y_i$) by $f_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt). We use the $90^{\text{th}}$ percentile as the threshold for the POT approach. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(f_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers. 
+
+The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points. 
+
