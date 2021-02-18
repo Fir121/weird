@@ -1,20 +1,34 @@
 # Univariate methods
 
-In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable.  Throughout the chapter, we will use three illustrative examples.
+In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable.  Throughout the chapter, we will use two illustrative examples.
 
-1. The cricket batting averages discussed in Section \@ref(sec:scatterplots). Recall that this appeared to contain one genuine outlier, the batsman Don Bradman.
+1. The cricket batting averages discussed in Section \@ref(sec:scatterplots). Recall that this appeared to contain one genuine anomaly, the batsman Don Bradman.
 2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(sec:scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
-3. One thousand draws from a N(0,1) distribution. Of course, this contains no genuine outliers, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies different methods identify.
+3. One thousand draws from a N(0,1) distribution. Of course, this contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
+4. Nineteen draws from a N(0,1) distribution, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution.
 
-```{r n01, fig.asp=0.2, fig.cap="One thousand observations from a N(0,1) distribution."}
+The two artificial examples are designed to test different methods when there are large and small data sets.
+
+First, we will generate the data for the last two examples. A seed is set to allow readers to replicate these examples, even though they are using randomly generated numbers.
+
+```{r n01a, fig.asp=0.2, fig.cap="One thousand observations from a N(0,1) distribution."}
 set.seed(1)
-n01 <- tibble(y = rnorm(1000))
-n01 %>%
-  ggplot(aes(x=y, y=1)) + 
+n01a <- tibble(y = rnorm(1000))
+n01a %>%
+  ggplot(aes(x=y, y=1)) +
   geom_jitter(width=0, alpha=0.5) +
-  scale_y_discrete() + 
+  scale_y_discrete() +
   labs(y="", x="N(0,1)")
-``````
+```
+
+```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
+n01b <- tibble(y = c(rnorm(19), 4))
+n01b %>%
+  ggplot(aes(x=y, y=1)) +
+  geom_jitter(width=0, alpha=0.5) +
+  scale_y_discrete() +
+  labs(y="", x="N(0,1)")
+```
 
 ## Z scores and related tests
 
@@ -25,10 +39,10 @@ where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observati
 Some books recommended that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
 
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
-2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size. 
-3. The assumption of normality is very unlikely to be satisfied with most real data. 
+2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size.
+3. The assumption of normality is very unlikely to be satisfied with most real data.
 
-Let's see what happens when we apply this test to the three examples.
+Let's see what happens when we apply this test to the four examples.
 
 ```{r zscore1}
 cricket_batting %>%
@@ -36,21 +50,49 @@ cricket_batting %>%
   mutate(z = (Average - mean(Average))/sd(Average)) %>%
   filter(abs(z) > 3) %>%
   select(Player, Average, z)
-
 oldfaithful %>%
   mutate(z = (duration - mean(duration, na.rm=TRUE))/sd(duration, na.rm=TRUE)) %>%
   filter(abs(z) > 3)
-
-n01 %>%
+n01a %>%
+  mutate(z = (y - mean(y))/sd(y)) %>%
+  filter(abs(z) > 3)
+n01b %>%
   mutate(z = (y - mean(y))/sd(y)) %>%
   filter(abs(z) > 3)
 ```
 
  1. Don Bradman is correctly identified as the only outlier in the cricket batting averages.
- 2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length. 
- 3. One spurious anomaly is identified in the N(0,1) observations.
- 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain the same results in the first and last examples, but even worse results in the second example.
+ 2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
+ 3. One spurious anomaly is identified in the 1000 N(0,1) observations.
+ 4. The anomaly added to the 19 N(0,1) observations has not been identified.
+
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain the same results in the first and third examples, and we spot the true anomaly in the fourth example. But the second Old Faithful example gives even worse results.
+
+```{r check, include=FALSE}
+# Check last statement
+n1 <- cricket_batting %>%
+  filter(Innings > 20) %>%
+  mutate(z = (Average - median(Average))/IQR(Average)*1.34) %>%
+  filter(abs(z) > 3) %>%
+  select(Player, Average, z) %>%
+  NROW()
+of <- oldfaithful %>%
+  mutate(z = (duration - median(duration, na.rm=TRUE))/IQR(duration, na.rm=TRUE)*1.34) %>%
+  filter(abs(z) > 3)
+n2 <- NROW(of)
+n3 <- n01a %>%
+  mutate(z = (y - median(y))/IQR(y)*1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
+n4 <- n01b %>%
+  mutate(z = (y - median(y))/IQR(y)*1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
+stopifnot(n1 == 1L)
+stopifnot(n2 == 209L)
+stopifnot(n3 == 1L)
+stopifnot(n4 == 1L)
+```
 
 ```{r zscore2}
 oldfaithful %>%
@@ -59,7 +101,7 @@ oldfaithful %>%
   filter(abs(z) > 3)
 ```
 
-Now there are 209 out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below 5 minutes. 
+Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r max(of$duration[of$duration < 200])` seconds.
 
 In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an anomaly using this approach.
 
@@ -84,25 +126,40 @@ tibble(n=n, c=threshold) %>%
 
 The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
 
-The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the three examples.
+The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the four examples.
 
 ```{r peirce_examples}
 cricket_batting %>% filter(peirce_anomalies(Average))
 oldfaithful %>% filter(peirce_anomalies(duration))
-n01 %>% filter(peirce_anomalies(y))
+n01a %>% filter(peirce_anomalies(y))
+n01b %>% filter(peirce_anomalies(y))
 ```
 
 1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
 2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
-3. Again, one spurious anomaly is identified in the N(0,1) observations.
+3. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
+4. The true anomaly has been spotted amongst the 19 N(0,1) observations.
 
-This failure is at least partly due to the standard error being highly inflated by the existence of the anomalies in the data set. 
+This failure is at least partly due to the standard error being highly inflated by the existence of the anomalies in the data set.
 
 ### Chauvenet's criterion {-}
 
-Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}\left(1-\frac{1}{4n}\right)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$.
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}(1-0.25/n)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite this, the method is still widely used in some disciplines, especially engineering.
 
-The `chauvenet_anomalies()` function can be used to implement this test. For our three examples, it gives identical results to those above for `peirce_anomalies()`.
+The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
+
+```{r checkchauvenet, include=FALSE}
+n1 <- cricket_batting %>% filter(chauvenet_anomalies(Average)) %>% NROW()
+n2 <- oldfaithful %>% filter(chauvenet_anomalies(duration)) %>% NROW()
+n3 <- n01a %>% filter(chauvenet_anomalies(y)) %>% NROW()
+n4 <- n01b %>% filter(chauvenet_anomalies(y)) %>% NROW()
+stopifnot(n1 == 0L)
+stopifnot(n2 == 1L)
+stopifnot(n3 == 1L)
+stopifnot(n4 == 1L)
+```
+
+## Statistical tests for univariate anomalies
 
 ### Maximum z-score test {-}
 
@@ -133,8 +190,6 @@ grubbs.test(cricket_batting %>%
               pull(Average)
 )
 ```
-
-## Statistical tests for univariate anomalies
 
 ### Dixon's Q test
 
@@ -205,7 +260,7 @@ Quite a few anomalies are shown, including the one-second eruption we identified
 
 ## Letter value plots
 
-The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend 
+The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend
 
 These can be produced using the `lvplot` package.
 
@@ -218,7 +273,7 @@ cricket_batting %>%
   scale_x_discrete() +
   coord_flip() +
   labs(x="", y="Career batting average") +
-  theme(legend.key.height = unit(.2,"cm")) 
+  theme(legend.key.height = unit(.2,"cm"))
 ```
 
 ```{r lv, echo=FALSE}
@@ -227,9 +282,9 @@ lv <- cricket_batting %>%
   stat_lv(mapping = aes(y=Average))
 ```
 
-Here the median is given by M, the fourths by F, and so on. So the middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on. 
+Here the median is given by M, the fourths by F, and so on. So the middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on.
 
-In this example, the most extreme box (labelled Z) is bounded by the points that fall within the 1/256 letter values. So it contains all but 2/256 of the data, and shows $2 / 256 \times `r NROW(filter(cricket_batting, Innings > 20))` = `r round(2/256*NROW(filter(cricket_batting, Innings > 20)))`$ points as anomalies. 
+In this example, the most extreme box (labelled Z) is bounded by the points that fall within the 1/256 letter values. So it contains all but 2/256 of the data, and shows $2 / 256 \times `r NROW(filter(cricket_batting, Innings > 20))` = `r round(2/256*NROW(filter(cricket_batting, Innings > 20)))`$ points as anomalies.
 
 The stopping rule used in the letter value plot is to show the boxes up to letter value $k$, where
 $$
@@ -243,7 +298,7 @@ In this cricketing example, it looks like there is one true anomaly (Don Bradman
 
 ## Lookout
 
-Denote the kernel density estimate of $y_i$ by $f_i$ and the leave-one-out kde of $y_i$ (by leaving out $y_i$) by $f_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt). We use the $90^{\text{th}}$ percentile as the threshold for the POT approach. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(f_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers. 
+Denote the kernel density estimate of $y_i$ by $f_i$ and the leave-one-out kde of $y_i$ (by leaving out $y_i$) by $f_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt). We use the $90^{\text{th}}$ percentile as the threshold for the POT approach. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(f_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers.
 
-The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points. 
+The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points.
 
