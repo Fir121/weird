@@ -1,6 +1,20 @@
 # Univariate methods
 
-In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable. 
+In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable.  Throughout the chapter, we will use three illustrative examples.
+
+1. The cricket batting averages discussed in Section \@ref(sec:scatterplots). Recall that this appeared to contain one genuine outlier, the batsman Don Bradman.
+2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(sec:scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
+3. One thousand draws from a N(0,1) distribution. Of course, this contains no genuine outliers, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies different methods identify.
+
+```{r n01, fig.asp=0.2, fig.cap="One thousand observations from a N(0,1) distribution."}
+set.seed(1)
+n01 <- tibble(y = rnorm(1000))
+n01 %>%
+  ggplot(aes(x=y, y=1)) + 
+  geom_jitter(width=0, alpha=0.5) +
+  scale_y_discrete() + 
+  labs(y="", x="N(0,1)")
+``````
 
 ## Z scores and related tests
 
@@ -13,7 +27,7 @@ Some books recommended that observations where the absolute value of $z$ is abov
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
 2. The assumption of normality is very unlikely to be satisfied with most real data. 
 
-Let's see what happens when we apply this test to the two simple examples introduced in Chapter \@ref(ch:intro).
+Let's see what happens when we apply this test to the three examples.
 
 ```{r zscore1}
 cricket_batting %>%
@@ -25,18 +39,19 @@ cricket_batting %>%
 oldfaithful %>%
   mutate(z = (duration - mean(duration, na.rm=TRUE))/sd(duration, na.rm=TRUE)) %>%
   filter(abs(z) > 3)
+
+n01 %>%
+  mutate(z = (y - mean(y))/sd(y)) %>%
+  filter(abs(z) > 3)
 ```
 
-In the first example, Don Bradman is correctly identified as the only outlier in the data, but in the second example only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length. If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain even worse results:
+ 1. Don Bradman is correctly identified as the only outlier in the cricket batting averages.
+ 2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length. 
+ 3. One spurious anomaly is identified in the N(0,1) observations.
+ 
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain the same results in the first and last examples, but even worse results in the second example.
 
 ```{r zscore2}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  mutate(z = (Average - median(Average))/
-                (IQR(Average)/1.34)) %>%
-  filter(abs(z) > 3) %>%
-  select(Player, Average, z)
-
 oldfaithful %>%
   mutate(z = (duration - median(duration, na.rm=TRUE))/
                 (IQR(duration, na.rm=TRUE)/1.34)) %>%
@@ -66,19 +81,20 @@ tibble(n=n, c=threshold) %>%
     geom_label(aes(x=1e4,  y=3.55, label="Chauvenet's criterion"), col='red')
 ```
 
-The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. For example, when applied to the Old Faithful eruption durations, it finds only the most extreme duration.
+The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the three examples.
 
-```{r peirce_oldfaithful}
-oldfaithful %>% 
-  filter(peirce_anomalies(duration))
-```
-
-When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
-
-```{r peirce_cricket}
+```{r peirce_examples}
 cricket_batting %>% 
   filter(peirce_anomalies(Average))
+oldfaithful %>% 
+  filter(peirce_anomalies(duration))
+n01 %>% 
+  filter(peirce_anomalies(y))
 ```
+
+1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
+2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
+3. Again, one spurious anomaly is identified in the N(0,1) observations.
 
 This failure is at least partly due to the standard error being highly inflated by the existence of the anomalies in the data set. 
 
@@ -86,7 +102,18 @@ This failure is at least partly due to the standard error being highly inflated 
 
 Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}\left(1-\frac{1}{4n}\right)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$.
 
-The `chauvenet_anomalies()` function can be used to implement this test. In the two examples above, it identifies exactly the same anomalies as the `peirce_anomalies()` function. 
+The `chauvenet_anomalies()` function can be used to implement this test.
+
+```{r chauvenet_examples}
+cricket_batting %>% 
+  filter(chauvenet_anomalies(Average))
+oldfaithful %>% 
+  filter(chauvenet_anomalies(duration))
+n01 %>% 
+  filter(chauvenet_anomalies(y))
+```
+
+While the first two examples yield identical results to using Peirce's criterion, the last example finds `NROW(n01 %>% filter(chauvenet_anomalies(y))` spurious anomalies in the N(0,1) data.
 
 ### Maximum z-score test {-}
 

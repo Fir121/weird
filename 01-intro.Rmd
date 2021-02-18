@@ -26,7 +26,7 @@ Many analysts have thrown away apparent outliers because they were assumed to be
 
 > Add story of ozone layer
 
-## Strip plots and scatterplots
+## Strip plots and scatterplots {#sec:scatterplots}
 
 When there are no more than a few thousand observations, it is useful to start with simple plots that allow you to look at the observations directly with no processing or modelling to hide what is going on.
 
