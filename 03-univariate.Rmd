@@ -25,7 +25,8 @@ where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observati
 Some books recommended that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
 
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
-2. The assumption of normality is very unlikely to be satisfied with most real data. 
+2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size. 
+3. The assumption of normality is very unlikely to be satisfied with most real data. 
 
 Let's see what happens when we apply this test to the three examples.
 
@@ -60,11 +61,11 @@ oldfaithful %>%
 
 Now there are 209 out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below 5 minutes. 
 
-In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an outlier. 
+In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an anomaly using this approach.
 
 ### Peirce's criterion {-}
 
-Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be rejected, where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
 ```{r zscorecriteria, echo=FALSE, fig.cap="Criteria for anomalies based on z-scores."}
 n <- exp(seq(log(3), log(1e5), l=100))
@@ -81,15 +82,14 @@ tibble(n=n, c=threshold) %>%
     geom_label(aes(x=1e4,  y=3.55, label="Chauvenet's criterion"), col='red')
 ```
 
+The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
+
 The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the three examples.
 
 ```{r peirce_examples}
-cricket_batting %>% 
-  filter(peirce_anomalies(Average))
-oldfaithful %>% 
-  filter(peirce_anomalies(duration))
-n01 %>% 
-  filter(peirce_anomalies(y))
+cricket_batting %>% filter(peirce_anomalies(Average))
+oldfaithful %>% filter(peirce_anomalies(duration))
+n01 %>% filter(peirce_anomalies(y))
 ```
 
 1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
@@ -102,18 +102,7 @@ This failure is at least partly due to the standard error being highly inflated 
 
 Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}\left(1-\frac{1}{4n}\right)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$.
 
-The `chauvenet_anomalies()` function can be used to implement this test.
-
-```{r chauvenet_examples}
-cricket_batting %>% 
-  filter(chauvenet_anomalies(Average))
-oldfaithful %>% 
-  filter(chauvenet_anomalies(duration))
-n01 %>% 
-  filter(chauvenet_anomalies(y))
-```
-
-While the first two examples yield identical results to using Peirce's criterion, the last example finds `NROW(n01 %>% filter(chauvenet_anomalies(y))` spurious anomalies in the N(0,1) data.
+The `chauvenet_anomalies()` function can be used to implement this test. For our three examples, it gives identical results to those above for `peirce_anomalies()`.
 
 ### Maximum z-score test {-}
 
