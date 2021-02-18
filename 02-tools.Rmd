@@ -59,7 +59,7 @@ Because each depth is roughly half the previous depth, the letter values provide
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
-Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$ and we want to estimate their probability density function. The kernel estimate [see @WJ1995] is given by
+Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are independent draws from a probability distribution, and we want to estimate the underlying probability density function. The kernel estimate [see @WJ1995] is given by
 \begin{equation}
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
   (\#eq:kde)
@@ -154,15 +154,67 @@ h <- 0.9 * min(s, iqr/1.34)*NROW(of)^(-1/5)
 
 As this is a much bigger data set (with `r NROW(of)` observations), the selected bandwidth is smaller and is now $h = `r round(h, 2)`$. Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
 
+### Statistical properties {-}
 
-
-The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. For our purposes, one important thing to note is that it is a consistent estimator of the underlying density $f$ when 
-$$
+The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. Equation \@ref(eq:kde) gives a consistent estimator of the underlying density $f$ when 
+\begin{equation}
   \lim_{n\rightarrow\infty} h = 0
   \qquad\text{and}\qquad
   \lim_{n\rightarrow\infty} nh = \infty.
+  (\#eq:asymptotickde)
+\end{equation}
+That is, $h$ should decrease slowly as $n$ increases. 
+
+Another important asymptotic result is that the mean square error (MSE) of $\hat{f}(y)$ is 
+\begin{equation}
+  \text{E}\left[(\hat{f}(y) - f(y))^2\right] \approx
+  \frac{1}{4}h^4[f''(y)]^2 + \frac{f(y)R(K)}{nh} ,
+  (\#eq:mse)
+\end{equation}
+where $R(K) = \int K^2(u)du$ is the "roughness" of the kernel function. If we integrate the MSE over $y$ (assuming $f$ is sufficiently smooth for the integral to exist), we obtain the mean integrated squared error (MISE) given by
+\begin{equation}
+  \text{E}\int \left[(\hat{f}(y) - f(y))^2\right] dy \approx
+  \frac{1}{4}h^4R(f'') + \frac{R(K)}{nh} ,
+  (\#eq:mise)
+\end{equation}
+where $R(f'') = \int [f''(y)]^2 dy$ is the roughness of the second derivative of the underlying density.
+
+The optimal overall bandwidth is obtained by minimizing the MISE. This can be calculated by differentiating \@ref(eq:mise) with respect to $h$ and setting the derivative to zero, yielding
+\begin{equation}
+  h = \left(\frac{R(K)}{R(f'')n}\right)^{1/5}.
+  (\#eq:opth)
+\end{equation}
+So the optimal $h$ is proportional to $n^{-1/5}$, which clearly satisfies the conditions \@ref(eq:asymptotickde).
+
+However, this value of $h$ depends on the underlying density $f$ which we don't know. For a Gaussian density $g$ with variance $\sigma^2$, $R(g) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(g'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, and assume the underlying density has the same roughness as a Gaussian density, we obtain the "normal reference rule":
+\begin{equation}
+  h = \sigma\left(\frac{4}{3n}\right)^{1/5} = 1.06\sigma n^{-1/5},
+  (\#eq:nrr)
+\end{equation}
+where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Gaussian distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.34)$, giving his rule-of-thumb \@ref(eq:ruleofthumb). 
+
+Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in \@ref(eq:opth) by an estimate based on the data.  The resulting bandwidth is often better than \@ref(eq:ruleofthumb). To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
+
+Bandwidths obtained in this way are designed to give a good overall estimate of the underlying density, but may not be optimal for any particular point of the density. Our goal is to find anomalies in the data, rather than find a good representation for the rest of the data, and so we are interested in the regions of low density. 
+
+If we optimized MSE \@ref(eq:mse) rather than MISE \@ref(eq:mise), we would obtain 
 $$
-That is, $h$ should decrease slowly as $n$ increases. The "rule-of-thumb" bandwidth \@ref(eq:ruleofthumb) satisfies this property.
+h = \left(\frac{f(y)R(K)}{n[f''(y)]^2}\right)^{1/5}.
+$$
+This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which occurs in the extreme tails of a distribution. Often the usual bandwidth selection methods result in bandwidths that are too small and can cause the kernel density estimates of observations in the tails to be confused with anomalies. So bandwidths for outlier detection tend to be a little larger than bandwidths for other purposes. 
+
+We can adjust the bandwidth using the argument `adjust` as follows.
+
+```{r oldfaithful5, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+oldfaithful %>%
+  filter(duration < 7000) %>%
+  ggplot(aes(x=duration)) +
+  geom_density(adjust=2) +
+  geom_rug() +
+  labs(x="Duration (seconds)")
+```
+
+Here we have doubled the default bandwidth obtained using \@ref(eq:ruleofthumb).
 
 ## Multivarate kernel density estimation
 
@@ -211,9 +263,9 @@ of2021 %>%
 
 Now we will apply the method to the full data set, other than the 2 hour eruption and observations where the subsequent waiting time is more than 2 hours (which are likely to be data errors). 
 
-We will use the `geom_density_2d()` function, which by default uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are 4.7 times the size of Silverman's rule-of-thumb \@ref(eq:ruleofthumb) for univariate density estimation.
+We will use the `geom_density_2d()` function, which by default uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by \@ref(eq:nrr).
 
-```{r ofbivariate2, fig.cap="Bivariate kernel density estimate."}
+```{r ofbivariate2, fig.cap="Bivariate kernel density estimate with default bandwidths."}
 oldfaithful %>% 
   filter(duration < 7000, waiting < 7000) %>%
   ggplot(aes(x=duration, y=waiting)) +
@@ -232,7 +284,18 @@ $$
 $$
 where $h = (h_1h_2\dots,h_d)^{1/d}$ is the geometric mean of the diagonal values of $\bm{H}$. The default values for `geom_density_2d()` satisfy this property.
 
-Note that the diagonal values $h_1,\dots,h_d$ tend to be larger than the values used in the corresponding univariate density estimates, as the convergence properties of the estimate are slower for larger $d$.
+Note that the diagonal values $h_1,\dots,h_d$ tend to be larger than the values used in the corresponding univariate density estimates, as the convergence properties of the estimate are slower for larger $d$. Consequently, the default bandwidths for `geom_density_2d()` tend to be too small. Further, because we are interested in the tails of the distribution, we usually want larger bandwidths than would be suitable for obtaining good estimates of the density function. 
+
+Figure \@ref(fig:ofbivariate3) shows a bivariate kernel density estimate where the bandwidths are double the default values.
+
+```{r ofbivariate3, fig.cap="Bivariate kernel density estimate with double the default bandwidths."}
+oldfaithful %>% 
+  filter(duration < 7000, waiting < 7000) %>%
+  ggplot(aes(x=duration, y=waiting)) +
+  geom_point(color='gray') +
+  geom_density_2d(adjust=2) +
+  labs(x="Duration (seconds)")
+```  
 
 ## Highest and lowest density regions
 
