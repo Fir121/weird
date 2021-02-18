@@ -333,6 +333,71 @@ oldfaithful %>%
 
 ## Extreme value theory
 
+Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified. 
+
+It is well known due to the central limit theorem that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippet-Gnedenko Theorem provides an analagous result for the maximum. It states that under certain conditions, the scaled maximum will converge to either a Gumbel, Frechet or Weibull distribution [@coles2001introduction].
+
+This theorem was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result.
+
+### Fisher-Tippett-Gnedenko Theorem {-}
+
+If there exist sequences $\{a_n\}$ and $\{b_n\}$ such that
+$$
+	P\left\{ \frac{(M_n - a_n)}{b_n} \leq z \right\} \rightarrow G(z) \quad \text{as} \quad n \to \infty,
+$$
+where $G$ is a non-degenerate distribution function, then $G$ belongs to one of the following families:
+\begin{align}\label{eq:EVT3}
+	&\text{Gumbel} :  && G(z) = \exp\left(-\exp \left[- \Big(\frac{z-b}{a}\Big) \right] \right), \quad -\infty < z < \infty , \\
+	&\text{Fréchet} : && G(z) =
+  	\begin{cases}
+			0 ,                                                           & z \leq b  , \\
+			\exp \left( - \left( \frac{z-b}{a}\right)^{-\alpha} \right) , & z > b    ,
+		\end{cases}                     \\
+	&\text{Weibull} : && G(z) =
+		\begin{cases}
+			\exp \left( - \left(- \left[\frac{z-b}{a}\right]\right)^{\alpha} \right) , & z < b  ,    \\
+			1 ,                                                                        & z \geq b  ,
+		\end{cases}
+\end{align}
+for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
+
+These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
+\begin{equation}\label{eq:EVT4}
+	G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
+\end{equation}
+where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$. The location parameter is $\mu\in\mathbb{R}$, $\sigma>0$ is the scale parameter, while $\xi\in\mathbb{R}$ is the shape parameter. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi < 0$ we get a Weibull distribution with a finite upper end and when $\xi > 0$ we get a Fréchet family of distributions with polynomially decaying tails.
+
+### The Generalized Pareto Distribution and the POT approach {-}
+
+The Peaks Over Threshold (POT) approach regards extremes as observations greater than a threshold $u$. We can write the conditional probability of extreme events as
+\begin{equation}\label{eq:POT1}
+	P\left \{X > u + y \mid X > u \right \} = \frac{1 - F(u+y)}{1 - F(u)} , \quad y >0  ,
+\end{equation}
+giving us
+\begin{equation}\label{eq:POT2}
+	P\left \{X \leq u + y \mid X > u \right \} = \frac{ F(u+y) - F(u)}{1 - F(u)} , \quad y >0  .
+\end{equation}
+The distribution function
+\begin{equation}\label{eq:POT3}
+	F_u(y) = P\left \{X \leq u + y \mid X > u \right \} ,
+\end{equation}
+describes the *exceedances* above the threshold $u$. If $F$ is known we could compute this probability. However, as $F$ is not known in practice we use approximations based on the Generalized Pareto Distribution [@Pickands1975].
+\begin{theorem}[Pickands]
+  Let $X_1,  X_2, \dots,  X_n$ be a sequence of independent random variables with a common distribution function $F$, and let $M_n = \max \{X_1, \dots, X_n \}$. Suppose $F$ satisfies Theorem \ref{thm:FisherTippett} so that for large $n$, $P\{ M_n \leq z \} \approx G(z)$, where
+	$$
+    G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\},
+  $$
+	for some $\mu, \xi \in \mathbb{R}$ and $\sigma >0$. Then for large enough $u$, the distribution function of $(X-u)$ conditional on $X > u$, is approximately
+	\begin{equation}\label{eq:POT4}
+		H(y) = 1 - \Big( 1 + \frac{\xi y}{\sigma_u} \Big)^{-1/\xi} ,
+	\end{equation}
+	where the domain of $H$ is $\{y: y >0 \text{~and~} (1 + \xi y)/\sigma_u >0 \}$, and $\sigma_u = \sigma + \xi(u- \mu)$.
+\end{theorem}
+The family of distributions defined by equation \eqref{eq:POT4} is called the \textbf{Generalized Pareto Distribution} (GPD). We note that the GPD parameters are determined from the associated GEV parameters. In particular, the shape parameter $\xi$ is the same in both distributions.
+
+For a chosen threshold $u$, the parameters of the GPD can be estimated by standard maximum likelihood techniques. As an analytical solution that maximizes the likelihood does not exist, numerical techniques are used to arrive at an approximate solution. We use the R package `evd` to fit a GPD using the POT approach.
+
+
 ## Principal component analysis
 
 ## Multi-dimensional scaling
