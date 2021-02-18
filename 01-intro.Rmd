@@ -1,6 +1,6 @@
 # Introduction {#ch:intro}
 
-Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that describe how most of the data behave. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book they are what we are interested in.
+Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that describe how most of the data behave. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book they are what we find interesting.
 
 Anomalies are often a nuisance. For example, they may be simply recording errors that are contaminating our data. We want to find them, remove them, and get on with analysing the bulk of the data. At other times, anomalies are the observations we care about. They tell us things that might otherwise go unnoticed if we only consider how the majority of observations behave.
 
@@ -10,7 +10,7 @@ An anomaly is an observation that behaves differently from the bulk of the data.
 
 An old definition due to @Barnett1978 states
 
-> an outlier in a set of data [is] an observation (or subset of observations) which appears to be inconsistent with the remainder of that set of data. 
+> an outlier in a set of data [is] an observation (or subset of observations) which appears to be inconsistent with the remainder of that set of data.
 
 @Hawkins1980 defined it like this
 
@@ -20,9 +20,9 @@ A more mathematical definition is that anomalies are observations that come from
 
 So rather than trying to define anomalies more precisely, we shall deliberately proceed with the fuzzy and subjective approach where anomalies are suspiciously different or inconsistent with the rest of the data.
 
-### Rejecting outliers {-}
+### Rejecting anomalies {-}
 
-Many analysts have thrown away apparent outliers because they were assumed to be errors. There are even formal statistical tests to tell you which observations should be ignored. In my view, this is a dangerous practice. No outliers should be removed unless you understand what led to their unusual behaviour in the first place.
+Many analysts have thrown away apparent anomalies because they were assumed to be errors. There are even formal statistical tests to tell you which observations should be ignored. In my view, this is a dangerous practice. No anomalies should be removed unless you understand what led to their unusual behaviour in the first place.
 
 > Add story of ozone layer
 
@@ -47,26 +47,26 @@ Don Bradman was an Australian cricketer in the first half of the 20th century, a
 ```{r cricket1, fig.asp=0.2, fig.cap="(ref:cricket1)"}
 cricket_batting %>%
   filter(Innings > 20) %>%
-  ggplot(aes(x=Average, y=1)) + 
+  ggplot(aes(x=Average, y=1)) +
   geom_jitter(width=0, alpha=0.5) +
-  scale_y_discrete() + 
+  scale_y_discrete() +
   labs(y="", x="Career batting average")
 ```
 
-The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r round(donave,2)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket. 
+The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r round(donave,2)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket.
 
 ### Example: Old Faithful Geyser eruptions {-}
 
 Some anomalies are not so obvious, and occur within the range of the rest of the data.
 
-A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions recorded since 2015. 
+A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions recorded since 2015.
 
 ```{r oldfaithful1, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015. The large anomaly is an eruption on 7&nbsp;December 2015 which lasted nearly two hours."}
 oldfaithful %>%
   ggplot(aes(x=duration, y=1)) +
-  geom_jitter(width=0, alpha=0.5) + 
+  geom_jitter(width=0, alpha=0.5) +
   labs(y="", x="Duration (seconds)") +
-  scale_y_discrete() 
+  scale_y_discrete()
 ```
 
 The big anomaly on the right was an eruption that lasted nearly two hours on 7 December 2015. This makes it difficult to see any detail in the rest of the data, so let's omit it so we can look at the remaining data more clearly.
@@ -75,9 +75,9 @@ The big anomaly on the right was an eruption that lasted nearly two hours on 7 D
 oldfaithful %>%
   filter(duration < 7000) %>%
   ggplot(aes(x=duration, y=1)) +
-  geom_jitter(width=0, alpha=0.5) + 
+  geom_jitter(width=0, alpha=0.5) +
   labs(y="", x="Duration (seconds)") +
-  scale_y_discrete() 
+  scale_y_discrete()
 ```
 
 We see that almost all the remaining eruptions were between 100 and 300 seconds in length, with one extremely short anomalous duration (of 1 second). However, the plot reveals another feature of the data. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Very few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
@@ -113,7 +113,7 @@ wine_reviews %>%
   select(country, state, region, winery, variety, year, points, price)
 ```
 
-A similar phenomenon occurs whenever you add variables. An anomaly in three dimensions may not appear anomalous in any of the 2-dimensional sets of variables. As the number of dimensions increases, there are more ways for observations to be anomalous, but it is increasingly difficult to find them. 
+A similar phenomenon occurs whenever you add variables. An anomaly in three dimensions may not appear anomalous in any of the 2-dimensional sets of variables. As the number of dimensions increases, there are more ways for observations to be anomalous, but it is increasingly difficult to find them.
 
 While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two dimensions, we will need alternative tools once we have three or more variables, or there is too much data to plot directly.
 
@@ -127,10 +127,10 @@ Computing pairwise distances requires $O(n^2)$ calculations where $n$ is the num
 
 Anomaly detection has a long history in the statistics literature...
 
-More recently, computer scientists have turned their attention to the problem of anomaly detection, especially as data sets have grown in size and complexity. Anomaly detection arises in cyber security systems (where intrusions are identified as anomalies), in credit-card fraud (where unusual buying patterns are anomalous) and in remote sensing (where unusual changes in land use are anomalies). 
+More recently, computer scientists have turned their attention to the problem of anomaly detection, especially as data sets have grown in size and complexity. Anomaly detection arises in cyber security systems (where intrusions are identified as anomalies), in credit-card fraud (where unusual buying patterns are anomalous) and in remote sensing (where unusual changes in land use are anomalies).
 
 Some books and papers distinguish "supervised anomaly detection" from "unsupervised anomaly detection". In the former case, anomalies are identified using human input and then a model or algorithm is employed to learn how to identify new anomalies contained within new data. I do not regard this as anomaly detection and it will not be covered in this book. It is possible, for example, that what a human labels as "anomalous" is not anomalous in a statistical sense. What is called "supervised anomaly detection" is actually a classification problem where the aim is to mimic the human who labelled the training set. In that case, different tools are employed.
 
-In this book, we will only consider unsupervised problems. That is, we have no idea *a priori* what observations are anomalous, and there is no "right" answer. 
+In this book, we will only consider unsupervised problems. That is, we have no idea *a priori* what observations are anomalous, and there is no "right" answer.
 
 
