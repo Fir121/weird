@@ -49,18 +49,48 @@ In any case, even if the data did come from a normal distribution, the probabili
 
 ### Peirce's criterion {-}
 
-Benjamin Peirce was a Harvard mathematician in the mid 1800s. In 1852 he proposed a test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be identified as outliers, where $c$ is such that the probability of 
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be rejected, where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
+
+```{r zscorecriteria, echo=FALSE, fig.cap="Criteria for anomalies based on z-scores."}
+n <- exp(seq(log(3), log(1e5), l=100))
+threshold <- numeric(length(n))
+for(i in seq_along(n))
+  threshold[i] <- weird:::peirce_threshold(n[i])
+tibble(n=n, c=threshold) %>%
+  ggplot(aes(x=n, y=c)) +
+    geom_line() +
+    geom_line(aes(y = qnorm(1-0.25/n)), col='red') +
+    scale_x_log10() +
+    labs(x = "n (sample size)", y = "c (threshold)") +
+    geom_label(aes(x=1500, y=4.1, label="Peirce's criterion")) +
+    geom_label(aes(x=1e4,  y=3.55, label="Chauvenet's criterion"), col='red')
+```
+
+The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. For example, when applied to the Old Faithful eruption durations, it finds only the most extreme duration.
+
+```{r peirce_oldfaithful}
+oldfaithful %>% 
+  filter(peirce_anomalies(duration))
+```
+
+When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
+
+```{r peirce_cricket}
+cricket_batting %>% 
+  filter(peirce_anomalies(Average))
+```
+
+This failure is at least partly due to the standard error being highly inflated by the existence of the anomalies in the data set. 
 
 ### Chauvenet's criterion {-}
 
-A very old approach due to the astrophysicist William Cauvenet is to identify any point where 
-$$
-  z_{max} > 
-$$
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}\left(1-\frac{1}{4n}\right)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$.
+
+The `chauvenet_anomalies()` function can be used to implement this test. In the two examples above, it identifies exactly the same anomalies as the `peirce_anomalies()` function. 
 
 ### Maximum z-score test {-}
 
-@Thompson1935 proposed a test using extreme $z$-scores, where an observation is considered an anomaly if
+By the 20th century, the concept of hypothesis testing had been developed and was applied to the identification of anomalies. @Thompson1935 proposed a test using extreme $z$-scores, where an observation is considered an anomaly if
 $$
 \max_i |z_i| > c_\alpha
 $$

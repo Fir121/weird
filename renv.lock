@@ -546,6 +546,13 @@
       "Repository": "CRAN",
       "Hash": "a399e4773075fc2375b71f45fca186c4"
     },
+    "outliers": {
+      "Package": "outliers",
+      "Version": "0.14",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "f6322b38ea06f3cfdaeeaaae6b17653a"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.4.7",
@@ -856,8 +863,8 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "d007a1544b6087573601fa742d62ab92f59afeb6",
-      "Hash": "48e8a45c6708531397b9c638ab109835"
+      "RemoteSha": "7973235b58eed64e071ab018e8ee412352aa7e1e",
+      "Hash": "8e8f807f598fcb498baeb52a8096f11a"
     },
     "whisker": {
       "Package": "whisker",
