@@ -114,18 +114,19 @@ In any case, even if the data did come from a normal distribution, the probabili
 Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
 ```{r zscorecriteria, echo=FALSE, fig.cap="Criteria for anomalies based on z-scores."}
-n <- exp(seq(log(3), log(1e5), l=100))
+n <- exp(seq(log(3), log(1e5), l = 100))
 threshold <- numeric(length(n))
-for(i in seq_along(n))
+for (i in seq_along(n)) {
   threshold[i] <- weird:::peirce_threshold(n[i])
-tibble(n=n, c=threshold) %>%
-  ggplot(aes(x=n, y=c)) +
-    geom_line() +
-    geom_line(aes(y = qnorm(1-0.25/n)), col='red') +
-    scale_x_log10() +
-    labs(x = "n (sample size)", y = "c (threshold)") +
-    geom_label(aes(x=1500, y=4.1, label="Peirce criterion")) +
-    geom_label(aes(x=1e4,  y=3.55, label="Chauvenet criterion"), col='red')
+}
+tibble(n = n, c = threshold) %>%
+  ggplot(aes(x = n, y = c)) +
+  geom_line() +
+  geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
+  scale_x_log10() +
+  labs(x = "n (sample size)", y = "c (threshold)") +
+  geom_label(aes(x = 1500, y = 4.1, label = "Peirce criterion")) +
+  geom_label(aes(x = 1e4, y = 3.55, label = "Chauvenet criterion"), col = "red")
 ```
 
 The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
@@ -153,10 +154,18 @@ Peirce's proposal was largely superseded by an alternative proposed by the astro
 The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
 
 ```{r checkchauvenet, include=FALSE}
-n1 <- cricket_batting %>% filter(chauvenet_anomalies(Average)) %>% NROW()
-n2 <- oldfaithful %>% filter(chauvenet_anomalies(duration)) %>% NROW()
-n3 <- n01a %>% filter(chauvenet_anomalies(y)) %>% NROW()
-n4 <- n01b %>% filter(chauvenet_anomalies(y)) %>% NROW()
+n1 <- cricket_batting %>%
+  filter(chauvenet_anomalies(Average)) %>%
+  NROW()
+n2 <- oldfaithful %>%
+  filter(chauvenet_anomalies(duration)) %>%
+  NROW()
+n3 <- n01a %>%
+  filter(chauvenet_anomalies(y)) %>%
+  NROW()
+n4 <- n01b %>%
+  filter(chauvenet_anomalies(y)) %>%
+  NROW()
 stopifnot(n1 == 0L)
 stopifnot(n2 == 1L)
 stopifnot(n3 == 1L)
@@ -184,20 +193,22 @@ Figure \@ref(fig:zscoretests) shows the critical values at $\alpha=0.05$ for the
 alpha <- 0.05
 n <- exp(seq(log(3), log(1e5), l=100))
 t1 <- qt(1 - alpha/n, n-2)
-t2 <- qt(1 - alpha/(2*n), n-2)
-tibble(n=n) %>%
-  ggplot(aes(x=n)) +
-    geom_line(aes(y = t1 * sqrt((n-1)/(n-2+t1^2))), col='black') +
-    geom_line(aes(y = (n-1)/sqrt(n)*sqrt(t2^2/(n-2+t2^2))), col='blue') +
-    geom_line(aes(y = qnorm(1-0.25/n)), col='red') +
-    scale_x_log10(limits=c(3,2e6),
-                  breaks =10^(1:6),
-                  minor_breaks = NULL,
-                  labels = format(10^(1:6), scientific=FALSE, trim=TRUE)) +
-    labs(x = "n (sample size)", y = latex2exp::TeX("$c_{\\alpha}$ (threshold)")) +
-    geom_label(aes(x=1.1e5,  y=4.8, label="Pearson-Sekar test", hjust="left"), col='black') +
-    geom_label(aes(x=1.1e5,  y=5.1, label="Grubbs test", hjust="left"), col='blue') +
-    geom_label(aes(x=1.1e5,  y=4.5, label="Chauvenet criterion", hjust="left"), col='red')
+t2 <- qt(1 - alpha / (2 * n), n - 2)
+tibble(n = n) %>%
+  ggplot(aes(x = n)) +
+  geom_line(aes(y = t1 * sqrt((n - 1) / (n - 2 + t1^2))), col = "black") +
+  geom_line(aes(y = (n - 1) / sqrt(n) * sqrt(t2^2 / (n - 2 + t2^2))), col = "blue") +
+  geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
+  scale_x_log10(
+    limits = c(3, 2e6),
+    breaks = 10^(1:6),
+    minor_breaks = NULL,
+    labels = format(10^(1:6), scientific = FALSE, trim = TRUE)
+  ) +
+  labs(x = "n (sample size)", y = latex2exp::TeX("$c_{\\alpha}$ (threshold)")) +
+  geom_label(aes(x = 1.1e5, y = 4.8, label = "Pearson-Sekar test", hjust = "left"), col = "black") +
+  geom_label(aes(x = 1.1e5, y = 5.1, label = "Grubbs test", hjust = "left"), col = "blue") +
+  geom_label(aes(x = 1.1e5, y = 4.5, label = "Chauvenet criterion", hjust = "left"), col = "red")
 ```
 
 This shows that for small sample sizes ($n<10$), the critical value for Grubbs' test is too low and is likely to lead to many spurious anomalies being detected.
