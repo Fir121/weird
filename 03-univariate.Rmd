@@ -36,7 +36,7 @@ Let's start with some bad ideas that are still sometimes used. Probably the most
 $$z_i = (y_i - \bar{y})/s_y$$
 where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observations.
 
-Some books recommended that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
+Some books recommend that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
 
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
 2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size.
@@ -51,7 +51,7 @@ cricket_batting %>%
   filter(abs(z) > 3) %>%
   select(Player, Average, z)
 oldfaithful %>%
-  mutate(z = (duration - mean(duration, na.rm=TRUE))/sd(duration, na.rm=TRUE)) %>%
+  mutate(z = (duration - mean(duration))/sd(duration)) %>%
   filter(abs(z) > 3)
 n01a %>%
   mutate(z = (y - mean(y))/sd(y)) %>%
@@ -76,10 +76,10 @@ n1 <- cricket_batting %>%
   filter(abs(z) > 3) %>%
   select(Player, Average, z) %>%
   NROW()
-of <- oldfaithful %>%
-  mutate(z = (duration - median(duration, na.rm=TRUE))/IQR(duration, na.rm=TRUE)*1.34) %>%
-  filter(abs(z) > 3)
-n2 <- NROW(of)
+n2 <- oldfaithful %>%
+  mutate(z = (duration - median(duration))/IQR(duration)*1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
 n3 <- n01a %>%
   mutate(z = (y - median(y))/IQR(y)*1.34) %>%
   filter(abs(z) > 3) %>%
@@ -92,16 +92,20 @@ stopifnot(n1 == 1L)
 stopifnot(n2 == 209L)
 stopifnot(n3 == 1L)
 stopifnot(n4 == 1L)
+of_threshold <- oldfaithful %>%
+  mutate(z = (duration - median(duration))/IQR(duration)*1.34) %>%
+  filter(abs(z) <= 3) %>%
+  pull(duration) %>%
+  min()
 ```
 
 ```{r zscore2}
 oldfaithful %>%
-  mutate(z = (duration - median(duration, na.rm=TRUE))/
-                (IQR(duration, na.rm=TRUE)/1.34)) %>%
+  mutate(z = (duration - median(duration))/ (IQR(duration)/1.34)) %>%
   filter(abs(z) > 3)
 ```
 
-Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r max(of$duration[of$duration < 200])` seconds.
+Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
 
 In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an anomaly using this approach.
 
@@ -120,8 +124,8 @@ tibble(n=n, c=threshold) %>%
     geom_line(aes(y = qnorm(1-0.25/n)), col='red') +
     scale_x_log10() +
     labs(x = "n (sample size)", y = "c (threshold)") +
-    geom_label(aes(x=1500, y=4.1, label="Peirce's criterion")) +
-    geom_label(aes(x=1e4,  y=3.55, label="Chauvenet's criterion"), col='red')
+    geom_label(aes(x=1500, y=4.1, label="Peirce criterion")) +
+    geom_label(aes(x=1e4,  y=3.55, label="Chauvenet criterion"), col='red')
 ```
 
 The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
@@ -140,11 +144,11 @@ n01b %>% filter(peirce_anomalies(y))
 3. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
 4. The true anomaly has been spotted amongst the 19 N(0,1) observations.
 
-This failure is at least partly due to the standard error being highly inflated by the existence of the anomalies in the data set.
+This failure is at least partly due to the standard deviation being highly inflated by the existence of the anomalies in the data set.
 
 ### Chauvenet's criterion {-}
 
-Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-1/(4n)$ quantile from the standard normal distribution, so that any observations with $|z_i| > \Phi^{-1}(1-0.25/n)$ are identified as anomalies. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite this, the method is still widely used in some disciplines, especially engineering.
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
 
 The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
 
@@ -159,45 +163,80 @@ stopifnot(n3 == 1L)
 stopifnot(n4 == 1L)
 ```
 
-## Statistical tests for univariate anomalies
-
 ### Maximum z-score test {-}
 
-By the 20th century, the concept of hypothesis testing had been developed and was applied to the identification of anomalies. @Thompson1935 proposed a test using extreme $z$-scores, where an observation is considered an anomaly if
-$$
-\max_i |z_i| > c_\alpha
-$$
-where $c_\alpha$ is a threshold that depends on the size of the test $\alpha$. The idea was quickly picked up by Egon Pearson and Chandra Sekar who proposed [@Pearson1936] setting
-$$
-  c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}},
-$$
-where $t_{\alpha/n, n-2}$ is the $1-\alpha/n$ quantile of the $t$ distribution with $n-2$ degrees of freedom. Later, this was extended by [@Grubbs1950] to handle multiple outliers, and the test is often now called "Grubbs' test".
+By the 20th century, the concept of hypothesis testing had been developed, and the $t$-distribution had been discovered, and both were applied to the identification of anomalies using $z$-scores. Many tests were developed under different assumptions about the underlying distribution and what was assumed to be known [@Hawkins1980]. We will mention just two of them here, as they are the most widely used.
 
-
+Egon Pearson and Chandra Sekar proposed [@Pearson1936] that an observation be considered an anomaly if $|z_i|> c_\alpha$, where the critical value is given by
 $$
-\max_i |z_i| > \frac{n-1}{\sqrt{n}}\sqrt{\frac{t^2_{\alpha/(n(n-1)), n-2}}{n-2 + t^2_{\alpha/(n(n-1)), n-2}}}
+c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}}
 $$
-where $t_{\alpha/(2n), n-2}$ is the $1-\alpha/(2n)$ quantile of the $t$ distribution with $n-2$ degrees of freedom.
+and $t_{p, m}$ is the $1-p$ quantile of the $t$ distribution with $m$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
+$$
+c_\alpha = \frac{(n-1)t_{\alpha/2n, n-2}}{\sqrt{n(n-2 + t^2_{\alpha/2n, n-2})}}.
+$$
 
-The test was meant to be applied iteratively, where observations were removed from the data if determined to be anomalies, and the test re-applied to the remaining data. This process continues until no more anomalies are found.
+Figure \@ref(fig:zscoretests) shows the critical values at $\alpha=0.05$ for these tests, along with the corresponding value from @Chauvenet1863 for comparison.
+
+(ref:zscoretests) Critical values for maximum $z$-score tests with $\alpha=0.05$.
+
+```{r zscoretests, echo=FALSE, fig.cap="(ref:zscoretests)"}
+alpha <- 0.05
+n <- exp(seq(log(3), log(1e5), l=100))
+t1 <- qt(1 - alpha/n, n-2)
+t2 <- qt(1 - alpha/(2*n), n-2)
+tibble(n=n) %>%
+  ggplot(aes(x=n)) +
+    geom_line(aes(y = t1 * sqrt((n-1)/(n-2+t1^2))), col='black') +
+    geom_line(aes(y = (n-1)/sqrt(n)*sqrt(t2^2/(n-2+t2^2))), col='blue') +
+    geom_line(aes(y = qnorm(1-0.25/n)), col='red') +
+    scale_x_log10(limits=c(3,2e6),
+                  breaks =10^(1:6),
+                  minor_breaks = NULL,
+                  labels = format(10^(1:6), scientific=FALSE, trim=TRUE)) +
+    labs(x = "n (sample size)", y = latex2exp::TeX("$c_{\\alpha}$ (threshold)")) +
+    geom_label(aes(x=1.1e5,  y=4.8, label="Pearson-Sekar test", hjust="left"), col='black') +
+    geom_label(aes(x=1.1e5,  y=5.1, label="Grubbs test", hjust="left"), col='blue') +
+    geom_label(aes(x=1.1e5,  y=4.5, label="Chauvenet criterion", hjust="left"), col='red')
+```
+
+This shows that for small sample sizes ($n<10$), the critical value for Grubbs' test is too low and is likely to lead to many spurious anomalies being detected.
 
 We can apply the test using the `grubbs.test()` function from the `outliers` package.
 
 ```{r}
 library(outliers)
-grubbs.test(cricket_batting %>%
-              filter(Innings > 20) %>%
-              pull(Average)
-)
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  pull(Average) %>%
+  grubbs.test()
+grubbs.test(oldfaithful$duration)
+grubbs.test(n01a$y)
+grubbs.test(n01b$y)
 ```
 
-### Dixon's Q test
+An outlier is identified in each case. 
+
+These tests are sometimes applied iteratively, where observations are removed from the data if determined to be anomalies, and the test re-applied to the remaining data. This process continues until no more anomalies are found. However, this procedure will clearly change the size of the test due to the problem of multiple comparisons. 
+
+I do not recommend any tests based on $z$-scores because they are not robust to the anomalies they are trying to detect, and are based on overly-restrictive assumptions about the underlying distribution.
+
+## Other statistical tests
+
+### Dixon's Q test {-}
 
 If $y_{(1)},\dots,y_{(n)}$ denote the ordered values of our sample, then Dixon's Q statistic [@Dixon1950] is given by
 $$
   Q = \frac{y_{(n)} - y_{(n-1)}}{y_{(n)} - y_{(1)}},
 $$
-the ratio of the difference between the two largest values to the range of the data. A variant of the statistic uses $y_{(2)}-y_{(1)}$ in the denominator instead, the difference between the second smallest and minimum observations. For samples sizes $n$ in the range 3 to 30, we can use the `dixon.test()` function from the `outliers` package to perform the test. For larger sample sizes, critical values are not available for this test.
+the ratio of the difference between the two largest values to the range of the data. A variant of the statistic uses $y_{(2)}-y_{(1)}$ in the denominator instead, the difference between the second smallest and minimum observations. For samples sizes $n$ in the range 3 to 30, we can use the `dixon.test()` function from the `outliers` package to perform the test. For larger sample sizes, critical values are not available for this test. So we can only use it on the last of our four examples, where it finds the outlying observation.
+
+```{r}
+dixon.test(n01b$y)
+```
+
+The test has an obvious flaw in that the minimum $y_{(1)}$ is also potentially an anomaly, and then the assumptions of the test break down.
+
 
 ## Boxplots
 
