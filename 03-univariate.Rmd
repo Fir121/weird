@@ -373,9 +373,10 @@ n01b %>% filter(barbato_anomaly(y))
 ```
 
 Only the extreme outlier in the duration data is identified as an anomaly. 
+
 ## Letter value plots
 
-The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend
+The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend to successive letter values until the quantiles corresponding to the letter values can no longer be estimated sufficiently accurately from the available data.
 
 These can be produced using the `lvplot` package.
 
@@ -407,7 +408,43 @@ $$
 $$
 and $z_{1-\alpha/2}$ is the $1-\alpha/2$ quantile of a standard Gaussian distribution. This choice is based on the idea that the edges of the boxes are quantile estimates, and the confidence interval for each  quantile estimate that is displayed should not overlap the subsequent quantile estimate. The Gaussian distribution arises because the quantile estimate has an approximate Gaussian distribution due to the Central Limit Theorem. This stopping rule means that, on average, there should be fewer than $2z^2_{1-\alpha/2}$ legitimate observations in the tails. By default, $\alpha=0.05$, so that, on average, there should be fewer than $2 \times (`r qnorm(1-0.05/2)`)^2 = `r round(2* qnorm(1-0.05/2)^2,1)`$ legitimate observations in the tails, regardless of the size of the data set.
 
-In this cricketing example, it looks like there is one true anomaly (Don Bradman) and the remaining 8 identified "anomalies" are simply in the tails of the distribution of the remaining data.
+Letter value plots were not designed to detect anomalies, but to be a useful data visualization tool for univariate distributions with large numbers of observations. So the display of legitimate observations in the tails of the distribution is by design, not a flaw.
+
+In this cricketing example, it looks like there is one true anomaly (Don Bradman) and the remaining 8 observations displayed directly are simply in the tails of the distribution of the remaining data.
+
+When applied to the remaining examples, we see approximately 10--20 observations shown as individual points in each case. The code to produce these is very similar to that shown for Figure \@ref(fig:cricketboxlv), so is not reproduced here.
+
+```{r lvplots1, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of Old Faithful eruption durations, omitting the very long 2 hour duration."}
+oldfaithful %>%
+  filter(duration < 7000) %>%
+  ggplot(aes(x = 1, y = duration)) +
+  geom_lv(aes(fill = ..LV..)) +
+  scale_x_discrete() +
+  coord_flip() +
+  labs(x = "", y = "Eruption durations (seconds)") +
+  theme(legend.key.height = unit(.2, "cm"))
+```
+
+```{r lvplots2, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 1000 N(0,1) observations."}
+n01a %>%
+  ggplot(aes(x = 1, y = y)) +
+  geom_lv(aes(fill = ..LV..)) +
+  scale_x_discrete() +
+  coord_flip() +
+  labs(x = "") +
+  theme(legend.key.height = unit(.2, "cm"))
+```
+
+```{r lvplots3, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 19 N(0,1) observations with an anomaly at 4."}
+n01b %>%
+  ggplot(aes(x = 1, y = y)) +
+  geom_lv(aes(fill = ..LV..)) +
+  scale_x_discrete() +
+  coord_flip() +
+  labs(x = "")
+```
+
+In this last example, because there are only 20 observations, there is not enough data to estimate the quantiles beyond the fourths. So only the middle box is shown.
 
 ## HDR boxplots
 
