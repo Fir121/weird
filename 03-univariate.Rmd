@@ -15,19 +15,19 @@ First, we will generate the data for the last two examples. A seed is set to all
 set.seed(1)
 n01a <- tibble(y = rnorm(1000))
 n01a %>%
-  ggplot(aes(x=y, y=1)) +
-  geom_jitter(width=0, alpha=0.5) +
+  ggplot(aes(x = y, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
-  labs(y="", x="N(0,1)")
+  labs(y = "", x = "N(0,1)")
 ```
 
 ```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
 n01b <- tibble(y = c(rnorm(19), 4))
 n01b %>%
-  ggplot(aes(x=y, y=1)) +
-  geom_jitter(width=0, alpha=0.5) +
+  ggplot(aes(x = y, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
-  labs(y="", x="N(0,1)")
+  labs(y = "", x = "N(0,1)")
 ```
 
 ## Z scores and related tests
@@ -47,17 +47,17 @@ Let's see what happens when we apply this test to the four examples.
 ```{r zscore1}
 cricket_batting %>%
   filter(Innings > 20) %>%
-  mutate(z = (Average - mean(Average))/sd(Average)) %>%
+  mutate(z = (Average - mean(Average)) / sd(Average)) %>%
   filter(abs(z) > 3) %>%
   select(Player, Average, z)
 oldfaithful %>%
-  mutate(z = (duration - mean(duration))/sd(duration)) %>%
+  mutate(z = (duration - mean(duration)) / sd(duration)) %>%
   filter(abs(z) > 3)
 n01a %>%
-  mutate(z = (y - mean(y))/sd(y)) %>%
+  mutate(z = (y - mean(y)) / sd(y)) %>%
   filter(abs(z) > 3)
 n01b %>%
-  mutate(z = (y - mean(y))/sd(y)) %>%
+  mutate(z = (y - mean(y)) / sd(y)) %>%
   filter(abs(z) > 3)
 ```
 
@@ -72,20 +72,20 @@ If we replace the mean and standard deviation by more robust estimates (the medi
 # Check last statement
 n1 <- cricket_batting %>%
   filter(Innings > 20) %>%
-  mutate(z = (Average - median(Average))/IQR(Average)*1.34) %>%
+  mutate(z = (Average - median(Average)) / IQR(Average) * 1.34) %>%
   filter(abs(z) > 3) %>%
   select(Player, Average, z) %>%
   NROW()
 n2 <- oldfaithful %>%
-  mutate(z = (duration - median(duration))/IQR(duration)*1.34) %>%
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
   filter(abs(z) > 3) %>%
   NROW()
 n3 <- n01a %>%
-  mutate(z = (y - median(y))/IQR(y)*1.34) %>%
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) %>%
   filter(abs(z) > 3) %>%
   NROW()
 n4 <- n01b %>%
-  mutate(z = (y - median(y))/IQR(y)*1.34) %>%
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) %>%
   filter(abs(z) > 3) %>%
   NROW()
 stopifnot(n1 == 1L)
@@ -93,7 +93,7 @@ stopifnot(n2 == 209L)
 stopifnot(n3 == 1L)
 stopifnot(n4 == 1L)
 of_threshold <- oldfaithful %>%
-  mutate(z = (duration - median(duration))/IQR(duration)*1.34) %>%
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
   filter(abs(z) <= 3) %>%
   pull(duration) %>%
   min()
@@ -101,7 +101,7 @@ of_threshold <- oldfaithful %>%
 
 ```{r zscore2}
 oldfaithful %>%
-  mutate(z = (duration - median(duration))/ (IQR(duration)/1.34)) %>%
+  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) %>%
   filter(abs(z) > 3)
 ```
 
@@ -191,8 +191,8 @@ Figure \@ref(fig:zscoretests) shows the critical values at $\alpha=0.05$ for the
 
 ```{r zscoretests, echo=FALSE, fig.cap="(ref:zscoretests)"}
 alpha <- 0.05
-n <- exp(seq(log(3), log(1e5), l=100))
-t1 <- qt(1 - alpha/n, n-2)
+n <- exp(seq(log(3), log(1e5), l = 100))
+t1 <- qt(1 - alpha / n, n - 2)
 t2 <- qt(1 - alpha / (2 * n), n - 2)
 tibble(n = n) %>%
   ggplot(aes(x = n)) +
@@ -258,10 +258,10 @@ Figure \@ref(fig:cricketbox) shows a boxplot of the cricket batting average data
 ```{r cricketbox, fig.asp=0.2, fig.cap="(ref:cricket1)"}
 cricket_batting %>%
   filter(Innings > 20) %>%
-  ggplot(aes(x=Average, y=1)) +
+  ggplot(aes(x = Average, y = 1)) +
   geom_boxplot() +
   scale_y_discrete() +
-  labs(y="", x="Career batting average")
+  labs(y = "", x = "Career batting average")
 ```
 
 The middle line in the box shows the median, and the ends of the box are the fourths ($L_F$ and $U_F$). Half of all observations lie within the box. The width of the box is called the "interquartile range", defined by $IQR = U_F - L_F$. Any points more than $1.5*IQR$ outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
@@ -279,18 +279,18 @@ However, boxplots can be misleading, and are they are limited in at least two re
 q1 <- qnorm(0.25)
 q3 <- qnorm(0.75)
 iqr <- q3 - q1
-whisker1 <- q1 - 1.5*iqr
-whisker2 <- q3 + 1.5*iqr
+whisker1 <- q1 - 1.5 * iqr
+whisker2 <- q3 + 1.5 * iqr
 ```
 
 To better understand the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). Figure \@ref(fig:normalboxplot) shows an example with 10000 points.
 
 ```{r normalboxplot, fig.asp=0.2, fig.cap="Boxplot of 10000 draws from a standard normal distribution."}
 tibble(x = rnorm(10000)) %>%
-  ggplot(aes(x=x, y=1)) +
+  ggplot(aes(x = x, y = 1)) +
   geom_boxplot() +
   scale_y_discrete() +
-  labs(y="")
+  labs(y = "")
 ```
 
 Many anomalies are shown, but since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, Q1 $= `r round(q1,2)`$, Q3 $= `r round(q3,2)`$, IQR $= `r round(iqr,2)`$, and so any observations less than $`r round(q1,2)` - 1.5\times `r round(iqr,2)` = `r round(whisker1, 2)`$ or greater than $`r round(q3,2)` + 1.5\times `r round(iqr,2)` = `r round(whisker2, 2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r round(whisker2, 2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with 10000 observations, we would have $`r round(10000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
@@ -300,9 +300,9 @@ The second problem is demonstrated using the Old Faithful eruption duration data
 ```{r oldfaithful2a, fig.asp=0.2, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
   filter(duration < 6000) %>%
-  ggplot(aes(x=duration, y=1)) +
+  ggplot(aes(x = duration, y = 1)) +
   geom_boxplot() +
-  labs(y="", x="Duration (seconds)") +
+  labs(y = "", x = "Duration (seconds)") +
   scale_y_discrete()
 ```
 
@@ -384,18 +384,18 @@ These can be produced using the `lvplot` package.
 library(lvplot)
 cricket_batting %>%
   filter(Innings > 20) %>%
-  ggplot(aes(x=1,y=Average)) +
-  geom_lv(aes(fill=..LV..)) +
+  ggplot(aes(x = 1, y = Average)) +
+  geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
   coord_flip() +
-  labs(x="", y="Career batting average") +
-  theme(legend.key.height = unit(.2,"cm"))
+  labs(x = "", y = "Career batting average") +
+  theme(legend.key.height = unit(.2, "cm"))
 ```
 
 ```{r lv, echo=FALSE}
 lv <- cricket_batting %>%
   filter(Innings > 20) %>%
-  stat_lv(mapping = aes(y=Average))
+  stat_lv(mapping = aes(y = Average))
 ```
 
 Here the median is given by M, the fourths by F, and so on. So the middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on.
@@ -448,9 +448,76 @@ In this last example, because there are only 20 observations, there is not enoug
 
 ## HDR boxplots
 
-## Lookout
+> Need gghdr package to be updated.
 
-Denote the kernel density estimate of $y_i$ by $f_i$ and the leave-one-out kde of $y_i$ (by leaving out $y_i$) by $f_{-i}$. Then we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt). We use the $90^{\text{th}}$ percentile as the threshold for the POT approach. Using the fitted GPD parameters, $\mu$, $\sigma$ and $\xi$, we declare points with $P\left(-\log(f_{-i})|\mu, \sigma,\xi \right) < \alpha$ to be outliers.
+## Lookout algorithm
 
-The output probability of lookout is the GPD probability of the points, so that low probabilities indicate likely outliers and high probabilities indicate normal points.
+A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is (equation \@ref(eq:kde))
+$$
+  f_i = \hat{f}(y_i) = \frac{1}{n} \sum_{j=1}^n K_h(y_i-y_j),  
+$$
+and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is, and are defined for all observations provided the kernel is non-negative everywhere (which it is for a Gaussian kernel). Anomalies are points where the kde scores are relatively large. 
 
+We also define the "leave-one-out" kernel density estimate --- the estimate of $f(y_i)$ obtained using all data other than $y_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_h(0)/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = f_i - K(0)/(nh)$.
+
+An observation point far from all other observations will have $f_i \approx K_h(0)/n$ because $K_h(y_i-y_j)\approx 0$ when $|y_i-y_j|$ is large. So $f_{-i}\approx 0$ for these observations, while the largest possible kde score is
+$$
+  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}) 
+$$
+for a Gaussian kernel.
+
+For the Old Faithful eruption duration data, we obtain the following kde scores.
+
+```{r, fig.asp = 0.2, fig.cap="KDE scores for the Old Faithful eruption durations."}
+oldfaithful %>%
+  mutate(score = kde_scores(duration)) %>%
+  ggplot(aes(x = score, y = 1)) +
+  geom_jitter(width = 0) +
+  scale_y_discrete() +
+  labs(y = "", x = "KDE score")
+```
+
+The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum.
+
+The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
+
+In this procedure, we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt), with the $90^{\text{th}}$ percentile as the threshold.
+
+```{r ofpot}
+of_scores <- oldfaithful %>%
+  mutate(
+    score = kde_scores(duration),
+    looscore = kde_scores(duration, loo = TRUE),
+  )
+threshold <- quantile(of_scores$score, prob = 0.90)
+gpd <- evd::fpot(oldfaithful$duration, threshold = threshold)$estimate
+```
+
+Now we apply the fitted distribution to the leave-one-out scores to obtain the probabilities that each observation is an outlier.
+
+```{r ofpot2}
+of_scores %>%
+  mutate(
+    pval = evd::pgpd(looscore,
+      loc = threshold,
+      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
+    )
+  ) %>%
+  arrange(pval)
+```
+
+Low probabilities indicate likely outliers and high probabilities indicate normal points.
+
+This procedure has identified only the minimum and maximum eruptions as likely outliers, with all other values having very high probability of being regular observations.
+
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout` package. This package uses the Epanechnikov kernel rather than the Gaussian kernel, but otherwise the procedure is equivalent to what is described above. We shall apply it to the four examples used throughout this chapter.
+
+```{r lookout}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  pull(Average) %>%
+  lookout::lookout()
+lookout::lookout(oldfaithful$duration)
+lookout::lookout(n01a$y)
+lookout::lookout(n01b$y)
+```
