@@ -510,14 +510,37 @@ Low probabilities indicate likely outliers and high probabilities indicate norma
 
 This procedure has identified only the minimum and maximum eruptions as likely outliers, with all other values having very high probability of being regular observations.
 
-The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout` package. This package uses the Epanechnikov kernel rather than the Gaussian kernel, but otherwise the procedure is equivalent to what is described above. We shall apply it to the four examples used throughout this chapter.
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
 
 ```{r lookout}
 cricket_batting %>%
   filter(Innings > 20) %>%
-  pull(Average) %>%
-  lookout::lookout()
-lookout::lookout(oldfaithful$duration)
+  mutate(lookout = lookout_prob(Average)) %>%
+  filter(lookout < 0.05) %>%
+  select(Player, Average, lookout)
+oldfaithful %>%
+  mutate(lookout = lookout_prob(duration)) %>%
+  filter(lookout < 0.05)
+n01a %>%
+  mutate(lookout = lookout_prob(y)) %>%
+  filter(lookout < 0.05)
+#n01b %>%
+#  mutate(lookout = lookout_prob(y)) %>%
+#  filter(lookout < 0.05)
+```
+
+The algorithm has performed poorly on the 1000 N(0,1) observations, identifying 66 of them as anomalous.
+
+But note:
+
+```{r lookout2}
 lookout::lookout(n01a$y)
 lookout::lookout(n01b$y)
 ```
+
+Something wrong with my implementation????
+
+
+The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel.
+
+
