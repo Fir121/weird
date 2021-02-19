@@ -308,6 +308,71 @@ oldfaithful %>%
 
 Quite a few anomalies are shown, including the one-second eruption we identified earlier. But the remaining "anomalies" are not particularly unusual observations. All the points below 180 seconds are identified as anomalies, even though we know that observations in the region between 100 and 140 are not unusual for this geyser. Because the boxplot does not allow for more than one mode, all the points in the second smaller cluster are identified as anomalies. The points around 300 seconds are also not really anomalies --- these are just values in the upper tail of the distribution for eruptions.
 
+## Modified IQR method
+
+```{r modifiediqr, echo=FALSE}
+q1 <- qnorm(0.25)
+q3 <- qnorm(0.75)
+iqr <- q3 - q1
+tukey1 <- 2 * (1 - pnorm(q3 + 1.5 * iqr))
+tukey2 <- 2 * (1 - pnorm(q3 + 3 * iqr))
+```
+
+
+Under Tukey's boxplot approach to identifying outliers, a regular outlier is more than 1.5IQR beyond the quartiles, while an extreme outlier is more than 3IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for very large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find spurious anomalies in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
+
+@Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of false anomalies. Figure \@ref(fig:probanomaly) shows the probability of a regular or extreme anomaly using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
+
+```{r probanomaly, echo=FALSE, fig.cap="Probability of anomaly based on the boxplot approach of Tukey, and the modified IQR approach of Barbato et al."}
+tibble(n = exp(seq(log(3), log(1e6), l = 100))) %>%
+  mutate(
+    Tukey1 = 2 * (1 - pnorm(q3 + 1.5 * iqr)),
+    Tukey2 = 2 * (1 - pnorm(q3 + 3 * iqr)),
+    Barbato1 = 2 * (1 - pnorm(q3 + 1.5 * iqr * (1 + 0.1 * log(n / 10)))),
+    Barbato2 = 2 * (1 - pnorm(q3 + 3 * iqr * (1 + 0.1 * log(n / 10))))
+  ) %>%
+  pivot_longer(Tukey1:Barbato2, names_to = "method", values_to = "probability") %>%
+  mutate(
+    level = stringr::str_extract(method, "\\d"),
+    level = if_else(level == "1", "Regular outlier", "Extreme outlier"),
+    method = stringr::str_extract(method, "[A-Za-z]*"),
+    level = factor(level, levels = c("Regular outlier", "Extreme outlier")),
+    method = factor(method, levels = c("Tukey", "Barbato")),
+    probability = 1 - (1 - probability)^n
+  ) %>%
+  ggplot(aes(x = n, y = probability)) +
+  geom_line() +
+  facet_grid(level ~ method) +
+  labs(y = "Probability of an anomaly in a normal distribution", x = "Sample size") +
+  scale_x_log10(
+    limits = c(3, 2e6),
+    breaks = 10^(1:6),
+    minor_breaks = NULL,
+    labels = format(10^(1:6), scientific = FALSE, trim = TRUE)
+  )
+```
+
+Even with a huge sample size, the probability of spotting a genuine anomaly using this modified approach is less than 1/2.
+
+Let's apply this approach to our four examples. First we will write a short function to implement the idea.
+
+```{r barbato4}
+barbato_anomaly <- function(y, extreme = FALSE) {
+  n <- length(y)
+  q1 <- quantile(y, 0.25, na.rm = TRUE)
+  q3 <- quantile(y, 0.75, na.rm = TRUE)
+  threshold <- (1.5 + 1.5 * extreme) * (q3 - q1) * (1 + log(n / 10))
+  return(y > q3 + threshold | y < q1 - threshold)
+}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  filter(barbato_anomaly(Average))
+oldfaithful %>% filter(barbato_anomaly(duration))
+n01a %>% filter(barbato_anomaly(y))
+n01b %>% filter(barbato_anomaly(y))
+```
+
+Only the extreme outlier in the duration data is identified as an anomaly. 
 ## Letter value plots
 
 The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend
