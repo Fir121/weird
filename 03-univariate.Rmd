@@ -456,11 +456,11 @@ A popular way of defining anomalies is that they are observations of low probabi
 $$
   f_i = \hat{f}(y_i) = \frac{1}{n} \sum_{j=1}^n K_h(y_i-y_j),  
 $$
-and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is, and are defined for all observations provided the kernel is non-negative everywhere (which it is for a Gaussian kernel). Anomalies are points where the kde scores are relatively large. 
+and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. 
 
-We also define the "leave-one-out" kernel density estimate --- the estimate of $f(y_i)$ obtained using all data other than $y_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_h(0)/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = f_i - K(0)/(nh)$.
+We also define the "leave-one-out" kernel density estimate --- the estimate of $f(y_i)$ obtained using all data other than $y_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_h(0)/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = \left[nf_i - K_h(0)\right]/(n-1)$.
 
-An observation point far from all other observations will have $f_i \approx K_h(0)/n$ because $K_h(y_i-y_j)\approx 0$ when $|y_i-y_j|$ is large. So $f_{-i}\approx 0$ for these observations, while the largest possible kde score is
+An observation far from all other observations will have $f_i \approx K_h(0)/n$ because $K_h(y_i-y_j)\approx 0$ when $|y_i-y_j|$ is large. So $f_{-i}\approx 0$ for these observations, while the largest possible kde score is
 $$
   -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}) 
 $$
@@ -481,7 +481,7 @@ The two large scores correspond to the extreme 2 hour duration, and the tiny 1 s
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
 
-In this procedure, we fit a Generalized Pareto Distribution to $-\log(f_i)$ using the POT approach discussed in Section \@ref(sec:evt), with the $90^{\text{th}}$ percentile as the threshold.
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section \@ref(sec:evt), with the $90^{\text{th}}$ percentile as the threshold.
 
 ```{r ofpot}
 of_scores <- oldfaithful %>%
@@ -490,10 +490,10 @@ of_scores <- oldfaithful %>%
     looscore = kde_scores(duration, loo = TRUE),
   )
 threshold <- quantile(of_scores$score, prob = 0.90)
-gpd <- evd::fpot(oldfaithful$duration, threshold = threshold)$estimate
+gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
 ```
 
-Now we apply the fitted distribution to the leave-one-out scores to obtain the probabilities that each observation is an outlier.
+Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
 ```{r ofpot2}
 of_scores %>%
@@ -506,9 +506,7 @@ of_scores %>%
   arrange(pval)
 ```
 
-Low probabilities indicate likely outliers and high probabilities indicate normal points.
-
-This procedure has identified only the minimum and maximum eruptions as likely outliers, with all other values having very high probability of being regular observations.
+Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers, with several other values around 90--93 seconds, 155 seconds and 304--305 seconds as likely outliers as well. These latter observations are in the regions of low density that we have previous noted. 
 
 The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
 
@@ -524,23 +522,11 @@ oldfaithful %>%
 n01a %>%
   mutate(lookout = lookout_prob(y)) %>%
   filter(lookout < 0.05)
-#n01b %>%
-#  mutate(lookout = lookout_prob(y)) %>%
-#  filter(lookout < 0.05)
+n01b %>%
+  mutate(lookout = lookout_prob(y)) %>%
+  filter(lookout < 0.05)
 ```
 
-The algorithm has performed poorly on the 1000 N(0,1) observations, identifying 66 of them as anomalous.
+The algorithm has found 6 of the 1000 N(0,1) observations to be possible anomalies, as well as the one true anomaly in the fourth example.
 
-But note:
-
-```{r lookout2}
-lookout::lookout(n01a$y)
-lookout::lookout(n01b$y)
-```
-
-Something wrong with my implementation????
-
-
-The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel.
-
-
+The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach. This idea will be discussed in Chapter ??

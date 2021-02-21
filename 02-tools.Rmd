@@ -64,7 +64,8 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are inde
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
   (\#eq:kde)
 \end{equation}
-where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$.
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by 
+$K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
 
 ```{r of2021, include=FALSE}
 of2021 <- oldfaithful %>%
@@ -108,7 +109,7 @@ ggplot() +
   labs(x = "y = Duration (seconds)", y = "Density")
 ```
 
-We made two choices when producing this estimate: the value of $h$ and the type of kernel $K_h$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used, and it is common to use a Gaussian kernel.
+We made two choices when producing this estimate: the value of $h$ and the type of kernel $K_h$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used.
 
 The choice of $h$ is more difficult and will change the shape of the density estimate substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
 
@@ -195,7 +196,7 @@ However, this value of $h$ depends on the underlying density $f$ which we don't 
 \end{equation}
 where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Gaussian distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.34)$, giving his rule-of-thumb \@ref(eq:ruleofthumb).
 
-Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in \@ref(eq:opth) by an estimate based on the data.  The resulting bandwidth is often better than \@ref(eq:ruleofthumb). To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
+Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in \@ref(eq:opth) by an estimate based on the data.  To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
 
 Bandwidths obtained in this way are designed to give a good overall estimate of the underlying density, but may not be optimal for any particular point of the density. Our goal is to find anomalies in the data, rather than find a good representation for the rest of the data, and so we are interested in the regions of low density.
 

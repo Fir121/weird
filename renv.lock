@@ -494,8 +494,8 @@
       "RemoteRepo": "lookout",
       "RemoteUsername": "sevvandi",
       "RemoteRef": "HEAD",
-      "RemoteSha": "f218625c71dc83b0903bf1d6ba23c8936abd9ced",
-      "Hash": "f038e37b82ed742155072ceedf870b94"
+      "RemoteSha": "e80e0b86603e5e8f665859aa2e9d80e790b0acb2",
+      "Hash": "5680f85a5c8df0149397aa024853954f"
     },
     "lubridate": {
       "Package": "lubridate",
@@ -926,8 +926,8 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "236433512c370041aefb708fa1577fab58a84ead",
-      "Hash": "3035bbeea71c4de12e843dfb02d8ac59"
+      "RemoteSha": "fa519743d118cb56dd89ed4f1f74653462069acb",
+      "Hash": "ff36c2e6b835c186904c8ced15f6f034"
     },
     "whisker": {
       "Package": "whisker",
