@@ -94,6 +94,10 @@ so that the corresponding letter values are given by
 \end{align*}
 In this example, the fourths are identical to the quartiles, but that is not always the case.
 
+### Anomalies using quantiles
+
+One of the simplest approaches that is sometimes used to find anomalies in univariate data is to identify the points that are above or below a specified quantile value. For example, we might identify anomalies as points above the 0.999 quantile or below the 0.001 quantile. More generally, an anomaly could be defined as points above $\hat{q}_{1-p}$ or below $\hat{q}_{p}$. The problem with that approach is that you need at least $1/p$ observations to find any anomaly, and even with a clean data set you will find $2p$ "anomalous" observations. Further, it doesn't allow us to find points that are inliers but otherwise unusual. So we don't recommend this approach.
+
 ## Kernel density estimation {#sec-kde}
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
@@ -260,7 +264,7 @@ oldfaithful %>%
 
 Here we have doubled the default bandwidth obtained using \@ref(eq:ruleofthumb).
 
-### Boundaries 
+### Boundaries
 
 When a Gaussian kernel is used, a kernel density estimate assumes that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. For example, if all data must be positive, then $f(u)=0$ for $u<0$.
 
@@ -270,10 +274,14 @@ There are modified estimators which deal with this situation, but we won't conce
 
 Suppose our observations are $d$-dimensional vectors, $\bm{y}_1,\dots,\bm{y}_n$. Then the multivariate version of \@ref(eq:kde) is given by [@Scott2015]
 \begin{equation}
-  \hat{f}(\bm{y}) = \frac{1}{n} \sum_{i=1}^n K_h(\bm{y} - \bm{y}_i),
+  \hat{f}(\bm{y}) = \frac{1}{n} \sum_{i=1}^n K_H(\bm{y} - \bm{y}_i),
   (\#eq:mkde)
 \end{equation}
-where $K_h$ is a multivariate probability density with covariance matrix $\bm{H}$. We will use a multivariate Gaussian kernel whenever we estimate a multivariate kernel density estimate.
+where $K_H$ is a multivariate probability density with covariance matrix $\bm{H}$. Whenever we estimate a multivariate kernel density estimate, we will use a multivariate Gaussian kernel given by
+$$
+  K_H(\bm{u}) = (2\pi)^{-d/2} \text{det}(\bm{H})^{-1/2} \exp \{-\textstyle\frac12 \bm{u}'\bm{H}^{-1}\bm{u} \}.
+$$
+
 
 ```{r bivariatebandwidths, include=FALSE}
 h1 <- MASS::bandwidth.nrd(of2021$duration)
@@ -349,9 +357,44 @@ oldfaithful %>%
   labs(x = "Duration (seconds)")
 ```
 
-## Highest and lowest density regions
+## Low density anomalies
 
-As already indicated, one way to think of an anomaly is a value with low probability density. That leads to the idea of finding all values with density above or below a given threshold.
+A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is (equation \@ref(eq:mkde))
+$$
+  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
+$$
+and we define the "**kde score**" at each observation as
+$$
+  s_i = -\log(\hat{f}_i).
+$$
+These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $|\bm{y}_i-\bm{y}_j|$ is large. So the largest possible kde score is
+$$
+  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H})
+$$
+for a Gaussian kernel. For univariate data, when $d=1$, this simplifies to
+$$
+  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
+$$
+
+For the Old Faithful eruption duration data, we obtain the following kde scores.
+
+```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
+of_scores <- oldfaithful %>%
+  mutate(score = kde_scores(duration))
+of_scores %>% arrange(desc(score))
+of_scores %>%
+  filter(duration < 7000) %>%
+  ggplot(aes(x = duration, y = score)) +
+  geom_point()
+```
+
+The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum.
+
+For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
+
+## Highest density regions
+
+For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
 
 A **highest density region** is defined as the region of the sample space where the density is higher than a given threshold [@HDR96]. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
 $$
@@ -361,9 +404,7 @@ where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 
 Let's illustrate the idea with some simple examples.
 
-
-```{r hdr, }
-# remotes::install_github("ropenscilabs/gghdr")
+```{r hdr, fig.asp=0.2}
 library(gghdr)
 oldfaithful %>%
   filter(duration < 7000) %>%
@@ -374,15 +415,11 @@ oldfaithful %>%
   coord_flip()
 ```
 
-
-
-## Depth measures
-
 ## Pairwise distances and nearest neighbours
 
 Most anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
 
-Consequently, some algorithms use only compute the pairwise distances of the $k$ nearest observations, which reduces the problem to computing up to $kn$ distances. For some types of distances, more efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time. 
+Consequently, some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
 
 Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `FNN` package uses kd trees to quickly identify the $k$ nearest observations to each eruption.
 
@@ -413,10 +450,32 @@ oldfaithful[knn$nn.index[1,],]
 
 The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm". 
 
- * kNN
- * Approximate NN
- 
-## Local outlier factor
+For very large data sets, approximations are available which speed up the computation even more, but are less accurate in finding the $k$ nearest neighbours. The `RANN` package uses an approximation that finds the nearest $k$ observations within a specified distance tolerance.
+
+```{r}
+# Find 5 approximate nearest neighbours to each eruption
+kann <- oldfaithful %>%
+  select(duration, waiting) %>%
+  scale() %>%
+  RANN::nn2(k = 6, eps = 2)
+# First eruption in the data set
+oldfaithful[1,]
+# Five closest observations
+oldfaithful[kann$nn.idx[1,],]
+```
+
+This algorithm also returns the original observation, so `k=6` has been set instead. Here the fourth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
+
+## Local outlier factors
+
+A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. First we need some definitions.
+
+* The $k$-distance of an observation $p$ is the distance $D_k(p)$ between observation $p$ and its $k$th nearest neighbour. That is, there are $k$ observations at a distance no more than $D_k$ from $p$. Actually, there may be more than $k$ observations within $D_k$ of $p$ if there are multiple observations at distance $D_k$ from $p$.
+* The reachability distance between observations $p$ and $q$ is the
+
+First define the "reachability distance" of an observation
+
+## Depth measures
 
 ## Extreme value theory {#sec-evt}
 

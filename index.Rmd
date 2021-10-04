@@ -55,8 +55,9 @@ This will load the relevant data sets and functions from the packages needed to 
 8. Spatial, network and graph data
 9. Video data
 10. Categorical and text data
-11. Deep learning for anomaly detection
-12. Applications: network intrusion, fraud detection
+11. Distributional observations
+12. Deep learning for anomaly detection
+13. Applications: network intrusion, fraud detection
 
 
 To include somewhere:

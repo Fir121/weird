@@ -452,32 +452,15 @@ In this last example, because there are only 20 observations, there is not enoug
 
 ## Lookout algorithm
 
-A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is (equation \@ref(eq:kde))
+A variation on the idea of kde scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation".
+
+Recall that the kernel density estimate at each observation is (equation \@ref(eq:mkde))
 $$
-  f_i = \hat{f}(y_i) = \frac{1}{n} \sum_{j=1}^n K_h(y_i-y_j),  
+  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$
-and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. 
+and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large.
 
-We also define the "leave-one-out" kernel density estimate --- the estimate of $f(y_i)$ obtained using all data other than $y_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_h(0)/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = \left[nf_i - K_h(0)\right]/(n-1)$.
-
-An observation far from all other observations will have $f_i \approx K_h(0)/n$ because $K_h(y_i-y_j)\approx 0$ when $|y_i-y_j|$ is large. So $f_{-i}\approx 0$ for these observations, while the largest possible kde score is
-$$
-  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}) 
-$$
-for a Gaussian kernel.
-
-For the Old Faithful eruption duration data, we obtain the following kde scores.
-
-```{r, fig.asp = 0.2, fig.cap="KDE scores for the Old Faithful eruption durations."}
-oldfaithful %>%
-  mutate(score = kde_scores(duration)) %>%
-  ggplot(aes(x = score, y = 1)) +
-  geom_jitter(width = 0) +
-  scale_y_discrete() +
-  labs(y = "", x = "KDE score")
-```
-
-The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum.
+We also define the "leave-one-out" kernel density estimate --- the estimate of $f(\bm{y}_i)$ obtained using all data other than $\bm{y}_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_H(\bm{0})/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1)$.
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
 

@@ -6,7 +6,7 @@ Anomalies are often a nuisance. For example, they may be simply recording errors
 
 ## Definitions
 
-An anomaly is an observation that behaves differently from the bulk of the data. They are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants". We prefer to use "anomalies" as it is more general than outliers (some anomalies are actually inliers as we shall see) and it is more widely used than the other options.
+An anomaly is an observation that behaves differently from the bulk of the data. They are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants". We prefer to use "anomalies" as it is more general than outliers and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. Some anomalies are actually inliers, and lie well within the data set.^[Some papers mistakenly use the term "inlier" to denote any point that is not an outlier. We shall use "inlier" to mean an observation that is an anomaly but which is surrounded by genuine observations.] 
 
 An old definition due to @Barnett1978 states
 
