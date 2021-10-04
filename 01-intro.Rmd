@@ -1,4 +1,4 @@
-# Introduction {#ch_intro}
+# Introduction {#ch-intro}
 
 Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that hold true for most of the data. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book they are what we find interesting.
 
@@ -26,7 +26,7 @@ Many analysts have thrown away apparent anomalies because they were assumed to b
 
 > Add story of ozone layer
 
-## Strip plots and scatterplots {#sec_scatterplots}
+## Strip plots and scatterplots {#sec-scatterplots}
 
 When there are no more than a few thousand observations, it is useful to start with simple plots that allow you to look at the observations directly with no processing or modelling to hide what is going on.
 

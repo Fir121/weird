@@ -55,7 +55,7 @@ Rather than label these using integers ($L_2,L_3,\dots$), Tukey proposed using l
 
 Because each depth is roughly half the previous depth, the letter values provide estimates of the quantiles with probabilities $p=1/2,1/4,1/8,\dots$.
 
-## Kernel density estimation {#sec:kde}
+## Kernel density estimation {#sec-kde}
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
@@ -342,7 +342,7 @@ oldfaithful %>%
  * kNN
  * Approximate NN
 
-## Extreme value theory {#sec:evt}
+## Extreme value theory {#sec-evt}
 
 Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
@@ -435,7 +435,7 @@ df %>%
   geom_line(data = truedensity, aes(x = y, y = hy2), col = "blue")
 ```
 
-The red estimate is better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances). The kernel density estimate (in black) is biased around 3 because of the boundary problem discussed in Section \@ref(sec:kde). Otherwise, the kernel density estimate closely matches the GPD estimates.
+The red estimate is better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances). The kernel density estimate (in black) is biased around 3 because of the boundary problem discussed in Section \@ref(sec-kde). Otherwise, the kernel density estimate closely matches the GPD estimates.
 
 
 ## Principal component analysis
