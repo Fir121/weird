@@ -1,3 +1,13 @@
+:root {
+  --main: #4b3219;
+  --brighter: #bf6000;
+  --highlight: #f9d1a9;
+  --darkgray: #222222;
+  --gray: #cccccc;
+  --lightgray: #ebebeb;
+  --menu: #ffcc00;
+}
+
 .book .book header h1 {
   opacity: 1;
   text-align: left;
@@ -7,10 +17,10 @@
   margin: 0EM;
   padding-left: 20px;
   padding-bottom: 0em;
-  color: #3b556e;
+  color: var(--main);
   border-radius: 25px 25px 0px 0px;
   border-bottom: 0px;
-  background: #cccccc;
+  background: var(--gray);
   font-size: 36pt;
   line-height: 65px;
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -23,8 +33,8 @@
   margin: 0;
   padding-left: 20px;
   padding-bottom: 0em;
-  color: #cccccc;
-  background: #3b556e;
+  color: var(--gray);
+  background: var(--main);
   font-size: 18pt;
   font-style: normal;
   font-weight: normal;
@@ -38,8 +48,8 @@
   font-style: normal;
   border-radius: 0px 0px 25px 25px;
   padding-left: 20px;
-  color: #cccccc;
-  background: #3b556e;
+  color: var(--gray);
+  background: var(--main);
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -51,8 +61,8 @@
 }
 
 .book-body p.caption {
-  color: #333333;
-  background-color: #eeeeee;
+  color: var(--darkgray);
+  background-color: var(--lightgray);
   padding-left: 20px;
   font-size: 12pt;
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -63,20 +73,20 @@
 }
 
 h1, h2 {
-  border-bottom: 2px solid #3b556e;
+  border-bottom: 2px solid var(--main);
 }
 
 h1, h2, h3, h4 {
-  color: #3b556e;
+  color: var(--main);
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-a {
-color: #3b556e;
+.book .book-body .page-wrapper .page-inner section.normal a {
+color: var(--brighter);
 }
 
 dt {
-  color: #3b556e;
+  color: var(--main);
 }
 
 dd {
@@ -86,12 +96,12 @@ dd {
 }
 
 .book-body table {
-  background: #eeeeee;
+  background: var(--lightgray);
   border: 0px;
 }
 
 .book .book-body .page-wrapper .page-inner section.normal table td, .book .book-body .page-wrapper .page-inner section.normal table th {
-  color: #333333;
+  color: var(--darkgray);
   border: 1px;
   font-size: 11pt;
   height: 15px;
@@ -102,22 +112,22 @@ dd {
 }
 
 .book.color-theme-2 .book-body .page-wrapper .page-inner section.normal table td {
-  color: #ddd;
+  color: var(--lightgray);
 }
 
 .book.color-theme-2 .book-body .page-wrapper .page-inner section.normal table th {
-  color: #222;
+  color: var(--darkgray);
 }
 
 .book .book-body .page-wrapper .page-inner section.normal th {
-  background: #b2c2d2;
+  background: var(--highlight);
   font-weight: bold;
 }
 
 .book .book-body .page-wrapper .page-inner section.normal blockquote {
   quotes: none;
   text-shadow: none;
-  background: #b2c2d2;
+  background: var(--highlight);
   padding:  7px 20px 1px 20px;
   color: #000000;
   -moz-border-radius: 5px;
@@ -126,13 +136,13 @@ dd {
 }
 
 .book .book-body .page-wrapper .page-inner section.normal pre {
-    background: #e3e3e3;
+    background: var(--lightgray);
     padding: 5px 10px 5px 10px;
     margin: 0px 0px 5px 0px;
 }
 
 div.sourceCode {
-    background-color: #e3e3e3;
+    background-color: var(--lightgray);
 }
 
 ol {
@@ -140,21 +150,21 @@ ol {
 }
 
 .book .book-summary {
-  background-color: #3b556e;
+  background-color: var(--main);
 }
 
 .book .book-summary ul.summary li a {
   padding: 5px 5px 5px 5px;
-  color: #ddd;
+  color: var(--lightgray);
 }
 
 .book .book-summary ul.summary li.active>a {
-  color: #edb621;
+  color: var(--menu);
 }
 
 .book .book-summary ul.summary li a:hover {
-  background-color: #aaaaaa;
-  color: #3b556e;
+  background-color: var(--gray);
+  color: var(--main);
 }
 
 .book .book-summary .book-search {
@@ -163,7 +173,7 @@ ol {
 .book .book-summary .book-search input,
 .book .book-summary .book-search input:focus,
 .book .book-summary .book-search input:hover {
-  color: #edb621;
+  color: var(--menu);
 }
 
 .book .book-header, .book .book-summary {
@@ -172,8 +182,8 @@ ol {
 
 .btn:hover, .btn:focus, .btn.focus, .btn:active, .btn.active, .open>.dropdown-toggle.btn-success {
     color: #ffffff;
-    background-color: #536878;
-    border-color: #536878;
+    background-color: var(--main);
+    border-color: var(--main);
     border-radius: 6px;
 }
 
@@ -194,8 +204,8 @@ ol {
 
 .btn-success:hover, .btn-success:focus, .btn-success.focus, .btn-success:active, .btn-success.active, .open>.dropdown-toggle.btn-success {
     color: #ffffff;
-    background-color: #536878;
-    border-color: #536878;
+    background-color: var(--main);
+    border-color: var(--main);
     border-radius: 6px;
 }
 
