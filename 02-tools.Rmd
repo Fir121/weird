@@ -2,17 +2,19 @@
 
 This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference.
 
+
+
 ## Sample quantiles
 
 A quantile is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
 
-Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, which variation you use makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and there is no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, which variation you use makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
 
 Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{q}_p$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{q}_p$ and $100(1-p)$% of the intervals lie to the right of $\hat{q}_p$.
 
 Equivalently, let $k^+ = (n-1)p+1$ and
 $$
-  \hat{q}_{p} = (1-\gamma) y_{(k)} - \gamma y_{(k+1)},
+  \hat{q}_{p} = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
 $$
 where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder.
 
@@ -49,11 +51,48 @@ when the depth is an integer. Otherwise the depth is an integer plus 1/2, and th
 $$
   L_i = (y_{(\lfloor d_i\rfloor)} + y_{(\lfloor d_i\rfloor+1)})/2
   \qquad\text{and}\qquad
-  U_i = (y_{(\lfloor n-d_i+1\rfloor)} + y_{n-(\lfloor d_i\rfloor+1)+1})/2 .
+  U_i = (y_{(\lfloor n-d_i+1\rfloor)} + y_{(\lfloor n-d_i+1\rfloor+1)})/2 .
 $$
 Rather than label these using integers ($L_2,L_3,\dots$), Tukey proposed using letters ($L_F,L_E,L_D,\dots$) where $F=$ fourths, $E=$ eighths, $D=$ sixteenths, and so on.
 
-Because each depth is roughly half the previous depth, the letter values provide estimates of the quantiles with probabilities $p=1/2,1/4,1/8,\dots$.
+Because each depth is roughly half the previous depth, the lower letter values provide estimates of the quantiles with probabilities $p=\frac{1}{2},\frac14,\frac18,\dots$, while the upper letter values provide estimates of the quantiles with probabilities $p=\frac{1}{2},\frac34,\frac78,\dots$.
+
+### Example: Test cricket batting averages {-}
+
+```{r battingsubset, echo=FALSE}
+batave <- cricket_batting %>% filter(Innings > 20)
+n <- NROW(batave)
+lv <- lvplot::lvtable(batave$Average, k=4)
+d <- lv[4:7,"depth"]
+quartiles <- sprintf("%2.2f", quantile(batave$Average, seq(0,1,by=0.25)))
+kplus <- (n-1)*seq(0,1, by=0.25) + 1
+k <- trunc(kplus)
+gamma <- kplus - k
+```
+
+We will use the batting averages discussed in the previous section as an example. There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there are an odd number of observations, the median is the middle value in the ordered data, which is $\hat{q}_{0.5} = y_{(`r (n+1)/2`)} = `r quartiles[3]`$. The quartiles are given by 
+$$\hat{q}_{0.25} = 0.5 (y_{(`r k[2]`)} + y_{(`r k[2]+1`)}) = `r quartiles[2]`$$ 
+and 
+$$\hat{q}_{0.75} = 0.5 (y_{(`r k[4]`)} + y_{(`r k[4]+1`)}) = `r quartiles[4]`.$$ 
+
+The depths of the first four letter values are given by
+$$
+  d_1 = `r d[1]`,\quad
+  d_2 = `r d[2]`,\quad
+  d_3 = `r d[3]`,\quad\text{and}\quad
+  d_4 = `r d[4]`,
+$$
+so that the corresponding letter values are given by
+\begin{align*}
+ L_1 &= U_1 = y_{(`r d[1]`)} = `r sprintf("%2.2f", lv[4,"LV"])` &\\
+ L_F &= (y_{(`r trunc(d[2])`)} + y_{(`r trunc(d[2]+1)`)})/2 = `r sprintf("%2.2f", lv[3,"LV"])` \qquad
+ &U_F &= (y_{(`r trunc(n-d[2]+1)`)} + y_{(`r trunc(n-d[2]+1) + 1`)})/2 = `r sprintf("%2.2f", lv[5,"LV"])` \\
+ L_E &= y_{(`r trunc(d[3])`)} = `r sprintf("%2.2f", lv[2,"LV"])` \qquad
+ &U_E &= y_{(`r trunc(n-d[3]+1)`)} = `r sprintf("%2.2f", lv[6,"LV"])` \\
+ L_F &= (y_{(`r trunc(d[4])`)} + y_{(`r trunc(d[4]+1)`)})/2 = `r sprintf("%2.2f", lv[1,"LV"])` \qquad
+ &U_F &= (y_{(`r trunc(n-d[4]+1)`)} + y_{(`r trunc(n-d[4]+1) + 1`)})/2 = `r sprintf("%2.2f", lv[7,"LV"])` 
+\end{align*}
+In this example, the fourths are identical to the quartiles, but that is not always the case.
 
 ## Kernel density estimation {#sec-kde}
 
@@ -64,7 +103,7 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are inde
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
   (\#eq:kde)
 \end{equation}
-where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by 
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by 
 $K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
 
 ```{r of2021, include=FALSE}
@@ -132,9 +171,9 @@ When $h$ is too small, the density estimate is very rough with many peaks and tr
   h = 0.9 \min(s, \text{IQR}/1.34) n^{-1/5},
   (\#eq:ruleofthumb)
 \end{equation}
-where $s$ is the sample standard deviation and $\text{IQR} = \hat{q}_{0.75} - \hat{q}_{0.25}$. This tends to work reasonably well for most data sets. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used above.
+where $s$ is the sample standard deviation and $\text{IQR} = \hat{q}_{0.75} - \hat{q}_{0.25}$. This tends to work reasonably well for most data sets. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used.
 
-The preceding example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
+This example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
 
 We will use the `geom_density()` function, which uses the Gaussian kernel and Silverman's rule-of-thumb by default, although other choices are available.
 
@@ -159,22 +198,24 @@ As this is a much bigger data set (with `r NROW(of)` observations), the selected
 
 ### Statistical properties {-}
 
-The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. Equation \@ref(eq:kde) gives a consistent estimator of the underlying density $f$ when
-\begin{equation}
-  \lim_{n\rightarrow\infty} h = 0
-  \qquad\text{and}\qquad
-  \lim_{n\rightarrow\infty} nh = \infty.
-  (\#eq:asymptotickde)
-\end{equation}
-That is, $h$ should decrease slowly as $n$ increases.
+The statistical properties of the kernel density estimator \@ref(eq:kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015. 
 
-Another important asymptotic result is that the mean square error (MSE) of $\hat{f}(y)$ is
+An important asymptotic result is that the mean square error (MSE) of $\hat{f}(y)$ is
 \begin{equation}
   \text{E}\left[(\hat{f}(y) - f(y))^2\right] \approx
   \frac{1}{4}h^4[f''(y)]^2 + \frac{f(y)R(K)}{nh} ,
   (\#eq:mse)
 \end{equation}
-where $R(K) = \int K^2(u)du$ is the "roughness" of the kernel function. If we integrate the MSE over $y$ (assuming $f$ is sufficiently smooth for the integral to exist), we obtain the mean integrated squared error (MISE) given by
+where $R(K) = \int K^2(u)du$ is the "roughness" of the kernel function. An estimator is "consistent" if the MSE goes to zero as the sample size $n$ goes to infinity. So \@ref(eq:kde) gives a consistent estimator of the underlying density $f$ when both terms in \@ref(eq:mse) go to zero. That is,
+\begin{equation}
+  \lim_{n\rightarrow\infty} h = 0
+  \qquad\text{and}\qquad
+  \lim_{n\rightarrow\infty} nh = \infty,
+  (\#eq:asymptotickde)
+\end{equation}
+and so $h$ should decrease slowly as $n$ increases. Note that these conditions hold for \@ref(eq:ruleofthumb).
+
+If we integrate the MSE given by \@ref(eq:mse) over $y$ (assuming $f$ is sufficiently smooth for the integral to exist), we obtain the mean integrated squared error (MISE) given by
 \begin{equation}
   \text{E}\int \left[(\hat{f}(y) - f(y))^2\right] dy \approx
   \frac{1}{4}h^4R(f'') + \frac{R(K)}{nh} ,
@@ -219,9 +260,9 @@ oldfaithful %>%
 
 Here we have doubled the default bandwidth obtained using \@ref(eq:ruleofthumb).
 
-### Boundaries
+### Boundaries 
 
-When a Gaussian kernel is used, a kernel density estimate assumes that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. A common situation is when $f(u)=0$ for $u<0$, for example.
+When a Gaussian kernel is used, a kernel density estimate assumes that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. For example, if all data must be positive, then $f(u)=0$ for $u<0$.
 
 There are modified estimators which deal with this situation, but we won't concern ourselves with them here as this situation will not come up very often in the context of anomaly detection.
 
@@ -321,7 +362,7 @@ where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 Let's illustrate the idea with some simple examples.
 
 
-```{r hdr, eval=FALSE}
+```{r hdr, }
 # remotes::install_github("ropenscilabs/gghdr")
 library(gghdr)
 oldfaithful %>%
@@ -339,8 +380,43 @@ oldfaithful %>%
 
 ## Pairwise distances and nearest neighbours
 
+Most anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
+
+Consequently, some algorithms use only compute the pairwise distances of the $k$ nearest observations, which reduces the problem to computing up to $kn$ distances. For some types of distances, more efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time. 
+
+Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `FNN` package uses kd trees to quickly identify the $k$ nearest observations to each eruption.
+
+```{r}
+# Find 5 nearest neighbours to each eruption
+knn <- oldfaithful %>%
+  select(duration, waiting) %>%
+  FNN::get.knn(k = 5)
+# First eruption in the data set
+oldfaithful[1,]
+# Five closest observations
+oldfaithful[knn$nn.index[1,],]
+```
+
+This algorithm is simply computing Euclidean distances between the numeric variables. When the variables have very different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
+
+```{r}
+# Find 5 nearest neighbours to each eruption
+knn <- oldfaithful %>%
+  select(duration, waiting) %>%
+  scale() %>%
+  FNN::get.knn(k = 5)
+# First eruption in the data set
+oldfaithful[1,]
+# Five closest observations
+oldfaithful[knn$nn.index[1,],]
+```
+
+The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm". 
+
  * kNN
  * Approximate NN
+ 
+## Local outlier factor
 
 ## Extreme value theory {#sec-evt}
 

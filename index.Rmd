@@ -19,6 +19,7 @@ twitter-handle: robjhyndman
 
 # Preface {-}
 
+
 > This book is under development. Please don't ask me when it will be finished --- I have to fit this around my other work. In the meantime, I hope the incomplete book is useful.
 
 This book is about tools and techniques for finding and understanding anomalies. We will begin with some simple data sets with only one variable, and build up slowly to much more complicated data. We will cover popular but inadvisable methods to identify anomalies, pointing out their shortcomings, as well as more reliable and recommended approaches.
@@ -48,7 +49,7 @@ This will load the relevant data sets and functions from the packages needed to 
 2. Tools
 3. Univariate methods
 4. Bivariate methods
-5. Multivariate methods
+5. High-dimensional methods
 6. Non-Euclidean spaces
 7. Time series anomalies
 8. Spatial, network and graph data
@@ -60,7 +61,7 @@ This will load the relevant data sets and functions from the packages needed to 
 
 To include somewhere:
 
- * Local outlier factor
+ * Local outlier factor https://en.wikipedia.org/wiki/Local_outlier_factor
  * Isolation forests??
  * subspace, correlation-based and tensor-based methods
  * Cluster analysis?
@@ -73,10 +74,16 @@ To include somewhere:
 
 ### Additional Examples {-}
 
-- [https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/](https://sevvandi.netlify.app/post/2021-01-23-anomaly-detection-datasets/)
 - [https://github.com/rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday)
 -
 
+### Collections of anomalous data {-}
+
+* [Outlier Detection DataSets (ODDS)](http://odds.cs.stonybrook.edu/)
+* [KMASH](https://figshare.com/articles/dataset/Datasets_12338_zip/7705127)
+* [ADRepository: Real-world anomaly detection datasets](https://github.com/GuansongPang/ADRepository-Anomaly-detection-datasets)
+* [Unsupervised Anomaly Detection Benchmark](http://doi.org/10.7910/DVN/OPQMVF)
+* [DAMI](https://www.dbs.ifi.lmu.de/research/outlier-evaluation/DAMI/)
 
 &nbsp;<br><br><br>
 
