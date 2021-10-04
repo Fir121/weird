@@ -2,8 +2,8 @@
 
 In this chapter, we will explore various methods for identifying and displaying anomalies when there is only one variable.  Throughout the chapter, we will use two illustrative examples.
 
-1. The cricket batting averages discussed in Section \@ref(sec:scatterplots). Recall that this appeared to contain one genuine anomaly, the batsman Don Bradman.
-2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(sec:scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
+1. The cricket batting averages discussed in Section \@ref(sec_scatterplots). Recall that this appeared to contain one genuine anomaly, the batsman Don Bradman.
+2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(sec_scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
 3. One thousand draws from a N(0,1) distribution. Of course, this contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
 4. Nineteen draws from a N(0,1) distribution, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution.
 

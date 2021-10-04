@@ -31,9 +31,9 @@ I will assume a knowledge of statistics and probability at about second year und
 
 ### R {-}
 
-I will also assume you already know how to use R and are familiar with the [tidyverse](https://tidyverse.org) packages such as `dplyr`, `tidyr` and `ggplot2`.
+I will also assume that you already know how to use R and are familiar with the [tidyverse](https://tidyverse.org) packages such as `dplyr`, `tidyr` and `ggplot2`.
 
-All R examples in the book assume you have loaded the `weird` package first:
+All R examples in the book assume that you have loaded the `weird` package first:
 
 ```{r library, eval=FALSE}
 #remotes::install_github("robjhyndman/weird-package")
@@ -49,12 +49,13 @@ This will load the relevant data sets and functions from the packages needed to 
 3. Univariate methods
 4. Bivariate methods
 5. Multivariate methods
-6. Non-euclidean spaces
+6. Non-Euclidean spaces
 7. Time series anomalies
 8. Spatial, network and graph data
 9. Video data
 10. Categorical and text data
-11. Applications: network intrusion, fraud detection
+11. Deep learning for anomaly detection
+12. Applications: network intrusion, fraud detection
 
 
 To include somewhere:
