@@ -81,6 +81,8 @@ h1, h2, h3, h4 {
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+h3 > span, h4 > span, h5 > span, h6 > span, h7 > span, h8 > span, h9 > span, h10 > .header-section-number { display: none; }
+
 .book .book-body .page-wrapper .page-inner section.normal a {
 color: var(--brighter);
 }
