@@ -1,12 +1,13 @@
 :root {
-  --main: #4b3219;
-  --brighter: #bf6000;
-  --highlight: #f9d1a9;
+  --main: #3c326e;
+  --brighter: #3e27b4;
+  --highlight: #cfcbe6;
   --darkgray: #222222;
   --gray: #cccccc;
   --lightgray: #ebebeb;
   --menu: #ffcc00;
 }
+
 
 .book .book header h1 {
   opacity: 1;
