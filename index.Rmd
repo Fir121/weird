@@ -47,22 +47,23 @@ This will load the relevant data sets and functions from the packages needed to 
 
 1. Introduction
 2. Tools
-3. Univariate methods
-4. Bivariate methods
-5. High-dimensional methods
-6. Non-Euclidean spaces
-7. Time series anomalies
-8. Spatial, network and graph data
-9. Video data
-10. Categorical and text data
-11. Distributional observations
-12. Deep learning for anomaly detection
-13. Applications: network intrusion, fraud detection
+3. Parametric methods
+4. Quantile and depth-based methods
+5. Density-based methods
+6. Distance-based methods
+7. High-dimensional methods
+8. Non-Euclidean spaces
+10. Time series anomalies
+11. Spatial, network and graph data
+12. Video data
+13. Categorical and text data
+14. Distributional observations
+15. Deep learning for anomaly detection
+16. Applications: network intrusion, fraud detection
 
 
 To include somewhere:
 
- * Local outlier factor https://en.wikipedia.org/wiki/Local_outlier_factor
  * Isolation forests??
  * subspace, correlation-based and tensor-based methods
  * Cluster analysis?

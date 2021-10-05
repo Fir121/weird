@@ -1,0 +1,252 @@
+# Parametric methods {#ch-parametric}
+
+The early history of anomaly detection method involved statistical tests and assumptions about the distribution of the data. There are much better methods available these days, but these old methods are still very widely used. So they are included here for historical interest, and to point out their flaws to those still using them.
+
+Throughout the chapter, we will use four simple illustrative examples, two with real data and two with synthetic data.
+
+1. The cricket batting averages discussed in Section \@ref(sec-scatterplots). Recall that this appeared to contain one genuine anomaly, the batsman Don Bradman.
+2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(sec-scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
+3. One thousand draws from a N(0,1) distribution. Of course, this contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
+4. Nineteen draws from a N(0,1) distribution, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution.
+
+The two artificial examples are designed to test different methods when there are large and small data sets.
+
+First, we will generate the data for the last two examples. A seed is set to allow readers to replicate these examples, even though they are using randomly generated numbers.
+
+```{r n01a, fig.asp=0.2, fig.cap="One thousand observations from a N(0,1) distribution."}
+set.seed(1)
+n01a <- tibble(y = rnorm(1000))
+n01a %>%
+  ggplot(aes(x = y, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  scale_y_discrete() +
+  labs(y = "", x = "N(0,1)")
+```
+
+```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
+n01b <- tibble(y = c(rnorm(19), 4))
+n01b %>%
+  ggplot(aes(x = y, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  scale_y_discrete() +
+  labs(y = "", x = "N(0,1)")
+```
+
+
+## Z scores and related tests
+
+Many parametric methods are based on $z$-scores which assume the data come from a normal distribution. If our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
+$$z_i = (y_i - \bar{y})/s_y$$
+where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observations.
+
+Some books recommend that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
+
+1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
+2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size.
+3. The assumption of normality is very unlikely to be satisfied with most real data.
+
+Let's see what happens when we apply this test to the four examples.
+
+```{r zscore1}
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  mutate(z = (Average - mean(Average)) / sd(Average)) %>%
+  filter(abs(z) > 3) %>%
+  select(Player, Average, z)
+oldfaithful %>%
+  mutate(z = (duration - mean(duration)) / sd(duration)) %>%
+  filter(abs(z) > 3)
+n01a %>%
+  mutate(z = (y - mean(y)) / sd(y)) %>%
+  filter(abs(z) > 3)
+n01b %>%
+  mutate(z = (y - mean(y)) / sd(y)) %>%
+  filter(abs(z) > 3)
+```
+
+ 1. Don Bradman is correctly identified as the only outlier in the cricket batting averages.
+ 2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
+ 3. One spurious anomaly is identified in the 1000 N(0,1) observations.
+ 4. The anomaly added to the 19 N(0,1) observations has not been identified.
+
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain the same results in the first and third examples, and we spot the true anomaly in the fourth example. But the second Old Faithful example gives even worse results.
+
+```{r check, include=FALSE}
+# Check last statement
+n1 <- cricket_batting %>%
+  filter(Innings > 20) %>%
+  mutate(z = (Average - median(Average)) / IQR(Average) * 1.34) %>%
+  filter(abs(z) > 3) %>%
+  select(Player, Average, z) %>%
+  NROW()
+n2 <- oldfaithful %>%
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
+n3 <- n01a %>%
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
+n4 <- n01b %>%
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) %>%
+  filter(abs(z) > 3) %>%
+  NROW()
+stopifnot(n1 == 1L)
+stopifnot(n2 == 209L)
+stopifnot(n3 == 1L)
+stopifnot(n4 == 1L)
+of_threshold <- oldfaithful %>%
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
+  filter(abs(z) <= 3) %>%
+  pull(duration) %>%
+  min()
+```
+
+```{r zscore2}
+oldfaithful %>%
+  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) %>%
+  filter(abs(z) > 3)
+```
+
+Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
+
+In any case, even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is `r round(2*pnorm(-3),4)`, so we would expect to see 1 in every `r round(.5/pnorm(-3))` regular observations being identified as an anomaly using this approach.
+
+### Peirce's criterion {-}
+
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
+
+```{r zscorecriteria, echo=FALSE, fig.cap="Criteria for anomalies based on z-scores."}
+n <- exp(seq(log(3), log(1e5), l = 100))
+threshold <- numeric(length(n))
+for (i in seq_along(n)) {
+  threshold[i] <- weird:::peirce_threshold(n[i])
+}
+tibble(n = n, c = threshold) %>%
+  ggplot(aes(x = n, y = c)) +
+  geom_line() +
+  geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
+  scale_x_log10() +
+  labs(x = "n (sample size)", y = "c (threshold)") +
+  geom_label(aes(x = 1500, y = 4.1, label = "Peirce criterion")) +
+  geom_label(aes(x = 1e4, y = 3.55, label = "Chauvenet criterion"), col = "red")
+```
+
+The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
+
+The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the four examples.
+
+```{r peirce_examples}
+cricket_batting %>% filter(peirce_anomalies(Average))
+oldfaithful %>% filter(peirce_anomalies(duration))
+n01a %>% filter(peirce_anomalies(y))
+n01b %>% filter(peirce_anomalies(y))
+```
+
+1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
+2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
+3. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
+4. The true anomaly has been spotted amongst the 19 N(0,1) observations.
+
+This failure is at least partly due to the standard deviation being highly inflated by the existence of the anomalies in the data set.
+
+### Chauvenet's criterion {-}
+
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Cauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
+
+The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
+
+```{r checkchauvenet, include=FALSE}
+n1 <- cricket_batting %>%
+  filter(chauvenet_anomalies(Average)) %>%
+  NROW()
+n2 <- oldfaithful %>%
+  filter(chauvenet_anomalies(duration)) %>%
+  NROW()
+n3 <- n01a %>%
+  filter(chauvenet_anomalies(y)) %>%
+  NROW()
+n4 <- n01b %>%
+  filter(chauvenet_anomalies(y)) %>%
+  NROW()
+stopifnot(n1 == 0L)
+stopifnot(n2 == 1L)
+stopifnot(n3 == 1L)
+stopifnot(n4 == 1L)
+```
+
+### Maximum z-score test {-}
+
+By the 20th century, the concept of hypothesis testing had been developed, and the $t$-distribution had been discovered, and both were applied to the identification of anomalies using $z$-scores. Many tests were developed under different assumptions about the underlying distribution and what was assumed to be known [@Hawkins1980]. We will mention just two of them here, as they are the most widely used.
+
+Egon Pearson and Chandra Sekar proposed [@Pearson1936] that an observation be considered an anomaly if $|z_i|> c_\alpha$, where the critical value is given by
+$$
+c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}}
+$$
+and $t_{p, m}$ is the $1-p$ quantile of the $t$ distribution with $m$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
+$$
+c_\alpha = \frac{(n-1)t_{\alpha/2n, n-2}}{\sqrt{n(n-2 + t^2_{\alpha/2n, n-2})}}.
+$$
+
+Figure \@ref(fig:zscoretests) shows the critical values at $\alpha=0.05$ for these tests, along with the corresponding value from @Chauvenet1863 for comparison.
+
+(ref:zscoretests) Critical values for maximum $z$-score tests with $\alpha=0.05$.
+
+```{r zscoretests, echo=FALSE, fig.cap="(ref:zscoretests)"}
+alpha <- 0.05
+n <- exp(seq(log(3), log(1e5), l = 100))
+t1 <- qt(1 - alpha / n, n - 2)
+t2 <- qt(1 - alpha / (2 * n), n - 2)
+tibble(n = n) %>%
+  ggplot(aes(x = n)) +
+  geom_line(aes(y = t1 * sqrt((n - 1) / (n - 2 + t1^2))), col = "black") +
+  geom_line(aes(y = (n - 1) / sqrt(n) * sqrt(t2^2 / (n - 2 + t2^2))), col = "blue") +
+  geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
+  scale_x_log10(
+    limits = c(3, 2e6),
+    breaks = 10^(1:6),
+    minor_breaks = NULL,
+    labels = format(10^(1:6), scientific = FALSE, trim = TRUE)
+  ) +
+  labs(x = "n (sample size)", y = latex2exp::TeX("$c_{\\alpha}$ (threshold)")) +
+  geom_label(aes(x = 1.1e5, y = 4.8, label = "Pearson-Sekar test", hjust = "left"), col = "black") +
+  geom_label(aes(x = 1.1e5, y = 5.1, label = "Grubbs test", hjust = "left"), col = "blue") +
+  geom_label(aes(x = 1.1e5, y = 4.5, label = "Chauvenet criterion", hjust = "left"), col = "red")
+```
+
+This shows that for small sample sizes ($n<10$), the critical value for Grubbs' test is too low and is likely to lead to many spurious anomalies being detected.
+
+We can apply the test using the `grubbs.test()` function from the `outliers` package.
+
+```{r}
+library(outliers)
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  pull(Average) %>%
+  grubbs.test()
+grubbs.test(oldfaithful$duration)
+grubbs.test(n01a$y)
+grubbs.test(n01b$y)
+```
+
+An outlier is identified in each case.
+
+These tests are sometimes applied iteratively, where observations are removed from the data if determined to be anomalies, and the test re-applied to the remaining data. This process continues until no more anomalies are found. However, this procedure will clearly change the size of the test due to the problem of multiple comparisons.
+
+I do not recommend any tests based on $z$-scores because they are not robust to the anomalies they are trying to detect, and are based on overly-restrictive assumptions about the underlying distribution.
+
+## Other statistical tests
+
+### Dixon's Q test {-}
+
+If $y_{(1)},\dots,y_{(n)}$ denote the ordered values of our sample, then Dixon's Q statistic [@Dixon1950] is given by
+$$
+  Q = \frac{y_{(n)} - y_{(n-1)}}{y_{(n)} - y_{(1)}},
+$$
+the ratio of the difference between the two largest values to the range of the data. A variant of the statistic uses $y_{(2)}-y_{(1)}$ in the denominator instead, the difference between the second smallest and minimum observations. For samples sizes $n$ in the range 3 to 30, we can use the `dixon.test()` function from the `outliers` package to perform the test. For larger sample sizes, critical values are not available for this test. So we can only use it on the last of our four examples, where it finds the outlying observation.
+
+```{r}
+dixon.test(n01b$y)
+```
+
+The test has an obvious flaw in that the minimum $y_{(1)}$ is also potentially an anomaly, and then the assumptions of the test break down.
