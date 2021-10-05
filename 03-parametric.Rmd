@@ -2,6 +2,8 @@
 
 The early history of anomaly detection method involved statistical tests and assumptions about the distribution of the data. There are much better methods available these days, but these old methods are still very widely used. So they are included here for historical interest, and to point out their flaws to those still using them.
 
+## Four univariate examples
+
 Throughout the chapter, we will use four simple illustrative examples, two with real data and two with synthetic data.
 
 1. The cricket batting averages discussed in Section \@ref(sec-scatterplots). Recall that this appeared to contain one genuine anomaly, the batsman Don Bradman.
@@ -69,7 +71,7 @@ n01b %>%
  3. One spurious anomaly is identified in the 1000 N(0,1) observations.
  4. The anomaly added to the 19 N(0,1) observations has not been identified.
 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34), we obtain the same results in the first and third examples, and we spot the true anomaly in the fourth example. But the second Old Faithful example gives even worse results.
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. We will discuss this in more detail in Section \@ref(sec-quantiles).] we obtain the same results in the first and third examples, and we spot the true anomaly in the fourth example. But the second Old Faithful example gives even worse results.
 
 ```{r check, include=FALSE}
 # Check last statement

@@ -1,7 +1,7 @@
 # Quantile and depth-based measures {#ch-quantile}
 
 
-## Sample quantiles
+## Sample quantiles {#sec-quantiles}
 
 A quantile is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
 

@@ -285,6 +285,7 @@ oldfaithful %>%
 
 Points outside the 99% region are shown separately and indicate possible outliers.
 
+
 ## KDE scores {#sec-kdescores}
 
 A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is \@ref(eq:mkde)
@@ -321,10 +322,6 @@ The two large scores correspond to the extreme 2 hour duration, and the tiny 1 s
 For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
 
 
-
-## HDR boxplots
-
-> Need gghdr package to be updated.
 
 ## Lookout algorithm
 

@@ -129,7 +129,7 @@ The second half of the 20th century witnessed the advent of computing, which all
 
 ### Distance and density-based methods {-}
 
-Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on densities. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
+Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on distances. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
 
 Density-based methods are discussed in Chapter \@ref(ch-density), while distance-based methods are the subject of Chapter \@ref(ch-distance).
 
