@@ -357,41 +357,6 @@ oldfaithful %>%
   labs(x = "Duration (seconds)")
 ```
 
-## Low density anomalies
-
-A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is (equation \@ref(eq:mkde))
-$$
-  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
-$$
-and we define the "**kde score**" at each observation as
-$$
-  s_i = -\log(\hat{f}_i).
-$$
-These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $|\bm{y}_i-\bm{y}_j|$ is large. So the largest possible kde score is
-$$
-  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H})
-$$
-for a Gaussian kernel. For univariate data, when $d=1$, this simplifies to
-$$
-  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
-$$
-
-For the Old Faithful eruption duration data, we obtain the following kde scores.
-
-```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
-of_scores <- oldfaithful %>%
-  mutate(score = kde_scores(duration))
-of_scores %>% arrange(desc(score))
-of_scores %>%
-  filter(duration < 7000) %>%
-  ggplot(aes(x = duration, y = score)) +
-  geom_point()
-```
-
-The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum.
-
-For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
-
 ## Highest density regions
 
 For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
@@ -411,9 +376,46 @@ oldfaithful %>%
   ggplot() +
   geom_point(aes(x = 0, y = duration)) +
   geom_hdr_boxplot(aes(y = duration), prob = c(0.5, 0.99)) +
-  labs(y = "Duration (seconds)") +
+  labs(x = "", y = "Duration (seconds)") +
   coord_flip()
 ```
+
+Points outside the 99% region are shown separately and indicate possible outliers.
+
+## KDE scores {#sec-kdescores}
+
+A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is \@ref(eq:mkde)
+$$
+  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
+$$
+and we define the "**kde score**" at each observation as
+$$
+  s_i = -\log(f_i).
+$$
+These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $|\bm{y}_i-\bm{y}_j|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
+$$
+  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}).
+$$
+For univariate data, when $d=1$, this simplifies to
+$$
+  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
+$$
+
+For the Old Faithful eruption duration data, we obtain the following kde scores.
+
+```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
+of_scores <- oldfaithful %>%
+  mutate(score = kde_scores(duration))
+of_scores %>% arrange(desc(score))
+of_scores %>%
+  filter(duration < 7000) %>%
+  ggplot(aes(x = duration, y = score)) +
+  geom_point()
+```
+
+The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. The lowest kde scores correspond to the mode of the estimated density.
+
+For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
 
 ## Pairwise distances and nearest neighbours
 
