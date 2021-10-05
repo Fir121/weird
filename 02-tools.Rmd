@@ -466,16 +466,87 @@ oldfaithful[1,]
 oldfaithful[kann$nn.idx[1,],]
 ```
 
-This algorithm also returns the original observation, so `k=6` has been set instead. Here the fourth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
+This function also returns the original observation, so `k=6` has been set instead. Here the fourth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
 
 ## Local outlier factors
 
-A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. First we need some definitions.
+A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. This is similar to the idea discussed in \@ref(sec-kdescores) of finding points with low probability density estimates, in that it is designed to find points in areas with few surrounding observations.
 
-* The $k$-distance of an observation $p$ is the distance $D_k(p)$ between observation $p$ and its $k$th nearest neighbour. That is, there are $k$ observations at a distance no more than $D_k$ from $p$. Actually, there may be more than $k$ observations within $D_k$ of $p$ if there are multiple observations at distance $D_k$ from $p$.
-* The reachability distance between observations $p$ and $q$ is the
+Suppose we write the distance between observations $\bm{y}_i$ and $\bm{y}_j$ as $\|\bm{y}_i - \bm{y}_j\|$, and let $d_{i,k}$ be the distance between observation $\bm{y}_i$ and its $k$th nearest neighbour.
 
-First define the "reachability distance" of an observation
+Let $N_{i,k}$ be the set of $k$ nearest neighbours within $d_{i,k}$ of $\bm{y}_i$. (If there are multiple observations all exactly $d_{i,k}$ from $\bm{y}_i$, then $N_{i,k}$ may contain more than $k$ observations, but we will ignore that issue here.)
+
+Note that an observation $\bm{y}_j$ may be within $N_{i,k}$ while $\bm{y}_i$ does not fall within $N_{j,k}$, as shown in the diagram below.
+
+```{r njk, fig.cap="A synthetic data set of 11 observations. Nearest neighbourhoods containing five observations each are shown for $\\bm{y}_1$ (in orange) and $\\bm{y}_2$ (in blue). The neighbourhood of $\\bm{y}_1$ contains $\\bm{y}_2$ in its nearest five observations, but $\\bm{y}_2$ does not include $\\bm{y}_1$ in its nearest five observations.", echo=FALSE, warning=FALSE}
+set.seed(2)
+cols <- c("#D55E00", "#0072B2")
+df <- tibble(
+    x = c(rnorm(5), rnorm(6, 5, 1)),
+    y = c(rnorm(5), rnorm(6, 5, 1))
+  ) 
+chosen <- c(3,11)
+knn <- dbscan::kNN(df, 5)$id[chosen,]
+df <- df %>%
+  mutate(
+    d = dbscan::kNNdist(df,5),
+    n15 = if_else(row_number() %in% knn[1,], "N15", "NO"),
+    n25 = if_else(row_number() %in% knn[2,], "N25", "NO")
+  )
+df %>% 
+  ggplot() +
+  ggforce::geom_circle(aes(x0=x,y0=y,r=d, col=c("N15","N25"), fill=c("N15","N25")),
+                       alpha=0.2, data=df[chosen,]) +
+  geom_point(aes(x=x, y=y), size=3) +
+  #geom_point(aes(x=x, y=y), size=3, data=df[chosen,], col=cols) +
+  annotate("text", x=df$x[chosen]+0.3, y=df$y[chosen]+0.3, 
+           label=latex2exp::TeX(paste0("$y_",1:2,"$"), bold=TRUE), col=cols) +
+  annotate("text", x=c(-0.5,3.6), y=c(4.2,6),
+           label=latex2exp::TeX(paste0("$N_{",1:2,",5}$")), col=cols) +
+  geom_segment(aes(x=x, y=y,xend=c(7.75,8.75), yend=y), 
+               arrow = arrow(length = unit(0.02, "npc")),
+               data=df[chosen,], col=cols) +
+  annotate("text", x=c(4.7,7), y=c(-0.8,4.1), 
+           label=latex2exp::TeX(paste0("$d_{",1:2,",5}$")), col=cols) +
+  coord_fixed(xlim=c(-4,8.5), ylim=range(df$y)) +
+  guides(col="none",fill="none") +
+  theme_void()
+```
+
+Let $r_k(i,j) = \max(d_{j,k}, \|\bm{y}_i-\bm{y}_j\|)$ be the "reachability" of $\bm{y}_i$ from $\bm{y}_j$. Thus, $r_k(i,j)$ is the distance between observations $\bm{y}_i$ and $\bm{y}_j$ when they are far from each other, but is equal to $d_{j,k}$ if $\bm{y}_i$ is one of the $k$ nearest neighbours of $\bm{y}_j$. The reachability is a truncated variant of the usual Euclidean distance $\|\bm{y}_i-\bm{y}_j\|$ so that it is not less than $d_{j,k}$.
+
+The average reachability of $\bm{y}_i$ *from* its nearest neighbours is given by
+$$
+  \bar{r}_{i,k} = k^{-1} \sum_{\bm{y}_j \in N_{i,k}} r_k(i,j)
+$$
+This is not the same as the average reachability of the neighbours *from* $\bm{y}_i$ which, by definition, would be $d_{i,k}$. An observation will have high average reachability if it is far from its neighbours, whereas it will have low average reachability if it has many close neighbours.
+
+Then the local outlier factor for observation $\bm{y}_i$ is given by
+$$
+\ell_{i,k} = \frac{\bar{r}_{i,k}}{k}\sum_{\bm{y}_j \in N_{i,k}} \bar{r}^{-1}_{j,k}.
+$$
+Thus, it is the ratio between $\bar{r}_{i,k}$ and the average value of $\bar{r}^{-1}_{j,k}$ for points within its neighbourhood.
+
+This provides a relative measure of the density of each observation compared to its neighbours. An observation is regarded as an anomaly if it is in a low-density region (far from its neighbours) while its neighbours are in higher density regions (with many neighbours nearby). A value of $\ell_{i,k}$ much greater than 1 shows that the observation has much larger average reachability compared to its neighbours, and so is regarded as an anomaly.
+
+One problem with this definition is that $\ell_{i,k}$ can be infinite. If the data set contains at least $k+1$ identical observations, then the average reachability $\bar{r}_k(j,k)$ will be 0 if $\bm{y}_j$ is one of the group of identical observations. Consequently, $\ell_{i,k} = \infty$ if $\bm{y}_i$ is a neighbour to one of the group of identical observations.  In this book we use a slightly different definition from that used elsewhere and replace these infinite values with zeros.
+
+Another problem is that it can be difficult to determine an appropriate value for $k$.
+
+### Example: Old Faithful data
+
+```{r}
+of_scores <- oldfaithful %>%
+  mutate(lof = lof_scores(duration, k=150))
+of_scores %>% arrange(desc(lof))
+of_scores %>%
+  filter(duration < 7000) %>%
+  ggplot(aes(x = duration, y = lof)) +
+  geom_point()
+```
+
+Again, the two large scores correspond to the extreme 2 hour duration and the tiny 1 second duration. The value of $k=150$ has been chosen by trial and error.
+
 
 ## Depth measures
 
@@ -483,7 +554,7 @@ First define the "reachability distance" of an observation
 
 Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
-It is well known, due to the central limit theorem, that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippet-Gnedenko (FTG) Theorem provides an analagous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Frechet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
+It is well known, due to the central limit theorem, that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analagous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Frechet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
 
 ### Fisher-Tippett-Gnedenko Theorem {-}
 
