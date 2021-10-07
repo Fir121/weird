@@ -1,7 +1,7 @@
-# Density-based methods {#ch-density}
+# Density-based methods {#density-methods}
 
 
-## Kernel density estimation {#sec-kde}
+## Kernel density estimation {#kde}
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
@@ -84,7 +84,7 @@ This example using only 10 observations was purely to illustrate the method. Let
 
 We will use the `geom_density()` function, which uses the Gaussian kernel and Silverman's rule-of-thumb by default, although other choices are available.
 
-```{r oldfaithful3, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+```{r oldfaithful4, fig.asp=0.45, fig.cap="Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
   filter(duration < 7000) %>%
   ggplot(aes(x = duration)) +
@@ -286,7 +286,7 @@ oldfaithful %>%
 Points outside the 99% region are shown separately and indicate possible outliers.
 
 
-## KDE scores {#sec-kdescores}
+## KDE scores {#kdescores}
 
 A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is \@ref(eq:mkde)
 $$
@@ -337,7 +337,7 @@ We also define the "leave-one-out" kernel density estimate --- the estimate of $
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
 
-In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section \@ref(sec-evt), with the $90^{\text{th}}$ percentile as the threshold.
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section \@ref(evt), with the $90^{\text{th}}$ percentile as the threshold.
 
 ```{r ofpot}
 of_scores <- oldfaithful %>%
@@ -375,11 +375,13 @@ cricket_batting %>%
 oldfaithful %>%
   mutate(lookout = lookout_prob(duration)) %>%
   filter(lookout < 0.05)
-n01a %>%
-  mutate(lookout = lookout_prob(y)) %>%
+n01 %>%
+  mutate(lookout = lookout_prob(v1)) %>%
   filter(lookout < 0.05)
+n01b <- n01 %>% select(v2) %>% head(20)
+n01b$v2[20] <- 4
 n01b %>%
-  mutate(lookout = lookout_prob(y)) %>%
+  mutate(lookout = lookout_prob(v2)) %>%
   filter(lookout < 0.05)
 ```
 

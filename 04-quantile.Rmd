@@ -1,11 +1,14 @@
-# Quantile and depth-based measures {#ch-quantile}
+# Quantile and depth-based measures {#quantile-methods}
 
+Once computing had developed to the point where more sophisticated calculations were possible, new methods for anomaly detection were developed which did not make strong assumptions about the underlying probability distribution of the data. These newer approaches were based either on the sample quantiles of the data, or used the concept of data depth to find anomalies.
 
-## Sample quantiles {#sec-quantiles}
+In the last chapter, we considered methods based only on one variable at a time. In this chapter (and the next two), we will look at methods that use either one or two variables.
 
-A quantile is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
+## Sample quantiles {#quantiles}
 
-Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a sample quantile. There are a surprising number of ways this can be done, and there is no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, which variation you use makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+A quantile for a single variable is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
+
+Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a quantile. There are a surprising number of ways this can be done, and there is no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Fortunately, which variation you use makes little difference except for tiny data sets where $n$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
 
 Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{q}_p$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{q}_p$ and $100(1-p)$% of the intervals lie to the right of $\hat{q}_p$.
 
@@ -22,19 +25,65 @@ A few special cases give some well-known summary statistics.
   * When $p=0.5$ and $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{q}_{0.5}$ is the average of the middle two observations.
   * When $p=0.5$ and $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{q}_{0.5}$ is the middle observation.
 
-### Quartiles, depths and letter values {-}
-
 The sample quantiles $\hat{q}_{0.25}$ and $\hat{q}_{0.75}$ are known as the **quartiles**, and the difference between them is the **IQR** or "interquartile range". The latter is often used as an alternative to the standard deviation for estimating the spread of the data as it is unaffected by any anomalies in the data. When used in this way, the IQR is usually divided by 1.34 to make it an estimate of the standard deviation assuming a normal distribution. The scaling factor will be different for other distributions.
 
-Closely related are the "**fourths**" (or "hinges") introduced by @Tukey1977-xd. These are alternative (simpler) estimates of the quartiles given by
+### Example: Test cricket batting averages {-}
+
+Using this idea, we can calculate some of the quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings.
+
+```{r battingsubset, echo=FALSE}
+batave <- cricket_batting %>% filter(Innings > 20)
+n <- NROW(batave)
+lv <- lvplot::lvtable(batave$Average, k=4)
+d <- lv[4:7,"depth"]
+quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0,1,by=0.25),0.99)))
+kplus <- (n-1)*c(seq(0,1, by=0.25), 0.99) + 1
+k <- trunc(kplus)
+gamma <- kplus - k
+```
+
+There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the median is the average of the middle two observations in the ordered data, which is 
+$$\hat{q}_{0.5} = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$ 
+The quartiles are given by
+$$\hat{q}_{0.25} = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
+and
+$$\hat{q}_{0.75} = `r 1- gamma[4]` y_{(`r k[4]`)} + `r gamma[4]` y_{(`r k[4]+1`)} = `r quartiles[4]`.$$
+The 0.99 quantile is given by
+$$\hat{q}_{0.99} = `r 1- gamma[6]` y_{(`r k[6]`)} + `r gamma[6]` y_{(`r k[6]+1`)} = `r quartiles[6]`.
+$$
+
+* So 50% of all batters have an average higher than `r quartiles[3]`, while 50% of all batters have a lower average than `r quartiles[3]`.
+* Also, 50% of all batters have an average between `r quartiles[2]` and `r quartiles[4]`, with 25% lower than `r quartiles[2]` and 25% higher than `r quartiles[4]`.
+* Only 1% of batters have an average above `r quartiles[6]`.
+
+These values are easily computed using the `quantile()` function.
+
+```{r battingquantiles}
+cricket_batting %>% 
+  filter(Innings > 20) %>%
+  pull(Average) %>%
+  quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1))
+```
+
+### Anomalies using quantiles
+
+One of the simplest approaches that is sometimes used to find anomalies in univariate data is to identify the points that are above or below a specified quantile value. For example, we might identify anomalies as points above the 0.999 quantile or below the 0.001 quantile. More generally, an anomaly could be defined as points above $\hat{q}_{1-p}$ or below $\hat{q}_{p}$. The problem with that approach is that you need at least $1/p$ observations to find any anomaly, and even with a clean data set you will find $2p$ "anomalous" observations. Further, it doesn't allow us to find points that are inliers but otherwise unusual. So we don't recommend this approach either.
+
+## Data depth
+
+For univariate data, the **depth** of an observation is a measure of how deeply buried it is when all observations are ordered. That is, how far would you need to count from either the smallest or largest observation until you encountered the observation of interest. So the minimum and maximum both have depth 1, while the median has the largest depth of $(n+1)/2$.
+
+The other sample quantiles as defined in the previous section do not correspond exactly to specific depths, but @Tukey1977-xd introduced variations for some quantiles that are based on depths. He called these "letter values".
+
+### Letter values
+
+Closely related to quartiles are the "**fourths**" (or "hinges"). These are alternative (simpler) estimates of the quartiles given by
 $$
   L_F = y_{(\ell)}
   \qquad\text{and}\qquad
   U_F = y_{(u)},
 $$
 where $\ell = (\lfloor n/2 \rfloor + 1)/2$ and $u = n+1 - (\lfloor n/2 \rfloor + 1)/2$. These order statistics are based on depth values.
-
-For univariate data, the **depth** of an observation is a measure of how deeply buried it is when all observations are ordered. That is, how far would you need to count from either the smallest or largest observation until you encountered the observation of interest. So the minimum and maximum both have depth 1, while the median has the largest depth of $(n+1)/2$.
 
 Tukey's fourths are at half the depth of the median. In other words, $L_F$ is the median of the observations below the median, while $L_U$ is the median of the observations above the median.
 
@@ -56,23 +105,7 @@ Because each depth is roughly half the previous depth, the lower letter values p
 
 ### Example: Test cricket batting averages {-}
 
-```{r battingsubset, echo=FALSE}
-batave <- cricket_batting %>% filter(Innings > 20)
-n <- NROW(batave)
-lv <- lvplot::lvtable(batave$Average, k=4)
-d <- lv[4:7,"depth"]
-quartiles <- sprintf("%2.2f", quantile(batave$Average, seq(0,1,by=0.25)))
-kplus <- (n-1)*seq(0,1, by=0.25) + 1
-k <- trunc(kplus)
-gamma <- kplus - k
-```
-
-We will use the batting averages discussed in the previous section as an example. There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there are an odd number of observations, the median is the middle value in the ordered data, which is $\hat{q}_{0.5} = y_{(`r (n+1)/2`)} = `r quartiles[3]`$. The quartiles are given by
-$$\hat{q}_{0.25} = 0.5 (y_{(`r k[2]`)} + y_{(`r k[2]+1`)}) = `r quartiles[2]`$$
-and
-$$\hat{q}_{0.75} = 0.5 (y_{(`r k[4]`)} + y_{(`r k[4]+1`)}) = `r quartiles[4]`.$$
-
-The depths of the first four letter values are given by
+We will continue to use the batting averages discussed in the previous section as an example. The depths of the first four letter values are given by
 $$
   d_1 = `r d[1]`,\quad
   d_2 = `r d[2]`,\quad
@@ -91,9 +124,6 @@ so that the corresponding letter values are given by
 \end{align*}
 In this example, the fourths are identical to the quartiles, but that is not always the case.
 
-### Anomalies using quantiles
-
-One of the simplest approaches that is sometimes used to find anomalies in univariate data is to identify the points that are above or below a specified quantile value. For example, we might identify anomalies as points above the 0.999 quantile or below the 0.001 quantile. More generally, an anomaly could be defined as points above $\hat{q}_{1-p}$ or below $\hat{q}_{p}$. The problem with that approach is that you need at least $1/p$ observations to find any anomaly, and even with a clean data set you will find $2p$ "anomalous" observations. Further, it doesn't allow us to find points that are inliers but otherwise unusual. So we don't recommend this approach.
 
 ## Boxplots
 
@@ -202,7 +232,7 @@ Even with a huge sample size, the probability of spotting a genuine anomaly usin
 
 Let's apply this approach to our four examples. First we will write a short function to implement the idea.
 
-```{r barbato4}
+```{r barbato4, eval=TRUE}
 barbato_anomaly <- function(y, extreme = FALSE) {
   n <- length(y)
   q1 <- quantile(y, 0.25, na.rm = TRUE)
@@ -214,8 +244,10 @@ cricket_batting %>%
   filter(Innings > 20) %>%
   filter(barbato_anomaly(Average))
 oldfaithful %>% filter(barbato_anomaly(duration))
-n01a %>% filter(barbato_anomaly(y))
-n01b %>% filter(barbato_anomaly(y))
+n01 %>% filter(barbato_anomaly(v1))
+n01b <- n01 %>% select(v2) %>% head(20)
+n01b$v2[20] <- 4
+n01b %>% filter(barbato_anomaly(v2))
 ```
 
 Only the extreme outlier in the duration data is identified as an anomaly.
@@ -272,8 +304,8 @@ oldfaithful %>%
 ```
 
 ```{r lvplots2, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 1000 N(0,1) observations."}
-n01a %>%
-  ggplot(aes(x = 1, y = y)) +
+n01 %>%
+  ggplot(aes(x = 1, y = v1)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
   coord_flip() +
@@ -283,7 +315,7 @@ n01a %>%
 
 ```{r lvplots3, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 19 N(0,1) observations with an anomaly at 4."}
 n01b %>%
-  ggplot(aes(x = 1, y = y)) +
+  ggplot(aes(x = 1, y = v2)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
   coord_flip() +
@@ -293,7 +325,21 @@ n01b %>%
 In this last example, because there are only 20 observations, there is not enough data to estimate the quantiles beyond the fourths. So only the middle box is shown.
 
 
-## Depth measures
+## Tukey depth
+
+For multivariate data, there is no natural ordering of observations by size, so the concept of depth has to be thought about differently. It is still a measure of how centrally a point is located in a data set, but we need to think about what "central" means when there are multiple variables.
+
+The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{z}$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any closed halfplane with boundary line through $\bm{z}$. This is often called the "Tukey depth" of the point. 
+
+A diagram will help illustrate the idea.
+
+```{r}
+
+```
+
+
+
+The depth region $D_k$ is the set of all points $\bm{z}$ with $ldepth \ge k$. The depth regions are convex polygons and $D_{k+1} \subset D_k$.
 
 
 ## Bagplots
