@@ -1,60 +1,10 @@
-# Distance-based methods {#ch-distance}
+# Distance-based methods {#distance-methods}
 
 
-## Pairwise distances and nearest neighbours
-
-Most anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
-
-Consequently, some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
-
-Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `FNN` package uses kd trees to quickly identify the $k$ nearest observations to each eruption.
-
-```{r}
-# Find 5 nearest neighbours to each eruption
-knn <- oldfaithful %>%
-  select(duration, waiting) %>%
-  FNN::get.knn(k = 5)
-# First eruption in the data set
-oldfaithful[1,]
-# Five closest observations
-oldfaithful[knn$nn.index[1,],]
-```
-
-This algorithm is simply computing Euclidean distances between the numeric variables. When the variables have very different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
-
-```{r}
-# Find 5 nearest neighbours to each eruption
-knn <- oldfaithful %>%
-  select(duration, waiting) %>%
-  scale() %>%
-  FNN::get.knn(k = 5)
-# First eruption in the data set
-oldfaithful[1,]
-# Five closest observations
-oldfaithful[knn$nn.index[1,],]
-```
-
-The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm".
-
-For very large data sets, approximations are available which speed up the computation even more, but are less accurate in finding the $k$ nearest neighbours. The `RANN` package uses an approximation that finds the nearest $k$ observations within a specified distance tolerance.
-
-```{r}
-# Find 5 approximate nearest neighbours to each eruption
-kann <- oldfaithful %>%
-  select(duration, waiting) %>%
-  scale() %>%
-  RANN::nn2(k = 6, eps = 2)
-# First eruption in the data set
-oldfaithful[1,]
-# Five closest observations
-oldfaithful[kann$nn.idx[1,],]
-```
-
-This function also returns the original observation, so `k=6` has been set instead. Here the fourth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
 
 ## Local outlier factors
 
-A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. This is similar to the idea discussed in \@ref(sec-kdescores) of finding points with low probability density estimates, in that it is designed to find points in areas with few surrounding observations.
+A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. This is similar to the idea discussed in \@ref(kdescores) of finding points with low probability density estimates, in that it is designed to find points in areas with few surrounding observations.
 
 Suppose we write the distance between observations $\bm{y}_i$ and $\bm{y}_j$ as $\|\bm{y}_i - \bm{y}_j\|$, and let $d_{i,k}$ be the distance between observation $\bm{y}_i$ and its $k$th nearest neighbour.
 
