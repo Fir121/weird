@@ -3,6 +3,7 @@ rm(list=ls(all=TRUE))
 set.seed(1967)
 library(tidyverse)
 library(weird)
+library(patchwork)
 
 knitr::opts_chunk$set(
   comment = "#>",
