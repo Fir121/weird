@@ -60,6 +60,7 @@ This will load the relevant data sets and functions from the packages needed to 
 14. Distributional observations
 15. Deep learning for anomaly detection
 16. Applications: network intrusion, fraud detection
+17. Handling very large data sets
 
 
 To include somewhere:

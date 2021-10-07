@@ -1,4 +1,4 @@
-# High-dimensional methods
+# High-dimensional methods {#highdim}
 
 
 
