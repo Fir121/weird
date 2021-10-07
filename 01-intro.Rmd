@@ -1,4 +1,4 @@
-# Introduction {#ch-intro}
+# Introduction {#intro}
 
 Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that hold true for most of the data. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book they are what we find interesting.
 
@@ -26,13 +26,60 @@ Many analysts have thrown away apparent anomalies because they were assumed to b
 
 > Add story of ozone layer
 
-## Strip plots and scatterplots {#sec-scatterplots}
+## Approaches to anomaly detection
 
-When there are no more than a few thousand observations, it is useful to start with simple plots that allow you to look at the observations directly with no processing or modelling to hide what is going on.
+### Z-scores and statistical tests
+
+The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in Chapter \@ref(parametric-methods).
+
+### Quantile and depth-based methods
+
+The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated approaches to be considered. Most of these were based on sample quantiles of the data, or used the concept of data depth. These methods led to some popular and useful data visualization tools, with anomaly detection a neat side effect. Such methods are discussed in Chapter \@ref(quantile-methods).
+
+### Distance and density-based methods {-}
+
+Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on distances. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
+
+Density-based methods are discussed in Chapter \@ref(density-methods), while distance-based methods are the subject of Chapter \@ref(distance-methods).
+
+### Statistical vs machine learning approaches {-}
+
+Anomaly detection has a long history in the statistics literature, including all of the approaches developed in the 20th century, and many of the more recent density-based approaches.
+
+More recently, computer scientists have turned their attention to the problem of anomaly detection, especially as data sets have grown in size and complexity. Anomaly detection arises in cyber security systems (where intrusions are identified as anomalies), in credit-card fraud (where unusual buying patterns are anomalous) and in remote sensing (where unusual changes in land use are anomalies). Machine-learning approaches have been developed to address these problems, mostly using distanced-based methods, although some important contributions to the density-based methods have also appeared in the machine learning literature.
+
+In this book, I make no attempt to distinguish methods as "statistical" or "machine-learning". The distinction is largely about the training of the researchers, or the journals in which they publish, and has little to do with the methods themselves. In any case, the two communities have been slowly moving closer together, with computer scientists taking a more probabilistic perspective than previously, and statisticians taking a more computational and algorithmic approach than their forbears. Now there is now considerable interaction and overlap between these communities, and continuing to label methods as "statistical" or "machine-learning" is unhelpful.
+
+### Supervised vs unsupervised approaches {-}
+
+Some books and papers distinguish "supervised anomaly detection" from "unsupervised anomaly detection". In the former case, anomalies are identified using human input and then a model or algorithm is employed to learn how to identify new anomalies contained within new data. I do not regard this as anomaly detection and it will not be covered in this book. It is possible, for example, that what a human labels as "anomalous" is not anomalous in a statistical sense. What is called "supervised anomaly detection" is actually a classification problem where the aim is to mimic the human who labelled the training set. In that case, different tools are employed.
+
+In this book, we will only consider unsupervised problems. That is, we have no idea *a priori* what observations are anomalous, and there is no "right" answer.
+
+### Testing anomaly detection algorithms {-}
+
+That makes it difficult to measure how good an anomaly detection algorithm performs. If we don't know the right answer, we can't know if an algorithm has found the true anomalies. There are three solutions to this problem that are often employed when testing anomaly detection algorithms.
+
+1. **Synthetic data**: We can use synthetic data that has been deliberately contaminated with a small number of known anomalies. This approach allows us to study the sensitivity of an algorithm to anomalies --- how anomalous does an observation have to be before it is detected? However, a drawback is that synthetic data is often simpler and neater than real data, making the anomaly detection task easier than it is in reality.
+2. **Human labelled**: We can use real data where a human has labelled some of the observations as anomalous. As noted above, this only works when the human has correctly and completely labelled the anomalies. It also requires that what a human considers an anomaly is also anomalous in a statistical sense.
+3. **Downsampled category**: We can use real data that contains a categorical variable taking two label values. One of the labels is downsampled and the corresponding observations form the anomalous subset. This approach is useful in obtaining large sets of realistic data, as it takes little time to create the data set. However, it requires that the observations labelled anomalies are different in some way from the other observations (apart from their label).
+
+In this book, we will use data sets of each type when testing different anomaly detection methods. The next section discusses the main examples we will be using throughout the book.
+
+
+## Strip plots and scatterplots {#scatterplots}
+
+When there are no more than a few thousand observations, and only one or two variables, it is useful to start with simple plots that allow you to look at the observations directly with no processing or modelling to hide what is going on.
 
 Let's start with some examples using only one or two variables. These examples will be revisited in the next couple of chapters as we introduce new anomaly detection tools and graphics.
 
-### Example: Test cricket batting averages {-}
+### Example: Test cricket batting averages
+
+Cricket is a very popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
+
+```{r cricketdata}
+cricket_batting
+```
 
 ```{r cricket0, echo=FALSE}
 batting <- cricket_batting %>%
@@ -59,7 +106,13 @@ The points are "jittered" vertically to reduce overplotting, and made slightly t
 
 Some anomalies are not so obvious, and occur within the range of the rest of the data.
 
-A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions recorded since 2015.
+A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. The `oldfaithful` data set contains data on all `r NROW(oldfaithful)` eruptions recorded between 1 January 2015 and 1 October 2021.
+
+```{r oldfaithfuldata}
+oldfaithful
+```
+
+Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions in the data set.
 
 ```{r oldfaithful1, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015. The large anomaly is an eruption on 7&nbsp;December 2015 which lasted nearly two hours."}
 oldfaithful %>%
@@ -84,9 +137,29 @@ We see that almost all the remaining eruptions were between 100 and 300 seconds 
 
 The two clusters of observations characterise two eruption modes for the Old Faithful geyser: short durations (around 2 minutes in length) and long durations (between 3 and 5 minutes in length). There was an earthquake in 1998 which changed the distribution of durations. Before 1998, the durations were more evenly split between the two clusters, but currently the long durations are much more common.
 
-### Example: wine prices and quality {-}
+The `oldfaithful` data set also contains the time between eruptions. For each row, `waiting` gives the time to the *following* eruption. This is used to predict when the next eruption will happen, based on the duration of the most recent eruption.
 
-Once we have more than one variable in our data set, anomalies can occur due to the combination of variables, although they may not appear anomalous in any one of the variables. For example, suppose we observed height and age for a large number of people. A height of 180 cm would not be identified as anomalous in the distribution of height, and an age of 4 years would not be identified as anomalous in the distribution of age. However, a 180cm 4-year-old would be an anomaly due to the unusual combination of height and age.
+```{r oldfaithful3, fig.cap="Old Faithful eruption durations and waiting times since 2015, omitting waiting times and durations of two hours or more."}
+oldfaithful %>%
+  filter(duration < 7200, waiting < 7200) %>%
+  ggplot(aes(x=duration, y=waiting)) +
+  geom_point(alpha=0.5) +
+  labs(y="Waiting time to next eruption (seconds)", x="Duration (seconds)")
+```
+
+We have filtered out some extreme waiting times (which are probably due to incomplete records), and the two-hour duration we have seen previously. This shows some anomalies that occur due to the combination of the two variables, although they do not appear anomalous within the data on any one of the variables.
+
+For example, there is one duration of over 6000 seconds, following an eruption of 120 seconds. Neither the waiting time nor the duration are unusual on their own, but the combination is anomalous.
+
+Similarly, there are two eruptions of 170 seconds, followed by waiting times of under 4000 seconds. Those waiting times are not particularly unusual compared to other waiting times, but they are unusual given the durations of the previous eruptions.
+
+### Example: Wine prices and quality {-}
+
+The `wine_reviews` data set contains data on `r NROW(wine_reviews)` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
+
+```{r winedata}
+wine_reviews
+```
 
 Figure \@ref(fig:shiraz) shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
@@ -115,44 +188,21 @@ wine_reviews %>%
 
 A similar phenomenon occurs whenever you consider additional variables. An anomaly in three dimensions may not appear anomalous in any of the 2-dimensional sets of variables. As the number of dimensions increases, there are more ways for observations to be anomalous, but it is increasingly difficult to find them.
 
-While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two dimensions, we will need alternative tools once we have three or more variables.
+While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two numerical variables, we will need alternative tools once we have three or more variables, or a very large data set, or non-numerical data.
 
-## Approaches to anomaly detection
+We will consider the problem of high dimensions in Chapter \@ref(highdim), while various types of non-numerical data are considered in the later chapters of the book. Finally Chapter \@ref(largedata) will consider the problem of finding anomalies in very large data sets.
 
-### Z-scores and statistical tests
+### Example: Synthetic standard normal data
 
-The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in Chapter \@ref(ch-parametric).
+The final example contains synthetic data on 10 variables, each generated from a normal distribution with mean zero and variance one. So by definition, this data set contains no anomalies. We will add anomalies to the data when testing algorithms, in order to check that the algorithms can identify the artificial anomalies.
 
-### Quantile and depth-based methods
+For now, we show the scatterplot matrix of all 10 variables using the `GGally` package. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
 
-The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated approaches to be considered. Most of these were based on sample quantiles of the data, or used the concept of data depth. These methods led to some popular and useful data visualization tools, with anomaly detection a neat side effect. Such methods are discussed in Chapter \@ref(ch-quantile).
+(ref:nn01) Scatterplots of all pairs of the synthetic `n01` data, where each variable has been generated from independent standard normal distributions.
 
-### Distance and density-based methods {-}
+```{r nn01, fig.asp=1, output.width="100%", fig.cap="(ref:nn01)", message=FALSE}
+n01 %>%
+  GGally::ggpairs(mapping= aes(alpha=0.1))
+```
 
-Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on distances. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
-
-Density-based methods are discussed in Chapter \@ref(ch-density), while distance-based methods are the subject of Chapter \@ref(ch-distance).
-
-### Statistical vs machine learning approaches {-}
-
-Anomaly detection has a long history in the statistics literature, including all of the approaches developed in the 20th century, and many of the more recent density-based approaches.
-
-More recently, computer scientists have turned their attention to the problem of anomaly detection, especially as data sets have grown in size and complexity. Anomaly detection arises in cyber security systems (where intrusions are identified as anomalies), in credit-card fraud (where unusual buying patterns are anomalous) and in remote sensing (where unusual changes in land use are anomalies). Machine-learning approaches have been developed to address these problems, mostly using distanced-based methods, although some important contributions to the density-based methods have also appeared in the machine learning literature.
-
-In this book, I make no attempt to distinguish methods as "statistical" or "machine-learning". The distinction is largely about the training of the researchers, or the journals in which they publish, and has little to do with the methods themselves. In any case, the two communities have been slowly moving closer together, with computer scientists taking a more probabilistic perspective than previously, and statisticians taking a more computational and algorithmic approach than their forbears. Now there is now considerable interaction and overlap between these communities, and continuing to label methods as "statistical" or "machine-learning" is unhelpful.
-
-### Supervised vs unsupervised approaches {-}
-
-Some books and papers distinguish "supervised anomaly detection" from "unsupervised anomaly detection". In the former case, anomalies are identified using human input and then a model or algorithm is employed to learn how to identify new anomalies contained within new data. I do not regard this as anomaly detection and it will not be covered in this book. It is possible, for example, that what a human labels as "anomalous" is not anomalous in a statistical sense. What is called "supervised anomaly detection" is actually a classification problem where the aim is to mimic the human who labelled the training set. In that case, different tools are employed.
-
-In this book, we will only consider unsupervised problems. That is, we have no idea *a priori* what observations are anomalous, and there is no "right" answer.
-
-### Testing anomaly detection algorithms {-}
-
-That makes it difficult to measure how good an anomaly detection algorithm performs. If we don't know the right answer, we can't know if an algorithm has found the true anomalies. There are three solutions to this problem that are often employed when testing anomaly detection algorithms.
-
-1. **Synthetic data**: We can use synthetic data that has been deliberately contaminated with a small number of known anomalies. This approach allows us to study the sensitivity of an algorithm to anomalies --- how anomalous does an observation have to be before it is detected? However, a drawback is that synthetic data is often simpler and neater than real data, making the anomaly detection task easier than it is in reality.
-2. **Human labelled**: We can use real data where a human has labelled some of the observations as anomalous. As noted above, this only works when the human has correctly and completely labelled the anomalies. It also requires that what a human considers an anomaly is also anomalous in a statistical sense. The three examples discussed in the previous section were all human labelled data.
-3. **Downsampled category**: We can use real data that contains a categorical variable taking two label values. One of the labels is downsampled and the corresponding observations form the anomalous subset. This approach is useful in obtaining large sets of realistic data, as it takes little time to create the data set. However, it requires that the observations labelled anomalies are different in some way from the other observations (apart from their label).
-
-In this book, we will use data sets of each type when testing different anomaly detection methods.
+Any points that appear slightly outside the main clouds of points are not genuine anomalies, because they were generated from the same N(0,1) distribution as the rest of the data. 
