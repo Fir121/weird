@@ -42,13 +42,13 @@ k <- trunc(kplus)
 gamma <- kplus - k
 ```
 
-There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the median is the average of the middle two observations in the ordered data, which is 
+There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is 
 $$\hat{q}_{0.5} = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$ 
-The quartiles are given by
+The sample quartiles are given by
 $$\hat{q}_{0.25} = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
 and
 $$\hat{q}_{0.75} = `r 1- gamma[4]` y_{(`r k[4]`)} + `r gamma[4]` y_{(`r k[4]+1`)} = `r quartiles[4]`.$$
-The 0.99 quantile is given by
+The 0.99 sample quantile is given by
 $$\hat{q}_{0.99} = `r 1- gamma[6]` y_{(`r k[6]`)} + `r gamma[6]` y_{(`r k[6]+1`)} = `r quartiles[6]`.
 $$
 
@@ -124,12 +124,11 @@ so that the corresponding letter values are given by
 \end{align*}
 In this example, the fourths are identical to the quartiles, but that is not always the case.
 
-
 ## Boxplots
 
 Boxplots were invented by John Tukey as a quick summary of medium sized data sets. They are widely used to identify anomalies, which are shown as separate points in the plot.
 
-Figure \@ref(fig:cricketbox) shows a boxplot of the cricket batting average data, previously shown in  \@ref(fig:cricket1).
+Figure \@ref(fig:cricketbox) shows a boxplot of the cricket batting average data, previously shown in Figure  \@ref(fig:cricket1).
 
 ```{r cricketbox, fig.asp=0.2, fig.cap="(ref:cricket1)"}
 cricket_batting %>%
@@ -193,7 +192,6 @@ iqr <- q3 - q1
 tukey1 <- 2 * (1 - pnorm(q3 + 1.5 * iqr))
 tukey2 <- 2 * (1 - pnorm(q3 + 3 * iqr))
 ```
-
 
 Under Tukey's boxplot approach to identifying outliers, a regular outlier is more than 1.5IQR beyond the quartiles, while an extreme outlier is more than 3IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for very large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find spurious anomalies in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
 
@@ -324,22 +322,76 @@ n01b %>%
 
 In this last example, because there are only 20 observations, there is not enough data to estimate the quantiles beyond the fourths. So only the middle box is shown.
 
+## Multivariate depth statistics
 
-## Tukey depth
+For multivariate data, there is no unique natural ordering of observations by size, so the concept of depth has to be thought about differently. It is still a measure of how centrally a point is located in a data set, but we need to think about what "central" means when there are multiple variables.
 
-For multivariate data, there is no natural ordering of observations by size, so the concept of depth has to be thought about differently. It is still a measure of how centrally a point is located in a data set, but we need to think about what "central" means when there are multiple variables.
+There are numerous ways to define depth for multivariate data, nicely summarised in @Liu1999. Here, we will consider the two simplest approaches.
 
-The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{z}$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any closed halfplane with boundary line through $\bm{z}$. This is often called the "Tukey depth" of the point. 
+### Tukey depth
 
-A diagram will help illustrate the idea.
+The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{y}_k$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any  halfspace that contains $\bm{y}_k$. This is often called the "Tukey depth" of the point. 
 
-```{r}
+For bivariate data, a half space is either of the two parts formed by splitting the plane with a straight line.
+A diagram will help illustrate the idea. Suppose we have the observations shown in Figure \@ref(fig:tukeydepth). These are the first 10 observations from the first two variables of `n01`. The red line divides the plane into two sections which are called "half spaces". 
 
+```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations. The dividing red line splits the plane into two halfspaces."}
+n01[1:10,] %>%
+  ggplot(aes(x=v1,y=v2)) +
+  geom_point() +
+  geom_line(aes(x=x,y=y),data=data.frame(x=c(-1.7,0.3),y=c(-2,2)), col='red') +
+  geom_point(data=n01[10,], col='orange', size=2) +
+  geom_point(data=n01[5,], col='blue', size=2) +
+  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
 ```
 
+There are an infinite number of ways of dividing the plane into half spaces, and the number of points in each half plane will vary depending on where the dividing line falls.
 
+Suppose we want to find the depth of the orange point. We would need to find the line which divides the plane into two sections where the half containing the orange point includes as few observations as possible. In fact, the red line is one such solution which has the orange point in a halfspace containing only 2 points. There are no dividing lines that would put the orange point in a halfspace on its own. So it has a Tukey depth of 2.
 
-The depth region $D_k$ is the set of all points $\bm{z}$ with $ldepth \ge k$. The depth regions are convex polygons and $D_{k+1} \subset D_k$.
+On the other hand, the blue point has depth 4 because there is a dividing line that will put it into a halfspace containing four observations but none that will contain fewer observations
 
+In this data set, points have Tukey depths of 1, 2 or 4.
+
+The Tukey depth median is the deepest point, in this case, the blue point of depth 4. 
+
+### Convex hull peeling depths
+
+Imagine that each of the observations shown in Figure \@ref(fig:tukeydepth) is a nail hammered into a board and we are looking at it from above. A rubber band wrapped around all observations will form a "convex hull" as shown on the left of Figure \@ref(fig:convexhull).
+
+(ref:convexhull) Left: The convex hull containing the 10 bivariate observations from Figure \@ref(fig:tukeydepth). Right: The second convex layer formed with the same points.
+
+```{r convexhull, fig.cap="(ref:convexhull)", echo=FALSE}
+hull <- chull(n01[1:10,1:2])
+hull <- c(hull,hull[1])
+df <- n01[1:10,1:2] %>%
+  mutate(hull = row_number() %in% hull) 
+p1 <- df %>%
+  ggplot(aes(x=v1,y=v2)) +
+  geom_point() +
+  geom_path(data = n01[hull,1:2], col='red') +
+  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
+hull2 <- chull(df[!df$hull,1:2])
+hull2 <- c(hull2, hull2[1])
+p2 <- df %>%
+  ggplot(aes(x=v1,y=v2, col=hull)) +
+  geom_point() +
+  scale_color_manual(values=c(`TRUE` = "gray", `FALSE`="black")) +
+  geom_path(data = (df[!df$hull,])[hull2,], col='red') +
+  guides(col="none") +
+  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
+p1 | p2
+```
+
+This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of Figure \@ref(fig:convexhull). The third convex layer will consist of the one remaining point that is within the second convex hull.
+
+The "convex hull peeling depth" [@barnett1976ordering] is the level of the convex layer that an observation belongs to. In this data set, points have convex hull peeling depths of 1, 2 or 3.
 
 ## Bagplots
+
+
+The depth region $D_k$ is the set of all points $\bm{z}$ with $\text{depth} \ge k$. For both of these depth measures, the depth regions are convex polygons and $D_{k+1} \subset D_k$. In the case of the convex hull peeling depths, the depth regions are equal to the convex layers. 
+
+Figure \@(fig:tukeydepthregions) shows the depth regions for the two depth measures we have considered.
+
+
