@@ -160,7 +160,7 @@ This probability is accurate for large $n$, but not for small sample sizes. So, 
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # c is zscore threshold, rep is number of replicates
-pspurious <- function(n, dist, c = 3, rep = 5000, ...) {
+pspurious <- function(n, dist, c = 3, rep = 1e4, ...) {
   if (length(n) == 1) {
     anomaly <- numeric(rep)
     for (j in seq(rep)) {
@@ -197,7 +197,7 @@ df %>%
   geom_line() +
   scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
-  geom_label(aes(x = n * 0.9, y = 0.75, label = label, hjust = "right"), data = labels) +
+  geom_label(aes(x = n * 0.9, y = 0.78, label = label, hjust = "right"), data = labels) +
   guides(col = "none") +
   theme(axis.text.x = element_text(size = 8))
 ```
@@ -360,7 +360,7 @@ df %>%
   geom_line() +
   labs(x = "n (sample size)", y = "Probability of at least one spurious anomaly") +
   scale_y_continuous(breaks = c(0.05, seq(0.1, 0.8, by = 0.1)), minor_breaks = NULL) +
-  scale_x_log10(limits=c(3,2e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
+  scale_x_log10(limits=c(3,9e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   guides(col = "none") +
   theme(axis.text.x = element_text(size = 8)) +
@@ -392,6 +392,7 @@ df <- df %>%
 df %>%
   filter(Distribution != "ApproxNormal") %>%
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
+  geom_hline(aes(yintercept = 0.05), col = "gray") +
   geom_line() +
   labs(x = "n (sample size)", y = "Probability of at least one spurious anomaly") +
   scale_x_log10(limits=c(3,2e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
@@ -431,11 +432,11 @@ The test has an obvious flaw in that the minimum $y_{(1)}$ is also potentially a
 
 Again, we can use simulation to compute the probability of false positives using this test, giving the results shown in Figure \@ref(fig:spuriousdixon).
 
-```{r spuriousdixon, fig.cap = "Probability of a spurious anomaly using Dixon's test.", dependson="pspurious"}
+```{r spuriousdixon, fig.cap = "Probability of a spurious anomaly using Dixon's test.", echo = FALSE, dependson="pspurious"}
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # rep is number of replicates
-pspuriousdixon <- function(n, dist, rep = 5000, ...) {
+pspuriousdixon <- function(n, dist, rep = 1e4, ...) {
   if (length(n) == 1) {
     pv <- numeric(rep)
     for (j in seq(rep)) {
