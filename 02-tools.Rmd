@@ -1,14 +1,25 @@
-# Tools {#ch-tools}
+# Tools {#tools}
 
 This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference.
 
-Maybe this will be re-worked into later chapters.
+## Probability distributions
 
-## Extreme value theory {#sec-evt}
+  * cdf
+  * density
+  * quantile
+
+ * Normal
+ * t
+ * Chi-squared
+ * Gamma
+
+## Central limit theorem
+
+## Extreme value theory {#evt}
 
 Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
-It is well known, due to the central limit theorem, that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analagous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Frechet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
+It is well known, due to the central limit theorem, that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
 
 ### Fisher-Tippett-Gnedenko Theorem {-}
 
@@ -17,7 +28,7 @@ $$
 	P\left\{ \frac{(M_n - a_n)}{b_n} \leq z \right\} \rightarrow G(z) \quad \text{as} \quad n \to \infty,
 $$
 where $G$ is a non-degenerate distribution function, then $G$ belongs to one of the following families:
-\begin{align}\label{eq:EVT3}
+\begin{align*}
 	&\text{Gumbel} :  && G(z) = \exp\left(-\exp \left[- \Big(\frac{z-b}{a}\Big) \right] \right), \quad -\infty < z < \infty , \\
 	&\text{Fréchet} : && G(z) =
   	\begin{cases}
@@ -29,12 +40,13 @@ where $G$ is a non-degenerate distribution function, then $G$ belongs to one of 
 			\exp \left( - \left(- \left[\frac{z-b}{a}\right]\right)^{\alpha} \right) , & z < b  ,    \\
 			1 ,                                                                        & z \geq b  ,
 		\end{cases}
-\end{align}
+\end{align*}
 for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
 
 These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
-\begin{equation}\label{eq:EVT4}
+\begin{equation}
 	G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
+	(\#eq:EVT4)
 \end{equation}
 where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$. The location parameter is $\mu\in\mathbb{R}$, $\sigma>0$ is the scale parameter, while $\xi\in\mathbb{R}$ is the shape parameter. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi < 0$ we get a Weibull distribution with a finite upper end, and when $\xi > 0$ we get a Fréchet family of distributions with heavy tails including polynomial tails.
 
@@ -68,9 +80,9 @@ tibble(maximum = maximums) %>%
 ### The Generalized Pareto Distribution {-}
 
 The Peaks Over Threshold (POT) approach regards extremes as observations greater than a threshold $u$. The probability distribution of *exceedances* above a specified threshold $u$ can be expressed as
-\begin{equation}\label{eq:POT3}
+\begin{equation}
 	H(y) = P\left \{Y \leq u + y \mid Y > u \right \}
-	= \frac{ F(u+y) - F(u)}{1 - F(u)}.
+	= \frac{ F(u+y) - F(u)}{1 - F(u)}. (\#eq:POT3)
 \end{equation}
 When the distribution $F$ satisfies the FTG theorem, then [@coles2001introduction, 75] $H$ is a  **Generalized Pareto Distribution** (GPD) defined by
 	\begin{equation}
@@ -97,4 +109,96 @@ df %>%
   geom_line(data = truedensity, aes(x = y, y = hy2), col = "blue")
 ```
 
-The red estimate is better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances). The kernel density estimate (in black) is biased around 3 because of the boundary problem discussed in Section \@ref(sec-kde). Otherwise, the kernel density estimate closely matches the GPD estimates.
+The red estimate is better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances). The kernel density estimate (in black) is biased around 3 because of the boundary problem discussed in Section \@ref(kde). Otherwise, the kernel density estimate closely matches the GPD estimates.
+
+## Pairwise distances
+
+Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
+
+Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. For now, we will assume these are numerical vectors of observations. Later in the book, we will allow the observations to be more complicated, where they may denote images, or video, or probability distributions, for example. But for the first half of the book, we will only deal with numerical data.
+
+When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
+$$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
+This is also known as the $L_2$ distance.
+
+For $d=1$ or $d=2$, this is the physical distance between the points when plotted on a strip plot or a scatterplot (provided there is no jittering used).
+
+The `dist()` function will return a distance matrix containing all pairwise distances computed in this way. Here is an example using only the first five observations of the `old_faithful` data set (omitting the time stamp). Because the distances are symmetric, only the lower triangle of the matrix is computed.
+
+```{r}
+oldfaithful %>%
+  select(-time) %>%
+  head(5) %>%
+  dist()
+```
+
+When the variables have very different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
+
+```{r}
+oldfaithful %>%
+  select(-time) %>%
+  scale() %>%
+  head(5) %>%
+  dist()
+```
+
+The `scale()` function subtracts the mean and divides by the standard deviation for each column of data. Therefore, all variables in the resulting scaled data have mean zero and standard deviation equal to 1.
+
+The `dist()` function will also compute other types of distances which may be more appropriate for some kinds of data. These are specified using the `method` argument and defined below.
+
+Manhattan:
+: Absolute distance between the two vectors:
+$$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
+This is also known as the $L_1$ distance.  It is called the Manhattan distance as it gives the shortest path  between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
+
+Minkowski:
+: This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
+$$\|\bm{y}_i - \bm{y}_j\| = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
+The value of $p$ is specified using the `p` argument. It is named after the German mathematician Hermann Minkowski.
+
+Maximum:
+: Maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$:
+$$\|\bm{y}_i - \bm{y}_j\| = \max_k |y_{ik}-y_{jk}|.$$
+
+Canberra:
+: $$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d \frac{|y_{ik}-y_{jk}|}{|y_{ik}|+|y_{jk}|}.$$
+Terms with zero numerator and denominator are omitted from the sum. This distance was introduced by two Australian scientists, Godfrey Lance and Bill Williams, who named it after their home city of Canberra. It scales the distances between components by the size of the components, so there is an inbuilt scaling which avoids problems with variables on different units. However, if there are components which are close to zero, but not identical to zero, the measure is numerically unstable. So it is better to scale the data explicitly before computing a distance, unless the variables cannot take small values.
+
+Binary:
+: This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
+
+
+## Nearest neighbours
+
+Some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
+
+The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm".
+
+Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `dbscan` package uses kd trees to quickly identify the $k$ nearest observations to each eruption. As noted earlier, we will scale the data before computing any distances.
+
+```{r}
+# Find 5 nearest neighbours to each eruption
+knn <- oldfaithful %>%
+  select(duration, waiting) %>%
+  scale() %>%
+  dbscan::kNN(k = 5)
+# First eruption in the data set
+oldfaithful[1,]
+# Five closest observations
+oldfaithful[knn$id[1,],]
+```
+
+For very large data sets, approximations are available which speed up the computation even more, but are less accurate in finding the $k$ nearest neighbours. The `approx` argument specifies a distance tolerance which makes the process faster for large data sets, although the neighbours returned may not be the exact nearest  neighbours.
+
+```{r}
+# Find 5 approximate nearest neighbours to each eruption
+kann <- oldfaithful %>%
+  select(duration, waiting) %>%
+  scale() %>%
+  dbscan::kNN(k = 5, approx=2)
+# Five closest observations
+oldfaithful[kann$id[1,],]
+```
+
+Here the fifth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
+
