@@ -18,14 +18,15 @@ knitr::opts_chunk$set(
 
 # Set some defaults
 # Colours to be viridis for continuous scales and Okabe for discrete scales
+discrete_colors <- c("#D55E00", "#0072B2","#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442")
 html <- TRUE
 options(
   digits = 4,
   width=58 + html*20,
   ggplot2.continuous.colour="viridis",
   ggplot2.continuous.fill = "viridis",
-  ggplot2.discrete.colour = c("#D55E00", "#0072B2","#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442"),
-  ggplot2.discrete.fill = c("#D55E00", "#0072B2","#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442")
+  ggplot2.discrete.colour = discrete_colors,
+  ggplot2.discrete.fill = discrete_colors
 )
 #ggplot2::theme_set(theme_get() + theme(text = element_text(family = 'Carlito')))
 

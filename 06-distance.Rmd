@@ -14,7 +14,6 @@ Note that an observation $\bm{y}_j$ may be within $N_{i,k}$ while $\bm{y}_i$ doe
 
 ```{r njk, fig.cap="A synthetic data set of 11 observations. Nearest neighbourhoods containing five observations each are shown for $\\bm{y}_1$ (in orange) and $\\bm{y}_2$ (in blue). The neighbourhood of $\\bm{y}_1$ contains $\\bm{y}_2$ in its nearest five observations, but $\\bm{y}_2$ does not include $\\bm{y}_1$ in its nearest five observations.", echo=FALSE, warning=FALSE}
 set.seed(2)
-cols <- c("#D55E00", "#0072B2")
 df <- tibble(
     x = c(rnorm(5), rnorm(6, 5, 1)),
     y = c(rnorm(5), rnorm(6, 5, 1))
@@ -34,14 +33,14 @@ df %>%
   geom_point(aes(x=x, y=y), size=3) +
   #geom_point(aes(x=x, y=y), size=3, data=df[chosen,], col=cols) +
   annotate("text", x=df$x[chosen]+0.3, y=df$y[chosen]+0.3,
-           label=latex2exp::TeX(paste0("$y_",1:2,"$"), bold=TRUE), col=cols) +
+           label=latex2exp::TeX(paste0("$y_",1:2,"$"), bold=TRUE), col=discrete_colors[1:2]) +
   annotate("text", x=c(-0.5,3.6), y=c(4.2,6),
-           label=latex2exp::TeX(paste0("$N_{",1:2,",5}$")), col=cols) +
+           label=latex2exp::TeX(paste0("$N_{",1:2,",5}$")), col=discrete_colors[1:2]) +
   geom_segment(aes(x=x, y=y,xend=c(7.75,8.75), yend=y),
                arrow = arrow(length = unit(0.02, "npc")),
-               data=df[chosen,], col=cols) +
+               data=df[chosen,], col=discrete_colors[1:2]) +
   annotate("text", x=c(4.7,7), y=c(-0.8,4.1),
-           label=latex2exp::TeX(paste0("$d_{",1:2,",5}$")), col=cols) +
+           label=latex2exp::TeX(paste0("$d_{",1:2,",5}$")), col=discrete_colors[1:2]) +
   coord_fixed(xlim=c(-4,8.5), ylim=range(df$y)) +
   guides(col="none",fill="none") +
   theme_void()
