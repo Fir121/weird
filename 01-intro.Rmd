@@ -66,6 +66,42 @@ That makes it difficult to measure how good an anomaly detection algorithm perfo
 
 In this book, we will use data sets of each type when testing different anomaly detection methods. The next section discusses the main examples we will be using throughout the book.
 
+## Data sets
+
+### Test cricket batting data
+
+Cricket is a very popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
+
+```{r cricketdata}
+cricket_batting
+```
+
+### Old Faithful Geyser eruptions {-}
+
+Data on the eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA, have been collected for about 150 years. It was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. The `oldfaithful` data set contains data on all `r NROW(oldfaithful)` eruptions recorded between 1 January 2015 and 1 October 2021.
+
+```{r oldfaithfuldata}
+oldfaithful
+```
+
+Other than the time stamp, the variables here give the duration of each eruption and the time to the next eruption.
+
+
+### Wine prices and quality {-}
+
+The `wine_reviews` data set contains data on `r NROW(wine_reviews)` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
+
+```{r winedata}
+wine_reviews
+```
+
+### Synthetic standard normal data
+
+The `n01` data set contains synthetic data on 10 variables, each generated independently from a normal distribution with mean zero and variance one. So by definition, this data set contains no anomalies. We will add anomalies to the data when testing algorithms, in order to check that the algorithms can identify the artificial anomalies.
+
+```{r n01}
+n01
+```
 
 ## Strip plots and scatterplots {#scatterplots}
 
@@ -73,13 +109,7 @@ When there are no more than a few thousand observations, and only one or two var
 
 Let's start with some examples using only one or two variables. These examples will be revisited in the next couple of chapters as we introduce new anomaly detection tools and graphics.
 
-### Example: Test cricket batting averages
-
-Cricket is a very popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
-
-```{r cricketdata}
-cricket_batting
-```
+### Example: Don Bradman's batting averages
 
 ```{r cricket0, echo=FALSE}
 batting <- cricket_batting %>%
@@ -102,17 +132,9 @@ cricket_batting %>%
 
 The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r round(donave,2)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket.
 
-### Example: Old Faithful Geyser eruptions {-}
+### Example: Old Faithful eruption durations {-}
 
-Some anomalies are not so obvious, and occur within the range of the rest of the data.
-
-A good example of this is the duration of eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA. Data on this geyser have been collected for about 150 years, and it was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. The `oldfaithful` data set contains data on all `r NROW(oldfaithful)` eruptions recorded between 1 January 2015 and 1 October 2021.
-
-```{r oldfaithfuldata}
-oldfaithful
-```
-
-Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions in the data set.
+Some anomalies are not so obvious, and occur within the range of the rest of the data. A good example of this is the duration of eruptions of the Old Faithful Geyser. Figure \@ref(fig:oldfaithful1) shows the duration of all eruptions in the data set.
 
 ```{r oldfaithful1, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015. The large anomaly is an eruption on 7&nbsp;December 2015 which lasted nearly two hours."}
 oldfaithful %>%
@@ -155,12 +177,6 @@ Similarly, there are two eruptions of 170 seconds, followed by waiting times of 
 
 ### Example: Wine prices and quality {-}
 
-The `wine_reviews` data set contains data on `r NROW(wine_reviews)` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
-
-```{r winedata}
-wine_reviews
-```
-
 Figure \@ref(fig:shiraz) shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
 ```{r shiraz, fig.cap="Wine prices and review points for Shiraz and Syrah wines."}
@@ -194,9 +210,9 @@ We will consider the problem of high dimensions in Chapter \@ref(highdim), while
 
 ### Example: Synthetic standard normal data
 
-The final example contains synthetic data on 10 variables, each generated from a normal distribution with mean zero and variance one. So by definition, this data set contains no anomalies. We will add anomalies to the data when testing algorithms, in order to check that the algorithms can identify the artificial anomalies.
+When we have many variables, showing the pairwise scatterplots in a matrix is a useful way to see a lot of information quickly. This is called a scatterplot matrix, and can be produced using the `GGally` package.
 
-For now, we show the scatterplot matrix of all 10 variables using the `GGally` package. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
+Figure \@ref(fig:nn01) show the scatterplot matrix of all 10 variables in the `n01` data set. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
 
 (ref:nn01) Scatterplots of all pairs of the synthetic `n01` data, where each variable has been generated from independent standard normal distributions.
 
