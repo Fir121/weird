@@ -55,12 +55,13 @@ This will load the relevant data sets and functions from the packages needed to 
 8. Non-Euclidean spaces
 10. Time series anomalies
 11. Spatial, network and graph data
-12. Video data
-13. Categorical and text data
-14. Distributional observations
-15. Deep learning for anomaly detection
-16. Applications: network intrusion, fraud detection
-17. Handling very large data sets
+12. Functional data
+13. Video data
+14. Categorical and text data
+15. Distributional observations
+16. Deep learning for anomaly detection
+17. Applications: network intrusion, fraud detection
+18. Handling very large data sets
 
 
 To include somewhere:
