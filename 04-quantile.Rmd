@@ -330,34 +330,61 @@ There are numerous ways to define depth for multivariate data, nicely summarised
 
 ### Tukey depth
 
-The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{y}_k$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any  halfspace that contains $\bm{y}_k$. This is often called the "Tukey depth" of the point. 
+The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{z}$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any  halfspace that contains $\bm{z}$. This is often called the "Tukey depth" of the point. (The point $\bm{z}$ does not have to be one of the observations.)
 
 For bivariate data, a half space is either of the two parts formed by splitting the plane with a straight line.
-A diagram will help illustrate the idea. Suppose we have the observations shown in Figure \@ref(fig:tukeydepth). These are the first 10 observations from the first two variables of `n01`. The red line divides the plane into two sections which are called "half spaces". 
+A diagram will help illustrate the idea. Suppose we have the observations shown in Figure \@ref(fig:tukeydepth). These are the first 10 observations from the first two variables of `n01`. The red line divides the plane into two sections which are called "half spaces". We are interested in the depth of the orange point (which is not one of the observations).
 
-```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations. The dividing red line splits the plane into two halfspaces."}
-n01[1:10,] %>%
+```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations (shown in black). The dividing red line splits the plane into two halfspaces. We are interested in the depth of the orange point."}
+n01 %>%
+  head(10) %>%
   ggplot(aes(x=v1,y=v2)) +
   geom_point() +
-  geom_line(aes(x=x,y=y),data=data.frame(x=c(-1.7,0.3),y=c(-2,2)), col='red') +
-  geom_point(data=n01[10,], col='orange', size=2) +
-  geom_point(data=n01[5,], col='blue', size=2) +
+  geom_abline(aes(intercept=-0.8, slope=-1.8), col='red') +
+  geom_point(aes(x=0, y=-1), col=discrete_colors[1]) +
   coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
 ```
 
 There are an infinite number of ways of dividing the plane into half spaces, and the number of points in each half plane will vary depending on where the dividing line falls.
 
-Suppose we want to find the depth of the orange point. We would need to find the line which divides the plane into two sections where the half containing the orange point includes as few observations as possible. In fact, the red line is one such solution which has the orange point in a halfspace containing only 2 points. There are no dividing lines that would put the orange point in a halfspace on its own. So it has a Tukey depth of 2.
+To find the depth of the orange point, we need to find the line which divides the plane into two sections where the half containing the orange point includes as few observations as possible. In fact, the red line is one such solution which has the orange point in a halfspace containing only 2 observations There are no dividing lines that would put the orange point in a halfspace on its own. So it has a Tukey depth of 2.
 
-On the other hand, the blue point has depth 4 because there is a dividing line that will put it into a halfspace containing four observations but none that will contain fewer observations
+The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at least $k$. These form a series of nested convex hulls where $D_{k+1} \subseteq D_k$. The depth regions for our example are shown in Figure \@ref(fig:depthregions). The blue region is depth 1, the orange region is depth 2, the pink region is depth 3, and the green region is depth 4.
 
-In this data set, points have Tukey depths of 1, 2 or 4.
+(ref:depthregions) The depth regions for the 10 bivariate observations from Figure \@ref(fig:tukeydepth). The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
 
-The Tukey depth median is the deepest point, in this case, the blue point of depth 4. 
+```{r depthregions, echo=FALSE, fig.cap="(ref:depthregions)"}
+median <- aplpack::compute.bagplot(n01[1:10,1:2])
+z <- expand_grid(v1=seq(-0.9,1.6,l=200), v2=seq(-1.95,1.15,l=200)) %>%
+  bind_rows(n01[1:10,1:2])
+z$depth <- round(as.numeric(DepthProc::depthTukey(as.matrix(z), as.matrix(n01[1:10,1:2])))*10)
+regions <- list()
+depths <- sort(unique(z$depth))
+depths <- depths[depths > 0]
+for(i in depths) {
+  tmp <- z %>% filter(depth == depths[i])
+  hull <- chull(tmp)
+  regions[[i]] <- tmp[c(hull,hull[1]),]
+}
+cols <- discrete_colors[c(2,1,4,3)]
+p <- n01 %>%
+  head(10) %>%
+  ggplot(aes(x=v1,y=v2))
+for(i in depths) {
+  p <- p + geom_polygon(aes(x=v1, y=v2), data=regions[[i]], fill=cols[i], alpha=0.8)
+}
+p + geom_point() +
+  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1)) +
+  geom_point(aes(x=median$center[1],y=median$center[2]), col='yellow', size=2)
+```
+
+### Depth median
+
+A simple way to define a multivariate median is the "centre of gravity" of all points of maximum depth [@bivariatemedian]. In Figure \@ref(fig:depthregions), the points of maximum depth are shown in the central green region. The centre of gravity of this region is the yellow point in the middle.
 
 ### Convex hull peeling depths
 
-Imagine that each of the observations shown in Figure \@ref(fig:tukeydepth) is a nail hammered into a board and we are looking at it from above. A rubber band wrapped around all observations will form a "convex hull" as shown on the left of Figure \@ref(fig:convexhull).
+Imagine that each of the observations shown in Figure \@ref(fig:tukeydepth) is a nail hammered into a board and we are looking at it from above. An elastic band wrapped around all observations will form a "convex hull" as shown on the left of Figure \@ref(fig:convexhull).
 
 (ref:convexhull) Left: The convex hull containing the 10 bivariate observations from Figure \@ref(fig:tukeydepth). Right: The second convex layer formed with the same points.
 
@@ -387,11 +414,50 @@ This is the first convex layer. If the points on the perimeter are removed, and 
 
 The "convex hull peeling depth" [@barnett1976ordering] is the level of the convex layer that an observation belongs to. In this data set, points have convex hull peeling depths of 1, 2 or 3.
 
+In this example, the convex hulls shown in Figure \@ref(fig:convexhull) are equivalent to the depth regions shown in Figure \@ref(fig:depthregions). But that will not always be true.
+
 ## Bagplots
 
+The bagplot was proposed by @bagplot as a bivariate version of a boxplot, constructed using similar principles.  Like a univariate boxplot, the bivariate bagplot has a central point (the depth median), an inner region (the "bag"), and an outer region (the "loop"), beyond which outliers are shown as individual points.
 
-The depth region $D_k$ is the set of all points $\bm{z}$ with $\text{depth} \ge k$. For both of these depth measures, the depth regions are convex polygons and $D_{k+1} \subset D_k$. In the case of the convex hull peeling depths, the depth regions are equal to the convex layers. 
+To define the bag, we first find the smallest depth region $D_k$ containing at least $\lfloor n/2 \rfloor$ of the observations. Then the bag is linear interpolated between $D_k$ and $D_{k-1}$, with the linear interpolation depending on the number of observations in each depth region. Because the bag is interpolated between depth regions, it is also a convex polygon. It is slightly more complicated for very small data sets where only $D_1$ might contain more than half of the observations. For details, see ???
 
-Figure \@(fig:tukeydepthregions) shows the depth regions for the two depth measures we have considered.
+To find the loop, we first inflate the bag relative to the median by a factor of 3. This forms the "fence". 
+Then the loop is the convex hull of the points contained within the fence. 
 
+Figure \@ref(fig:bagplot) shows the bagplot from the same 10 observations as were used in the illustration of depth in the previous section, along with the observations themselves shown in black.
 
+(ref:bagplot) A bagplot of the 10 bivariate observations from Figure \@ref(fig:tukeydepth). The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
+
+```{r bagplot, fig.cap="(ref:bagplot)"}
+n01 %>%
+  head(10) %>%
+  gg_bagplot(v1, v2) +
+  geom_point(aes(x=v1, y=v2), data=n01[1:10,])
+```
+
+A useful variation of the bagplot, especially for larger data sets, displays a scatterplot of the observations, but colored using the same colors as the bagplot, with the deepest observation in the strongest blue, the points within the bag in a lighter blue, and the points within the loop in the lightest color. Outliers are shown in black if any exist.
+
+```{r bagplot2, fig.cap="A variation of the bagplot showing individual points colored according to the region in which they fall."}
+n01 %>%
+  head(10) %>%
+  gg_bagplot(v1, v2, scatterplot=TRUE)
+```
+
+### Old faithful bagplot
+
+A more interesting example is obtained in Figure \@ref(fig:oldfaithfulbagplot), showing a bagplot of the durations and waiting times of Old Faithful eruptions.
+
+```{r oldfaithfulbagplot, fig.cap="Bagplot of the durations and waiting times of Old Faithful eruptions since 2015."}
+oldfaithful %>%
+  filter(duration < 7200, waiting < 7200) %>%
+  gg_bagplot(duration, waiting, scatterplot=TRUE)
+```
+
+This plot shows the value of the scatterplot version of a bagplot, as you can see a lot of detail in the bag and loop that would not be visible otherwise. It also shows the drawback of using a bagplot to identify anomalies. The plot has identified all the shorter duration eruptions as anomalous, along with a small number of other eruptions.
+
+## General comments
+
+The idea of depth regions and the depth median can be easily generaized to data with more than two dimensions [@rousseeuw1998computing]. Consequently, it would be possible to define a higher-dimensional version of the bagplot, although it would be difficult to plot it in four or more dimensions. In any case, we will consider approaches to handle high-dimensional data in Chapter \@ref(highdim).
+
+Boxplots, letter value plots and bagplots are all extremely useful tools in exploratory data analysis, and deserve to be widely applied. They are particularly useful in summarising univariate and bivariate data distributions when they are unimodal. However, as we have seen, none of them are effective at anomaly detection and none of them allow for data with multiple modes.
