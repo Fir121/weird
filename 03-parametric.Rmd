@@ -372,7 +372,7 @@ df %>%
   )
 ```
 
-Figure \@ref(fig:pzscoretests) shows that for small sample sizes ($n<1000$), all the methods give poor results, and only Grubbs' test gives reasonable results for larger sample sizes.
+Figure \@ref(fig:pzscoretests) shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in very small samples.
 
 However, when we allow for different data distributions, Grubbs' test also gives poor results, showing it is very sensitive to the assumed data distribution.
 
@@ -475,7 +475,7 @@ dixon.test(n01b$v2)
 
 ## General comments
 
-As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, since then there is really no justifiable reason for continuing to use such methods.
+As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
 
 They are particularly sensitive to the assumed data distribution, and the probability of detecting spurious anomalies is usually much higher in reality than under the ideal conditions in which the tests were conceived.
 
