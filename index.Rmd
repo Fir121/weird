@@ -22,13 +22,11 @@ twitter-handle: robjhyndman
 
 > This book is under development. Please don't ask me when it will be finished --- I have to fit this around my other work. In the meantime, I hope the incomplete book is useful.
 
-This book is about tools and techniques for finding and understanding anomalies. We will begin with some simple data sets with only one variable, and build up slowly to much more complicated data. We will cover popular but inadvisable methods to identify anomalies, pointing out their shortcomings, as well as more reliable and recommended approaches.
+This book is about tools and techniques for finding and understanding anomalies. We will begin with some simple data sets containing only one variable, and build up slowly to much more complicated data. We will cover popular but inadvisable methods to identify anomalies (pointing out their shortcomings), as well as more reliable and recommended approaches.
 
-The book is written for two audiences: (1)&nbsp;people finding themselves doing data analysis in business when they may not have had any formal training in the area; and (2)&nbsp;students studying data science.
+The book is written for two audiences: (1)&nbsp;people finding themselves doing data analysis without having had formal training in anomaly detection; and (2)&nbsp;students studying data science.
 
 I will assume a knowledge of statistics and probability at about second year undergraduate level. So if you've done a couple of statistics subjects, and are familiar with multiple regression, hypothesis tests and probability distributions, then you should be prepared for what follows.
-
-
 
 ### R {-}
 
