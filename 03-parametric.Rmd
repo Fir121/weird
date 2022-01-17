@@ -361,12 +361,7 @@ if(file.exists("pzscoredf. rds")) {
   pzscoredf <- readRDS("pzscoredf.rds")
 } else {
   pzscoredf <- df %>%
-    mutate(
-      #ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
-      pmax = pspurious(n, rnorm, c = c),
-      #`t(2)` = pspurious(n, rt, df = 2, c = c),
-      #`Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
-    )
+    mutate(pmax = pspurious(n, rnorm, c = c, rep=1e6))
   saveRDS(pzscoredf, "pzscoredf.rds")
 }
 pzscoredf %>%
@@ -421,17 +416,19 @@ pgrubbsdf %>%
   theme(axis.text.x = element_text(size = 8))
 ```
 
-We can apply the test using the `grubbs.test()` function from the `outliers` package.
+We can apply the test using the `grubbs_anomalies()` function.
 
 ```{r}
-library(outliers)
 cricket_batting %>%
   filter(Innings > 20) %>%
-  pull(Average) %>%
-  grubbs.test()
-grubbs.test(oldfaithful$duration)
-grubbs.test(n01$v1)
-grubbs.test(n01b$v2)
+  filter(grubbs_anomalies(Average)) %>%
+  select(Player, Country, Average)
+oldfaithful %>%
+  filter(grubbs_anomalies(duration))
+n01 %>%
+  filter(grubbs_anomalies(v1))
+n01b %>%
+  filter(grubbs_anomalies(v2))
 ```
 
 An outlier is identified in each case.
@@ -446,11 +443,15 @@ If $y_{(1)},\dots,y_{(n)}$ denote the ordered values of our sample, then Dixon's
 $$
   Q = \frac{y_{(n)} - y_{(n-1)}}{y_{(n)} - y_{(1)}},
 $$
-the ratio of the difference between the two largest values to the range of the data. A variant of the statistic uses $y_{(2)}-y_{(1)}$ in the denominator instead, the difference between the second smallest and minimum observations. As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
+the ratio of the difference between the two largest values to the range of the data. If the largest value is the only anomaly, then $Q$ will take a larger value than expected.
 
-The test has an obvious flaw in that the minimum $y_{(1)}$ is also potentially an anomaly, and then the assumptions of the test break down.
+The corresponding test for the minimum to be an anomaly uses $y_{(2)}-y_{(1)}$ in the numerator instead, the difference between the second smallest and minimum observations. Both minimum and maximum values can be tested simultaneously using the two-sided test, where the numerator is the maximum of $y_{(n)} - y_{(n-1)}$ and $y_{(2)}-y_{(1)}$.
 
-Again, we can use simulation to compute the probability of false positives using this test, giving the results shown in Figure \@ref(fig:spuriousdixon).
+The test is clearly flawed for several reasons. First, if the two largest values are both anomalies of similar size, then $Q$ may take a small value and these anomalies will be missed. Also, if both maximum and minimum values are anomalies, the denominator will be larger than expected, thereby reducing the size of $Q$.
+
+As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
+
+Simulation is used to compute the critical values for this test, assuming the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in Figure \@ref(fig:spuriousdixon). As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
 
 ```{r spuriousdixon, fig.cap = "Probability of a spurious anomaly using Dixon's test.", echo = FALSE, dependson="pspurious"}
 # Function to compute probability of spurious anomaly for sample size n,
@@ -460,12 +461,13 @@ pspuriousdixon <- function(n, dist, rep = 1e5, ...) {
   if (length(n) == 1) {
     pv <- numeric(rep)
     for (j in seq(rep)) {
-      pv[j] <- outliers::dixon.test(dist(n, ...))$p.value
+      pv[j] <- any(dixon_anomalies(dist(n, ...)))
     }
-    return(mean(pv < 0.05))
+    return(mean(pv))
   } else {
     pv <- numeric(length(n))
     for (i in seq_along(n)) {
+      #print(n[i])
       pv[i] <- pspuriousdixon(n = n[i], dist = dist, rep = rep, ...)
     }
     return(pv)
@@ -474,7 +476,7 @@ pspuriousdixon <- function(n, dist, rep = 1e5, ...) {
 if(file.exists("dixondf.rds")) {
   dixondf <- readRDS("dixondf.rds")
 } else {
-  dixondf <- tibble(n = 3:30) %>%
+  dixondf <- tibble(n = c(3:10,seq(12,20, by=2), seq(25,100, by=5))) %>%
   mutate(
     Normal  = pspuriousdixon(n, rnorm),
     `t(2)` = pspuriousdixon(n, rt, df = 2),
@@ -491,13 +493,22 @@ dixondf %>%
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)")
 ```
 
-As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
-
-For samples sizes $n$ in the range 3 to 30, we can use the `dixon.test()` function from the `outliers` package to perform the test. For larger sample sizes, critical values are not available for this test. So we can only use it on the last of our four examples, where it finds the outlying observation (unsurprisingly because the other data in that example are normally distributed).
+We can apply the test using the `dixon_anomalies()` function, which does a two-sided  test of both minimum and maximum observations.
 
 ```{r}
-dixon.test(n01b$v2)
+cricket_batting %>%
+  filter(Innings > 20) %>%
+  filter(dixon_anomalies(Average)) %>%
+  select(Player, Country, Average)
+oldfaithful %>%
+  filter(dixon_anomalies(duration))
+n01 %>%
+  filter(dixon_anomalies(v1))
+n01b %>%
+  filter(dixon_anomalies(v2))
 ```
+
+For these examples, the test has worked quite well, identifying the known outlying anomalies, plus the low average of Zimbabwean cricketer (and commentator) "Pommie" Mbangwa. Nevertheless, it is not recommended for the reasons already discussed.
 
 ## General comments
 
