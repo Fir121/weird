@@ -1456,14 +1456,6 @@
         "askpass"
       ]
     },
-    "outliers": {
-      "Package": "outliers",
-      "Version": "0.14",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "f6322b38ea06f3cfdaeeaaae6b17653a",
-      "Requirements": []
-    },
     "pROC": {
       "Package": "pROC",
       "Version": "1.18.0",
@@ -2230,8 +2222,8 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "35befd2284591ab1cc0b554ab9ed697f42fb8c4b",
-      "Hash": "304f915dfdee4cc5deaa3bfb1aa7fab5",
+      "RemoteSha": "e96a72798d564ee54d0eb56726c5201bc6359a5e",
+      "Hash": "35391b5c209d322a4d714efb21b195f5",
       "Requirements": [
         "aplpack",
         "cli",
