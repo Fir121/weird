@@ -84,10 +84,10 @@
     },
     "MASS": {
       "Package": "MASS",
-      "Version": "7.3-54",
+      "Version": "7.3-55",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "0e59129db205112e3963904db67fd0dc",
+      "Hash": "c5232ffb549f6d7a04a152c34ca1353d",
       "Requirements": []
     },
     "Matrix": {
@@ -147,10 +147,10 @@
     },
     "Rcpp": {
       "Package": "Rcpp",
-      "Version": "1.0.7",
+      "Version": "1.0.8",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "dab19adae4440ae55aa8a9d238b246bb",
+      "Hash": "22b546dd7e337f6c0c58a39983a496bc",
       "Requirements": []
     },
     "RcppArmadillo": {
@@ -395,10 +395,10 @@
     },
     "class": {
       "Package": "class",
-      "Version": "7.3-19",
+      "Version": "7.3-20",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "1593b7beb067c8381c0d24e38bd778e0",
+      "Hash": "da09d82223e669d270e47ed24ac8686e",
       "Requirements": [
         "MASS"
       ]
@@ -544,10 +544,10 @@
     },
     "dbscan": {
       "Package": "dbscan",
-      "Version": "1.1-9",
+      "Version": "1.1-10",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "4d315d73609d337eb2067c9666048b14",
+      "Hash": "a41eed892d408fda44afe96f7df2885e",
       "Requirements": [
         "Rcpp"
       ]
@@ -650,10 +650,10 @@
     },
     "fansi": {
       "Package": "fansi",
-      "Version": "1.0.0",
+      "Version": "1.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "ae34c3d1fdfac1566ca17c1b5d8f2613",
+      "Hash": "f28149c2d7a1342a834b314e95e67260",
       "Requirements": []
     },
     "farver": {
@@ -811,9 +811,9 @@
       "RemoteUsername": "Sayani07",
       "RemoteRepo": "gghdr",
       "RemoteRef": "HEAD",
-      "RemoteSha": "e8d14dfbd9876732a4164a4e4c0e9bfd3bf199de",
+      "RemoteSha": "1484cfd7b191a8faedf7b533b707a907557bed5a",
       "RemoteHost": "api.github.com",
-      "Hash": "f6415d58a78651a5262f969e5c54a474",
+      "Hash": "40d114c922a0e91cee32297ebb75d766",
       "Requirements": [
         "digest",
         "farver",
@@ -1119,10 +1119,10 @@
     },
     "jsonlite": {
       "Package": "jsonlite",
-      "Version": "1.7.2",
+      "Version": "1.7.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "98138e0994d41508c7a6b84a0600cfcb",
+      "Hash": "68c37fd8f863c6273dcd24928c17d6e1",
       "Requirements": []
     },
     "kernlab": {
@@ -1409,20 +1409,20 @@
     },
     "nlme": {
       "Package": "nlme",
-      "Version": "3.1-153",
+      "Version": "3.1-155",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "2d632e0d963a653a0329756ce701ecdd",
+      "Hash": "74ad940dccc9e977189a5afe5fcdb7ba",
       "Requirements": [
         "lattice"
       ]
     },
     "nnet": {
       "Package": "nnet",
-      "Version": "7.3-16",
+      "Version": "7.3-17",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "3a3dc184000bc9e6c145c4dbde4dd702",
+      "Hash": "cb1d8d9f300a7e536b89c8a88c53f610",
       "Requirements": []
     },
     "np": {
@@ -1756,10 +1756,10 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "0.15.0",
+      "Version": "0.15.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "36c1a644e5b0ba8050f40f07ea1dae62",
+      "Hash": "c38694b67e7f7091f7d073b3766258cc",
       "Requirements": []
     },
     "reprex": {
@@ -2222,8 +2222,8 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "e96a72798d564ee54d0eb56726c5201bc6359a5e",
-      "Hash": "35391b5c209d322a4d714efb21b195f5",
+      "RemoteSha": "051f8f2855a9edbf0009d6bd498998a4020ffa07",
+      "Hash": "9fa6f3203990d5e295f1aadd98245485",
       "Requirements": [
         "aplpack",
         "cli",
