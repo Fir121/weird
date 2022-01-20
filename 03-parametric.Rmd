@@ -457,7 +457,7 @@ Simulation is used to compute the critical values for this test, assuming the da
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # rep is number of replicates
-pspuriousdixon <- function(n, dist, rep = 1e5, ...) {
+pspuriousdixon <- function(n, dist, rep = 1e6, ...) {
   if (length(n) == 1) {
     pv <- numeric(rep)
     for (j in seq(rep)) {
@@ -476,7 +476,7 @@ pspuriousdixon <- function(n, dist, rep = 1e5, ...) {
 if(file.exists("dixondf.rds")) {
   dixondf <- readRDS("dixondf.rds")
 } else {
-  dixondf <- tibble(n = c(3:10,seq(12,20, by=2), seq(25,100, by=5))) %>%
+  dixondf <- tibble(n = c(3:10,seq(12,26, by=2), seq(30,100, by=5))) %>%
   mutate(
     Normal  = pspuriousdixon(n, rnorm),
     `t(2)` = pspuriousdixon(n, rt, df = 2),
@@ -493,7 +493,7 @@ dixondf %>%
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)")
 ```
 
-We can apply the test using the `dixon_anomalies()` function, which does a two-sided  test of both minimum and maximum observations.
+We can apply the test using the `dixon_anomalies()` function, which does a two-sided test of both minimum and maximum observations.
 
 ```{r}
 cricket_batting %>%
