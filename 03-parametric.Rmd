@@ -212,7 +212,7 @@ Let's also compute the probability of spurious anomalies for different data dist
 (ref:zspurious2) The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
 
 ```{r zspurious2, fig.cap="(ref:zspurious)", echo=FALSE, dependson=c("pspurious","zspurious")}
-if(file.exists("zspurious2df. rds")) {
+if(file.exists("zspurious2df.rds")) {
   zspurious2df <- readRDS("zspurious2df.rds")
 } else {
   zspurious2df <- tibble(n = n, c = 3) %>%
@@ -357,7 +357,7 @@ From these, we can compute the probability of a false positive (detecting an ano
 (ref:pzscoretests) True size of the tests (i.e., the probability of a false positive) for normally distributed data with $\alpha=0.05$.
 
 ```{r pzscoretests, fig.cap="(ref:pzscoretests)", echo=FALSE, dependson=c("pspurious","zscoretests")}
-if(file.exists("pzscoredf. rds")) {
+if(file.exists("pzscoredf.rds")) {
   pzscoredf <- readRDS("pzscoredf.rds")
 } else {
   pzscoredf <- df %>%
