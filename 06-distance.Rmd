@@ -1,7 +1,5 @@
 # Distance-based methods {#distance-methods}
 
-
-
 ## Local outlier factors
 
 A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. This is similar to the idea discussed in \@ref(kdescores) of finding points with low probability density estimates, in that it is designed to find points in areas with few surrounding observations.
@@ -87,4 +85,3 @@ of_scores %>%
 ```
 
 Again, the two large scores correspond to the extreme 2 hour duration and the tiny 1 second duration. The value of $k=150$ has been chosen by trial and error.
-

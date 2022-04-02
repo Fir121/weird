@@ -1,6 +1,5 @@
 # Density-based methods {#density-methods}
 
-
 ## Highest density regions
 
 For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
@@ -25,7 +24,6 @@ oldfaithful %>%
 ```
 
 Points outside the 99% region are shown separately and indicate possible outliers.
-
 
 ## KDE scores {#kdescores}
 
@@ -61,8 +59,6 @@ of_scores %>%
 The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. The lowest kde scores correspond to the mode of the estimated density.
 
 For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
-
-
 
 ## Lookout algorithm
 

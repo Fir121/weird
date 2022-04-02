@@ -70,7 +70,6 @@ Terms with zero numerator and denominator are omitted from the sum. This distanc
 Binary:
 : This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
 
-
 ## Nearest neighbours
 
 Some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
@@ -289,7 +288,6 @@ $$
   K_H(\bm{u}) = (2\pi)^{-d/2} \text{det}(\bm{H})^{-1/2} \exp \{-\textstyle\frac12 \bm{u}'\bm{H}^{-1}\bm{u} \}.
 $$
 
-
 ```{r bivariatebandwidths, include=FALSE}
 h1 <- MASS::bandwidth.nrd(of2021$duration)
 h2 <- MASS::bandwidth.nrd(of2021$waiting)
@@ -423,7 +421,6 @@ tibble(maximum = maximums) %>%
   geom_density() +
   geom_line(data = truedensity, aes(x = y, y = fy), col = "red")
 ```
-
 
 ### The Generalized Pareto Distribution {-}
 

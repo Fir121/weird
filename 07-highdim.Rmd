@@ -1,7 +1,5 @@
 # High-dimensional methods {#highdim}
 
-
-
 ## Principal component analysis
 
 ## Multi-dimensional scaling

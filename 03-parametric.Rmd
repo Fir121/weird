@@ -239,7 +239,6 @@ zspurious2df %>%
 
 Notice how the departures from normality, either via skewness (for the $\chi^2$ distribution) or with heavier tails (for the $t$ distribution), lead to much greater probabilities for spurious anomalies. Any tests for anomaly detection that assume an underlying data distribution will be sensitive to the shape of that distribution.
 
-
 Even if we were prepared to believe that the data come from a normal distribution, we need to adjust the threshold to allow for the sample size. This is the idea behind the next methods we will consider.
 
 ## Peirce's and Chauvenet's criteria
@@ -517,4 +516,3 @@ As noted at the start of this chapter, anomaly detection methods based on assume
 They are particularly sensitive to the assumed data distribution, and the probability of detecting spurious anomalies is usually much higher in reality than under the ideal conditions in which the tests were conceived.
 
 Next, we will turn out attention to methods that arose in the latter part of the 20th century which were based on quantiles and data depth rather than on any underlying parametric data distribution.
-

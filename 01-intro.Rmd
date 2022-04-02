@@ -86,7 +86,6 @@ oldfaithful
 
 Other than the time stamp, the variables here give the duration of each eruption and the time to the next eruption.
 
-
 ### Wine prices and quality {-}
 
 The `wine_reviews` data set contains data on `r NROW(wine_reviews)` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
