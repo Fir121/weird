@@ -119,7 +119,9 @@ oldfaithful %>%
 n01 %>%
   mutate(lookout = lookout_prob(v1)) %>%
   filter(lookout < 0.05)
-n01b <- n01 %>% select(v2) %>% head(20)
+n01b <- n01 %>%
+  select(v2) %>%
+  head(20)
 n01b$v2[20] <- 4
 n01b %>%
   mutate(lookout = lookout_prob(v2)) %>%

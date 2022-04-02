@@ -124,10 +124,10 @@ Don Bradman was an Australian cricketer in the first half of the 20th century, a
 ```{r cricket1, fig.asp=0.2, fig.cap="(ref:cricket1)"}
 cricket_batting %>%
   filter(Innings > 20) %>%
-  ggplot(aes(x=Average, y=1)) +
-  geom_jitter(width=0, alpha=0.5) +
+  ggplot(aes(x = Average, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
-  labs(y="", x="Career batting average")
+  labs(y = "", x = "Career batting average")
 ```
 
 The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r round(donave,2)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket.
@@ -138,9 +138,9 @@ Some anomalies are not so obvious, and occur within the range of the rest of the
 
 ```{r oldfaithful1, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015. The large anomaly is an eruption recorded on 7&nbsp;December 2015 which apparently lasted nearly two hours."}
 oldfaithful %>%
-  ggplot(aes(x=duration, y=1)) +
-  geom_jitter(width=0, alpha=0.5) +
-  labs(y="", x="Duration (seconds)") +
+  ggplot(aes(x = duration, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  labs(y = "", x = "Duration (seconds)") +
   scale_y_discrete()
 ```
 
@@ -149,9 +149,9 @@ The big anomaly on the right was an eruption that apparently lasted nearly two h
 ```{r oldfaithful2, fig.asp=0.2, fig.cap="Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 oldfaithful %>%
   filter(duration < 7000) %>%
-  ggplot(aes(x=duration, y=1)) +
-  geom_jitter(width=0, alpha=0.5) +
-  labs(y="", x="Duration (seconds)") +
+  ggplot(aes(x = duration, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  labs(y = "", x = "Duration (seconds)") +
   scale_y_discrete()
 ```
 
@@ -164,9 +164,9 @@ The `oldfaithful` data set also contains the time between eruptions. For each ro
 ```{r oldfaithful3, fig.cap="Old Faithful eruption durations and waiting times since 2015, omitting waiting times and durations of two hours or more."}
 oldfaithful %>%
   filter(duration < 7200, waiting < 7200) %>%
-  ggplot(aes(x=duration, y=waiting)) +
-  geom_point(alpha=0.5) +
-  labs(y="Waiting time to next eruption (seconds)", x="Duration (seconds)")
+  ggplot(aes(x = duration, y = waiting)) +
+  geom_point(alpha = 0.5) +
+  labs(y = "Waiting time to next eruption (seconds)", x = "Duration (seconds)")
 ```
 
 We have filtered out some extreme waiting times (which are probably due to incomplete records), and the two-hour duration we have seen previously. This shows some anomalies that occur due to the combination of the two variables, although they do not appear anomalous within the data on any one of the variables.
@@ -183,8 +183,8 @@ Figure \@ref(fig:shiraz) shows a scatterplot of data on `r wine_reviews %>% filt
 wine_reviews %>%
   filter(variety %in% c("Shiraz", "Syrah")) %>%
   select(points, price) %>%
-  ggplot(aes(y=price, x=points)) +
-  geom_jitter(height=0, width=0.3, alpha=0.5) +
+  ggplot(aes(y = price, x = points)) +
+  geom_jitter(height = 0, width = 0.3, alpha = 0.5) +
   scale_y_log10()
 ```
 
@@ -218,7 +218,7 @@ Figure \@ref(fig:nn01) show the scatterplot matrix of all 10 variables in the `n
 
 ```{r nn01, fig.asp=1, output.width="100%", fig.cap="(ref:nn01)", message=FALSE}
 n01 %>%
-  GGally::ggpairs(mapping= aes(alpha=0.1))
+  GGally::ggpairs(mapping = aes(alpha = 0.1))
 ```
 
 Any points that appear slightly outside the main clouds of points are not genuine anomalies, because they were generated from the same N(0,1) distribution as the rest of the data. 

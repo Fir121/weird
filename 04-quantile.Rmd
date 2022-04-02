@@ -34,10 +34,10 @@ Using this idea, we can calculate some of the quantiles for Test cricket batting
 ```{r battingsubset, echo=FALSE}
 batave <- cricket_batting %>% filter(Innings > 20)
 n <- NROW(batave)
-lv <- lvplot::lvtable(batave$Average, k=4)
-d <- lv[4:7,"depth"]
-quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0,1,by=0.25),0.99)))
-kplus <- (n-1)*c(seq(0,1, by=0.25), 0.99) + 1
+lv <- lvplot::lvtable(batave$Average, k = 4)
+d <- lv[4:7, "depth"]
+quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0, 1, by = 0.25), 0.99)))
+kplus <- (n - 1) * c(seq(0, 1, by = 0.25), 0.99) + 1
 k <- trunc(kplus)
 gamma <- kplus - k
 ```
@@ -59,7 +59,7 @@ $$
 These values are easily computed using the `quantile()` function.
 
 ```{r battingquantiles}
-cricket_batting %>% 
+cricket_batting %>%
   filter(Innings > 20) %>%
   pull(Average) %>%
   quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1))
@@ -243,7 +243,9 @@ cricket_batting %>%
   filter(barbato_anomaly(Average))
 oldfaithful %>% filter(barbato_anomaly(duration))
 n01 %>% filter(barbato_anomaly(v1))
-n01b <- n01 %>% select(v2) %>% head(20)
+n01b <- n01 %>%
+  select(v2) %>%
+  head(20)
 n01b$v2[20] <- 4
 n01b %>% filter(barbato_anomaly(v2))
 ```
@@ -338,11 +340,11 @@ A diagram will help illustrate the idea. Suppose we have the observations shown 
 ```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations (shown in black). The dividing red line splits the plane into two halfspaces. We are interested in the depth of the orange point."}
 n01 %>%
   head(10) %>%
-  ggplot(aes(x=v1,y=v2)) +
+  ggplot(aes(x = v1, y = v2)) +
   geom_point() +
-  geom_abline(aes(intercept=-0.8, slope=-1.8), col='red') +
-  geom_point(aes(x=0, y=-1), col=discrete_colors[1]) +
-  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
+  geom_abline(aes(intercept = -0.8, slope = -1.8), col = "red") +
+  geom_point(aes(x = 0, y = -1), col = discrete_colors[1]) +
+  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
 ```
 
 There are an infinite number of ways of dividing the plane into half spaces, and the number of points in each half plane will vary depending on where the dividing line falls.
@@ -354,28 +356,28 @@ The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at lea
 (ref:depthregions) The depth regions for the 10 bivariate observations from Figure \@ref(fig:tukeydepth). The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
 
 ```{r depthregions, echo=FALSE, fig.cap="(ref:depthregions)"}
-median <- aplpack::compute.bagplot(n01[1:10,1:2])
-z <- expand_grid(v1=seq(-0.9,1.6,l=200), v2=seq(-1.95,1.15,l=200)) %>%
-  bind_rows(n01[1:10,1:2])
-z$depth <- round(as.numeric(DepthProc::depthTukey(as.matrix(z), as.matrix(n01[1:10,1:2])))*10)
+median <- aplpack::compute.bagplot(n01[1:10, 1:2])
+z <- expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) %>%
+  bind_rows(n01[1:10, 1:2])
+z$depth <- round(as.numeric(DepthProc::depthTukey(as.matrix(z), as.matrix(n01[1:10, 1:2]))) * 10)
 regions <- list()
 depths <- sort(unique(z$depth))
 depths <- depths[depths > 0]
-for(i in depths) {
+for (i in depths) {
   tmp <- z %>% filter(depth == depths[i])
   hull <- chull(tmp)
-  regions[[i]] <- tmp[c(hull,hull[1]),]
+  regions[[i]] <- tmp[c(hull, hull[1]), ]
 }
-cols <- discrete_colors[c(2,1,4,3)]
+cols <- discrete_colors[c(2, 1, 4, 3)]
 p <- n01 %>%
   head(10) %>%
-  ggplot(aes(x=v1,y=v2))
-for(i in depths) {
-  p <- p + geom_polygon(aes(x=v1, y=v2), data=regions[[i]], fill=cols[i], alpha=0.8)
+  ggplot(aes(x = v1, y = v2))
+for (i in depths) {
+  p <- p + geom_polygon(aes(x = v1, y = v2), data = regions[[i]], fill = cols[i], alpha = 0.8)
 }
 p + geom_point() +
-  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1)) +
-  geom_point(aes(x=median$center[1],y=median$center[2]), col='yellow', size=2)
+  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1)) +
+  geom_point(aes(x = median$center[1], y = median$center[2]), col = "yellow", size = 2)
 ```
 
 ### Depth median
@@ -389,24 +391,24 @@ Imagine that each of the observations shown in Figure \@ref(fig:tukeydepth) is a
 (ref:convexhull) Left: The convex hull containing the 10 bivariate observations from Figure \@ref(fig:tukeydepth). Right: The second convex layer formed with the same points.
 
 ```{r convexhull, fig.cap="(ref:convexhull)", echo=FALSE}
-hull <- chull(n01[1:10,1:2])
-hull <- c(hull,hull[1])
-df <- n01[1:10,1:2] %>%
-  mutate(hull = row_number() %in% hull) 
+hull <- chull(n01[1:10, 1:2])
+hull <- c(hull, hull[1])
+df <- n01[1:10, 1:2] %>%
+  mutate(hull = row_number() %in% hull)
 p1 <- df %>%
-  ggplot(aes(x=v1,y=v2)) +
+  ggplot(aes(x = v1, y = v2)) +
   geom_point() +
-  geom_path(data = n01[hull,1:2], col='red') +
-  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
-hull2 <- chull(df[!df$hull,1:2])
+  geom_path(data = n01[hull, 1:2], col = "red") +
+  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
+hull2 <- chull(df[!df$hull, 1:2])
 hull2 <- c(hull2, hull2[1])
 p2 <- df %>%
-  ggplot(aes(x=v1,y=v2, col=hull)) +
+  ggplot(aes(x = v1, y = v2, col = hull)) +
   geom_point() +
-  scale_color_manual(values=c(`TRUE` = "gray", `FALSE`="black")) +
-  geom_path(data = (df[!df$hull,])[hull2,], col='red') +
-  guides(col="none") +
-  coord_fixed(xlim=c(-0.85, 1.6), ylim=c(-1.85,1.1))
+  scale_color_manual(values = c(`TRUE` = "gray", `FALSE` = "black")) +
+  geom_path(data = (df[!df$hull, ])[hull2, ], col = "red") +
+  guides(col = "none") +
+  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
 p1 | p2
 ```
 
@@ -433,7 +435,7 @@ Figure \@ref(fig:bagplot) shows the bagplot from the same 10 observations as wer
 n01 %>%
   head(10) %>%
   gg_bagplot(v1, v2) +
-  geom_point(aes(x=v1, y=v2), data=n01[1:10,])
+  geom_point(aes(x = v1, y = v2), data = n01[1:10, ])
 ```
 
 A useful variation of the bagplot, especially for larger data sets, displays a scatterplot of the observations, but colored using the same colors as the bagplot, with the deepest observation in the strongest blue, the points within the bag in a lighter blue, and the points within the loop in the lightest color. Outliers are shown in black if any exist.
@@ -441,7 +443,7 @@ A useful variation of the bagplot, especially for larger data sets, displays a s
 ```{r bagplot2, fig.cap="A variation of the bagplot showing individual points colored according to the region in which they fall."}
 n01 %>%
   head(10) %>%
-  gg_bagplot(v1, v2, scatterplot=TRUE)
+  gg_bagplot(v1, v2, scatterplot = TRUE)
 ```
 
 ### Old faithful bagplot
@@ -451,7 +453,7 @@ A more interesting example is obtained in Figure \@ref(fig:oldfaithfulbagplot), 
 ```{r oldfaithfulbagplot, fig.cap="Bagplot of the durations and waiting times of Old Faithful eruptions since 2015."}
 oldfaithful %>%
   filter(duration < 7200, waiting < 7200) %>%
-  gg_bagplot(duration, waiting, scatterplot=TRUE)
+  gg_bagplot(duration, waiting, scatterplot = TRUE)
 ```
 
 This plot shows the value of the scatterplot version of a bagplot, as you can see a lot of detail in the bag and loop that would not be visible otherwise. It also shows the drawback of using a bagplot to identify anomalies. The plot has identified all the shorter duration eruptions as anomalous, along with a small number of other eruptions.

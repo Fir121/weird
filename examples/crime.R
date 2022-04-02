@@ -5,9 +5,9 @@ library(tidyverse)
 
 # Table 8
 offences2018 <- readxl::read_excel(
-    here::here("data/crime/Table_8_Offenses_Known_to_Law_Enforcement_by_State_by_City_2018.xls"),
-    skip=3
-  ) %>%
+  here::here("data/crime/Table_8_Offenses_Known_to_Law_Enforcement_by_State_by_City_2018.xls"),
+  skip = 3
+) %>%
   janitor::clean_names() %>%
   fill(state, .direction = "down") %>%
   filter(!str_detect(state, "^[0-9]")) %>%

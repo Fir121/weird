@@ -86,9 +86,9 @@ knn <- oldfaithful %>%
   scale() %>%
   dbscan::kNN(k = 5)
 # First eruption in the data set
-oldfaithful[1,]
+oldfaithful[1, ]
 # Five closest observations
-oldfaithful[knn$id[1,],]
+oldfaithful[knn$id[1, ], ]
 ```
 
 For very large data sets, approximations are available which speed up the computation even more, but are less accurate in finding the $k$ nearest neighbours. The `approx` argument specifies a distance tolerance which makes the process faster for large data sets, although the neighbours returned may not be the exact nearest  neighbours.
@@ -98,9 +98,9 @@ For very large data sets, approximations are available which speed up the comput
 kann <- oldfaithful %>%
   select(duration, waiting) %>%
   scale() %>%
-  dbscan::kNN(k = 5, approx=2)
+  dbscan::kNN(k = 5, approx = 2)
 # Five closest observations
-oldfaithful[kann$id[1,],]
+oldfaithful[kann$id[1, ], ]
 ```
 
 Here the fifth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
