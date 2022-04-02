@@ -7,11 +7,10 @@ This chapter covers various statistical and computational tools that will be use
   * cdf
   * density
   * quantile
-
- * Normal
- * t
- * Chi-squared
- * Gamma
+  * Normal
+  * t
+  * Chi-squared
+  * Gamma
 
 ## Central limit theorem
 
@@ -106,7 +105,6 @@ oldfaithful[kann$id[1,],]
 
 Here the fifth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
 
-
 ## Kernel density estimation {#kde}
 
 Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
@@ -126,7 +124,7 @@ of2021 <- oldfaithful %>%
   mutate(eruption = row_number())
 s <- sd(of2021$duration)
 iqr <- IQR(of2021$duration)
-h <- 0.9 * min(s, iqr / 1.34) * NROW(of2021)^(-1/5)
+h <- 0.9 * min(s, iqr/1.34) * NROW(of2021)^(-1/5)
 ```
 
 Now we will apply \@ref(eq:kde) to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
@@ -460,4 +458,3 @@ df %>%
 ```
 
 The red estimate is better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances). The kernel density estimate (in black) is biased around 3 because of the boundary problem discussed in Section \@ref(kde). Otherwise, the kernel density estimate closely matches the GPD estimates.
-

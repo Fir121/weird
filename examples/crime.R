@@ -9,15 +9,16 @@ offences2018 <- readxl::read_excel(
     skip=3
   ) %>%
   janitor::clean_names() %>%
-  fill(state, .direction="down") %>%
-  filter(!str_detect(state,"^[0-9]")) %>%
+  fill(state, .direction = "down") %>%
+  filter(!str_detect(state, "^[0-9]")) %>%
   filter(state != "IOWA7") %>%
-  mutate(across(violent_crime:arson2, ~ ./population*1e3))
+  mutate(across(violent_crime:arson2, ~ . / population * 1e3))
 
 offences2018 %>%
-  ggplot(aes(x=violent_crime, y=rape1)) +
+  ggplot(aes(x = violent_crime, y = rape1)) +
   geom_point() +
-  scale_x_log10() + scale_y_log10()
+  scale_x_log10() +
+  scale_y_log10()
 
 library(lookout)
 
