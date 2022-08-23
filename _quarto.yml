@@ -18,7 +18,7 @@ book:
     - "07-highdim.qmd"
     - "99-refs.qmd"
   page-footer: 
-    left: "Copyright 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 
+    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 
     border: false
     background: light
   sidebar: 
