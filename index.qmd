@@ -1,23 +1,4 @@
----
-knit: "bookdown::render_book"
-title: "That's weird: Anomaly&nbsp;detection&nbsp;using&nbsp;R"
-author:
-  name: "Rob J Hyndman"
-  affiliation: Monash University, Australia
-site: bookdown::bookdown_site
-output:
-  bookdown::gitbook:
-    highlight: tango
-bibliography: [weird.bib]
-biblio-style: authoryear-comp
-geometry: left=1.3cm
-subparagraph: yes
-link-citations: yes
-url: 'https\://Otexts.com/weird/'
-twitter-handle: robjhyndman
----
-
-# Preface {-}
+# Preface {.unnumbered}
 
 > This book is under development. Please don't ask me when it will be finished --- I have to fit this around my other work. In the meantime, I hope the incomplete book is useful.
 
@@ -59,7 +40,7 @@ This will load the relevant data sets and functions from the packages needed to 
 16. Deep learning for anomaly detection
 17. Applications: network intrusion, fraud detection
 18. Handling very large data sets
-
+  
 To include somewhere:
 
  * Isolation forests??
@@ -70,12 +51,10 @@ To include somewhere:
 ### Task view {-}
 
 - [https://github.com/pridiltal/ctv-AnomalyDetection](https://github.com/pridiltal/ctv-AnomalyDetection)
--
 
 ### Additional Examples {-}
 
 - [https://github.com/rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday)
--
 
 ### Collections of anomalous data {-}
 

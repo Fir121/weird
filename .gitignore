@@ -5,3 +5,8 @@
 public
 _bookdown_files
 .vscode
+
+/.quarto/
+*_cache/*
+*_files/*
+/docs/

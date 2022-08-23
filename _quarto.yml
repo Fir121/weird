@@ -1,0 +1,41 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "That's weird: Anomaly&nbsp;detection using&nbsp;R"
+  author:
+    name: "<a href='https://robjhyndman.com'>Rob J Hyndman</a>"
+    affiliation: "Monash University, Australia"
+  site-url: "https://OTexts.com/weird"
+  chapters:
+    - index.qmd
+    - "01-intro.qmd"
+    - "02-tools.qmd"
+    - "99-refs.qmd"
+  page-footer: 
+    left: "Copyright 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 
+    border: false
+    background: light
+  sidebar: 
+    background: "#cbcbcb"
+    style: "docked"
+
+html-math-method: katex
+published-title: "Last updated"
+date-format: "DD MMMM YYYY"
+number-depth: 2
+include-before-body: google_analytics.html
+bibliography: weird.bib
+biblio-style: authoryear-comp
+
+format: 
+  html:
+    theme: 
+      - cosmo
+      - otexts.scss
+    fontsize: 16px
+    mainfont: "Merriweather, Georgia, serif"
+    code-link: true
+  pdf:
+    documentclass: scrreprt
