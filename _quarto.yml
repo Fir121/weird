@@ -12,6 +12,7 @@ book:
     - index.qmd
     - "01-intro.qmd"
     - "02-tools.qmd"
+    - "03-parametric.qmd"
     - "99-refs.qmd"
   page-footer: 
     left: "Copyright 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 

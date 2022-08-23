@@ -1,6 +1,12 @@
-# Parametric methods {#parametric-methods}
+# Parametric methods {#ch-parametric-methods}
 
-The early history of anomaly detection method involved statistical tests and assumptions about the distribution of the data. There are much better methods available these days, but these old methods are still very widely used. So they are included here for historical interest, and to point out their flaws to those still using them. There is nothing in later chapters that assumes knowledge of this chapter, so if you want to skip on to more useful methods, head to Chapter \@ref(quantile-methods).
+```{r}
+#| echo: false
+#| include: false
+source("before-each-chapter.R")
+```
+
+The early history of anomaly detection method involved statistical tests and assumptions about the distribution of the data. There are much better methods available these days, but these old methods are still very widely used. So they are included here for historical interest, and to point out their flaws to those still using them. There is nothing in later chapters that assumes knowledge of this chapter, so if you want to skip on to more useful methods, head to Chapter @ch-quantile-methods.
 
 We will only consider univariate methods in this chapter. There have been multivariate parametric methods for anomaly detection, but they are much less widely used and are also best avoided.
 
@@ -8,12 +14,13 @@ We will only consider univariate methods in this chapter. There have been multiv
 
 We will use four simple univariate examples to illustrate the ideas, two with real data and two with synthetic data.
 
-1. The cricket batting averages from the `cricket_batting` data set. As discussed in Section \@ref(scatterplots), these appear to contain one genuine anomaly, the batter Don Bradman.
-2. Old Faithful eruption durations since 2015, also discussed in Section \@ref(scatterplots). For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
+1. The cricket batting averages from the `cricket_batting` data set. As discussed in @sec-scatterplots, these appear to contain one genuine anomaly, the batter Don Bradman.
+2. Old Faithful eruption durations since 2015, also discussed in @sec-scatterplots. For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
 3. The first variable in the `n01` data containing 1000 draws from a N(0,1) distribution. This contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
 4. The first 19 rows of the second variable in the `n01` data, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution. The code below shows the data for this example.
 
 ```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
+#| label: fig-n01b
 n01b <- n01 %>%
   select(v2) %>%
   head(20)
@@ -32,6 +39,7 @@ The two artificial examples are designed to test different methods when there ar
 All of the methods considered in this chapter assume the underlying data follow a normal distribution. We will test the methods under this assumption by considering the probability of each method identifying a spurious anomaly when, in fact, the data do follow a normal distribution. For comparison, we will also test the methods under two variations to the underlying data: (1) when the data follow a $\chi^2_{4}$ distribution which is positively skewed; and (2) when the data follow a $t_2$ distribution which has heavy tails. The densities for the three distributions are shown below.
 
 ```{r testdist, echo=FALSE, fig.cap="Three distributions we will use to test various anomaly detection methods."}
+#| label: fig-testdist
 tibble(
   x = seq(-5, 10, l = 999),
   `t(2)` = dt(x, df = 2),
@@ -104,7 +112,7 @@ n4 <- n01b %>%
 stopifnot(n1 == 1, n2 == 1, n3 == 1, n4 == 1)
 ```
 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. We will discuss this in more detail in Section \@ref(quantiles).] we obtain the same results in three of the examples, but the Old Faithful example gives even worse results.
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. We will discuss this in more detail in @sec-quantiles.] we obtain the same results in three of the examples, but the Old Faithful example gives even worse results.
 
 ```{r check, include=FALSE}
 # Check last statement
@@ -150,11 +158,10 @@ Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as ano
 Even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is $`r round(2*pnorm(-3),4)`$ (assuming a large sample), so we would expect to see 1 in every $1/ `r round(2*pnorm(-3),4)` = `r round(.5/pnorm(-3))`$ regular observations being identified as an anomaly using this approach.
 
 In fact, we can be more accurate than this. If our $n$ observations come from a normal distribution, then the z-scores follow (approximately) a $t_{n-1}$ distribution. (The approximation arises because we replace the mean by its sample estimate.) When we identify anomalies as those points with $|z|>c$, then the probability of finding at least one spurious anomaly is the probability of the maximum being above $c$ or the minimum being below $-c$. Since the distribution is symmetric, these probabilities are the same. Let $M_n$ be the maximum of $n$ z-scores computed from the data; then $P(M_n \le c) = (F_{t,n-1}(c))^n$ where $F_{t,n-1}$ is the cumulative distribution function of a $t$ distribution with $n-1$ degrees of freedom. So the probability of at least one spurious anomaly is
-\begin{equation}
-1 - (F_{t,n-1}(c))^{2n}.
-	(\#eq:spuriousz)
-\end{equation}
-This probability is accurate for large $n$, but not for small sample sizes. So, instead, we will use simulation to compute the probabilities; these are plotted in Figure \@ref(fig:zspurious) for several values of $c$ and $n$.
+$$
+  1 - (F_{t,n-1}(c))^{2n}.
+$$ {#eq-spuriousz}
+This probability is accurate for large $n$, but not for small sample sizes. So, instead, we will use simulation to compute the probabilities; these are plotted in @fig-zspurious for several values of $c$ and $n$.
 
 ```{r pspurious, echo=FALSE}
 # Function to compute probability of spurious anomaly for sample size n,
@@ -179,9 +186,9 @@ n <- c(2:10, round(exp(seq(log(15), log(1e4), l = 40))))
 breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 ```
 
-(ref:zspurious) The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
-
-```{r zspurious, fig.cap="(ref:zspurious)", echo=FALSE, dependson="pspurious"}
+```{r zspurious, echo=FALSE, dependson="pspurious"}
+#| label: fig-zspurious
+#| fig-cap: The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
 if (file.exists("zspuriousdf.rds")) {
   zspuriousdf <- readRDS("zspuriousdf.rds")
 } else {
@@ -207,11 +214,11 @@ zspuriousdf %>%
   theme(axis.text.x = element_text(size = 8))
 ```
 
-Let's also compute the probability of spurious anomalies for different data distributions --- the $t_2$ and $\chi^2_4$ distributions shown in Figure \@ref(fig:testdist).
+Let's also compute the probability of spurious anomalies for different data distributions --- the $t_2$ and $\chi^2_4$ distributions shown in @fig-testdist.
 
-(ref:zspurious2) The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
-
-```{r zspurious2, fig.cap="(ref:zspurious)", echo=FALSE, dependson=c("pspurious","zspurious")}
+```{r zspurious2, echo=FALSE, dependson=c("pspurious","zspurious")}
+#| fig-cap: The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
+#| label: fig-zspurious2
 if (file.exists("zspurious2df.rds")) {
   zspurious2df <- readRDS("zspurious2df.rds")
 } else {
@@ -245,9 +252,12 @@ Even if we were prepared to believe that the data come from a normal distributio
 
 ### Peirce's criterion {-}
 
-Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. Figure \@ref(fig:zscorecriteria) shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. 
+
+@fig-zscorecriteria shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
 ```{r zscorecriteria, echo=FALSE, warning=FALSE, fig.cap="Criteria for anomalies based on z-scores.", dependson="pspurious"}
+#| label: fig-zscorecriteria
 threshold <- numeric(length(n))
 for (i in seq_along(n)) {
   threshold[i] <- weird:::peirce_threshold(n[i])
@@ -284,7 +294,7 @@ This failure is at least partly due to the standard deviation being highly infla
 
 ### Chauvenet's criterion {-}
 
-Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Chauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in Figure \@ref(fig:zscorecriteria). A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Chauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in @fig-zscorecriteria. A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
 
 The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
 
@@ -320,11 +330,12 @@ $$
 c_\alpha = \frac{(n-1)t_{\alpha/2n, n-2}}{\sqrt{n(n-2 + t^2_{\alpha/2n, n-2})}}.
 $$
 
-Figure \@ref(fig:zscoretests) shows the critical values at $\alpha=0.05$ for these tests, along with the corresponding value from @Chauvenet1863 for comparison.
+@fig-zscoretests shows the critical values at $\alpha=0.05$ for these tests, along with the corresponding value from @Chauvenet1863 for comparison.
 
-(ref:zscoretests) Critical values for maximum $z$-score tests with $\alpha=0.05$.
 
-```{r zscoretests, echo=FALSE, fig.cap="(ref:zscoretests)", dependson="pspurious"}
+```{r zscoretests, echo=FALSE, dependson="pspurious"}
+#| label: fig-zscoretests
+#| fig-cap: Critical values for maximum $z$-score tests with $\alpha=0.05$.
 alpha <- 0.05
 df <- tibble(n = n) %>%
   filter(n >= 3) %>%
@@ -351,11 +362,11 @@ df %>%
   )
 ```
 
-From these, we can compute the probability of a false positive (detecting an anomaly which is a genuine observation) in a normal distribution, using \@ref(eq:spuriousz). This probability should be equal to $\alpha=0.05$.
+From these, we can compute the probability of a false positive (detecting an anomaly which is a genuine observation) in a normal distribution, using @eq-spuriousz. This probability should be equal to $\alpha=0.05$.
 
-(ref:pzscoretests) True size of the tests (i.e., the probability of a false positive) for normally distributed data with $\alpha=0.05$.
-
-```{r pzscoretests, fig.cap="(ref:pzscoretests)", echo=FALSE, dependson=c("pspurious","zscoretests")}
+```{r pzscoretests, echo=FALSE, dependson=c("pspurious","zscoretests")}
+#| label: fig-pzscoretests
+#| fig-cap: True size of the tests (i.e., the probability of a false positive) for normally distributed data with $\alpha=0.05$.
 if (file.exists("pzscoredf.rds")) {
   pzscoredf <- readRDS("pzscoredf.rds")
 } else {
@@ -381,13 +392,14 @@ pzscoredf %>%
   )
 ```
 
-Figure \@ref(fig:pzscoretests) shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in very small samples.
+@fig-pzscoretests shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in very small samples.
 
 However, when we allow for different data distributions, Grubbs' test also gives poor results, showing it is very sensitive to the assumed data distribution.
 
-(ref:pgrubbs) True size of Grubbs' tests (i.e., the probability of a false positive) for different data distributions with $\alpha=0.05$.
 
-```{r pgrubbs, fig.cap="(ref:pgrubbs)", echo=FALSE, dependson=c("pspurious","zscoretests")}
+```{r pgrubbs, echo=FALSE, dependson=c("pspurious","zscoretests")}
+#| label: fig-pgrubbs
+#| fig-cap: True size of Grubbs' tests (i.e., the probability of a false positive) for different data distributions with $\alpha=0.05$.
 if (file.exists("pgrubbsdf.rds")) {
   pgrubbsdf <- readRDS("pgrubbsdf.rds")
 } else {
@@ -450,9 +462,10 @@ The test is clearly flawed for several reasons. First, if the two largest values
 
 As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
 
-Simulation is used to compute the critical values for this test, assuming the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in Figure \@ref(fig:spuriousdixon). As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
+Simulation is used to compute the critical values for this test, assuming the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
 
 ```{r spuriousdixon, fig.cap = "Probability of a spurious anomaly using Dixon's test.", echo = FALSE, dependson="pspurious"}
+#| label: fig-spuriousdixon
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # rep is number of replicates
