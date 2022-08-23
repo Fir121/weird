@@ -1,18 +1,18 @@
-Rmd_files := $(wildcard *.Rmd)
+qmd_files := $(wildcard *.qmd)
 css_files := $(wildcard *.css)
 
-all: public/index.html launch
+all: build launch
 
-public/index.html: $(Rmd_files) $(css_files) weird.bib before-each-chapter.R apa-single-spaced.csl
-	Rscript -e 'bookdown::render_book("index.Rmd", "bookdown::gitbook", quiet=FALSE)'
+build: $(qmd_files) $(css_files) weird.bib before-each-chapter.R apa-single-spaced.csl
+	quarto render --to html
 
 launch: 
-	vivaldi public/index.html
+	vivaldi docs/index.html
 
 deploy: 
-	cp .htaccess public
+	cp .htaccess docs
 	rsync -zrvce 'ssh -p 18765' public/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
 
 clean:
-	rm -rf public
+	rm -rf docs
 	rm -rf _bookdown_files
