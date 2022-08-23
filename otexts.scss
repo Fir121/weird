@@ -108,6 +108,7 @@ code, pre {
 
 .sidebar {
   font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: var(--gray);
 }
 
 .sidebar nav[role=doc-toc] a  {
@@ -126,6 +127,7 @@ code, pre {
 
 .sidebar nav[role=doc-toc] a:hover  {
   color: #c14b14 !important;
+  background-color: var(--lightgray);
 }
 
 .sidebar-navigation,.sidebar-item a  {
@@ -138,6 +140,7 @@ code, pre {
 
 .sidebar-navigation,.sidebar-item a:hover  {
   color: #c14b14 !important;
+  background-color: var(--lightgray);
 }
 
 .page-navigation a:hover  {

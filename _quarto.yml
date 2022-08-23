@@ -22,9 +22,11 @@ book:
     border: false
     background: light
   sidebar: 
-    background: "#cbcbcb"
+    background: "#cccccc"
     style: "docked"
-
+  favicon: "https://otexts.com/favicon.ico"
+  
+toc-title: "<b>Sections</b>"
 html-math-method: katex
 published-title: "Last updated"
 date-format: "DD MMMM YYYY"
