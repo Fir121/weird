@@ -7,12 +7,13 @@ build: $(qmd_files) $(css_files) weird.bib before-each-chapter.R apa-single-spac
 	quarto render --to html
 
 launch: 
-	vivaldi docs/index.html
+	vivaldi _book/index.html
 
 deploy: 
 	cp .htaccess docs
-	rsync -zrvce 'ssh -p 18765' public/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
+	rsync -zrvce 'ssh -p 18765' _book/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
 
 clean:
-	rm -rf docs
-	rm -rf _bookdown_files
+	rm -rf _book
+	rm -rf *_cache
+	rm -rf *_files

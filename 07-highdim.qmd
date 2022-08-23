@@ -1,4 +1,4 @@
-# High-dimensional methods {#highdim}
+# High-dimensional methods {#sec-highdim}
 
 ## Principal component analysis
 

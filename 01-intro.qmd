@@ -1,4 +1,4 @@
-# Introduction {#ch-intro}
+# Introduction {#sec-intro}
 
 ```{r}
 #| echo: false
@@ -36,17 +36,17 @@ Many analysts have thrown away apparent anomalies because they were assumed to b
 
 ### Z-scores and statistical tests
 
-The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in Chapter @ch-parametric-methods.
+The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in [Chapter -@sec-parametric-methods].
 
 ### Quantile and depth-based methods
 
-The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated approaches to be considered. Most of these were based on sample quantiles of the data, or used the concept of data depth. These methods led to some popular and useful data visualization tools, with anomaly detection a neat side effect. Such methods are discussed in Chapter @quantile-methods.
+The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated approaches to be considered. Most of these were based on sample quantiles of the data, or used the concept of data depth. These methods led to some popular and useful data visualization tools, with anomaly detection a neat side effect. Such methods are discussed in [Chapter -@sec-quantile-methods].
 
 ### Distance and density-based methods {-}
 
 Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on distances. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
 
-Density-based methods are discussed in Chapter @density-methods, while distance-based methods are the subject of Chapter @distance-methods.
+Density-based methods are discussed in [Chapter -@sec-density-methods], while distance-based methods are the subject of [Chapter -@sec-distance-methods].
 
 ### Statistical vs machine learning approaches {-}
 
@@ -122,7 +122,7 @@ batting <- cricket_batting %>%
 donave <- max(batting$Average)
 ```
 
-Don Bradman was an Australian cricketer in the first half of the 20th century, and is renowned as the best batter to ever play the game. The most common measure of a batter's ability is their career average --- the total number of runs made divided by the number of times they were dismissed. Figure @fig-cricket1 shows a strip plot of the career averages for all `r NROW(batting)` men and women to have played test cricket and batted more than 20 times.
+Don Bradman was an Australian cricketer in the first half of the 20th century, and is renowned as the best batter to ever play the game. The most common measure of a batter's ability is their career average --- the total number of runs made divided by the number of times they were dismissed. @fig-cricket1 shows a strip plot of the career averages for all `r NROW(batting)` men and women to have played test cricket and batted more than 20 times.
 
 ```{r fig-cricket1}
 #| fig-asp: 0.2
@@ -140,7 +140,7 @@ The points are "jittered" vertically to reduce overplotting, and made slightly t
 
 ### Example: Old Faithful eruption durations {-}
 
-Some anomalies are not so obvious, and occur within the range of the rest of the data. A good example of this is the duration of eruptions of the Old Faithful Geyser. Figure @fig-oldfaithful1 shows the duration of all eruptions in the data set.
+Some anomalies are not so obvious, and occur within the range of the rest of the data. A good example of this is the duration of eruptions of the Old Faithful Geyser. @fig-oldfaithful1 shows the duration of all eruptions in the data set.
 
 ```{r fig-oldfaithful1}
 #| fig-asp: 0.2
@@ -188,7 +188,7 @@ Similarly, there are two eruptions of 170 seconds, followed by waiting times of 
 
 ### Example: Wine prices and quality {-}
 
-Figure @fig-shiraz shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
+@fig-shiraz shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
 ```{r fig-shiraz}
 #| fig-cap: "Wine prices and review points for Shiraz and Syrah wines."
@@ -219,13 +219,13 @@ A similar phenomenon occurs whenever you consider additional variables. An anoma
 
 While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two numerical variables, we will need alternative tools once we have three or more variables, or a very large data set, or non-numerical data.
 
-We will consider the problem of high dimensions in Chapter @highdim, while various types of non-numerical data are considered in the later chapters of the book. Finally Chapter @largedata will consider the problem of finding anomalies in very large data sets.
+We will consider the problem of high dimensions in [Chapter -@sec-highdim], while various types of non-numerical data are considered in the later chapters of the book. Finally [Chapter -@sec-largedata] will consider the problem of finding anomalies in very large data sets.
 
 ### Example: Synthetic standard normal data
 
 When we have many variables, showing the pairwise scatterplots in a matrix is a useful way to see a lot of information quickly. This is called a scatterplot matrix, and can be produced using the `GGally` package.
 
-Figure @fig-nn01 show the scatterplot matrix of all 10 variables in the `n01` data set. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
+@fig-nn01 show the scatterplot matrix of all 10 variables in the `n01` data set. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
 
 ```{r fig-nn01}
 #| fig-asp: 1

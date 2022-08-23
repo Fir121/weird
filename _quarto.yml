@@ -1,6 +1,5 @@
 project:
   type: book
-  output-dir: docs
 
 book:
   title: "That's weird: Anomaly&nbsp;detection using&nbsp;R"
@@ -13,6 +12,10 @@ book:
     - "01-intro.qmd"
     - "02-tools.qmd"
     - "03-parametric.qmd"
+    - "04-quantile.qmd"
+    - "05-density.qmd"
+    - "06-distance.qmd"
+    - "07-highdim.qmd"
     - "99-refs.qmd"
   page-footer: 
     left: "Copyright 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 

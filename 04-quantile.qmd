@@ -1,4 +1,10 @@
-# Quantile and depth-based measures {#quantile-methods}
+# Quantile and depth-based measures {#sec-quantile-methods}
+
+```{r}
+#| echo: false
+#| include: false
+source("before-each-chapter.R")
+```
 
 Once computing had developed to the point where more sophisticated calculations were possible, new methods for anomaly detection were developed which did not make strong assumptions about the underlying probability distribution of the data. These newer approaches were based either on the sample quantiles of the data, or used the concept of data depth to find anomalies.
 
@@ -128,9 +134,11 @@ In this example, the fourths are identical to the quartiles, but that is not alw
 
 Boxplots were invented by John Tukey as a quick summary of medium sized data sets. They are widely used to identify anomalies, which are shown as separate points in the plot.
 
-Figure \@ref(fig:cricketbox) shows a boxplot of the cricket batting average data, previously shown in Figure  \@ref(fig:cricket1).
+@fig-cricketbox shows a boxplot of the cricket batting average data, previously shown in @fig-cricket1.
 
-```{r cricketbox, fig.asp=0.2, fig.cap="(ref:cricket1)"}
+```{r cricketbox, fig.asp=0.2}
+#| label: fig-cricketbox
+#| fig-cap: "Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged `r scales::number(donave, 0.01)` over his career."
 cricket_batting %>%
   filter(Innings > 20) %>%
   ggplot(aes(x = Average, y = 1)) +
@@ -158,9 +166,10 @@ whisker1 <- q1 - 1.5 * iqr
 whisker2 <- q3 + 1.5 * iqr
 ```
 
-To better understand the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). Figure \@ref(fig:normalboxplot) shows an example with 10000 points.
+To better understand the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). @fig-normalboxplot shows an example with 10000 points.
 
 ```{r normalboxplot, fig.asp=0.2, fig.cap="Boxplot of 10000 draws from a standard normal distribution."}
+#| label: fig-normalboxplot
 tibble(x = rnorm(10000)) %>%
   ggplot(aes(x = x, y = 1)) +
   geom_boxplot() +
@@ -170,9 +179,10 @@ tibble(x = rnorm(10000)) %>%
 
 Many anomalies are shown, but since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, Q1 $= `r round(q1,2)`$, Q3 $= `r round(q3,2)`$, IQR $= `r round(iqr,2)`$, and so any observations less than $`r round(q1,2)` - 1.5\times `r round(iqr,2)` = `r round(whisker1, 2)`$ or greater than $`r round(q3,2)` + 1.5\times `r round(iqr,2)` = `r round(whisker2, 2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r round(whisker2, 2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with 10000 observations, we would have $`r round(10000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
 
-The second problem is demonstrated using the Old Faithful eruption duration data, shown in Figure \@ref(fig:oldfaithful1). As before, we will omit the largest value so we can see the details in the remaining data.
+The second problem is demonstrated using the Old Faithful eruption duration data, shown in @fig-oldfaithful1. As before, we will omit the largest value so we can see the details in the remaining data.
 
 ```{r oldfaithful2a, fig.asp=0.2, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+#| label: fig-oldfaithful2a
 oldfaithful %>%
   filter(duration < 6000) %>%
   ggplot(aes(x = duration, y = 1)) +
@@ -195,9 +205,10 @@ tukey2 <- 2 * (1 - pnorm(q3 + 3 * iqr))
 
 Under Tukey's boxplot approach to identifying outliers, a regular outlier is more than 1.5IQR beyond the quartiles, while an extreme outlier is more than 3IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for very large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find spurious anomalies in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
 
-@Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of false anomalies. Figure \@ref(fig:probanomaly) shows the probability of a regular or extreme anomaly using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
+@Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of false anomalies. @fig-probanomaly shows the probability of a regular or extreme anomaly using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
 
 ```{r probanomaly, echo=FALSE, fig.cap="Probability of anomaly based on the boxplot approach of Tukey, and the modified IQR approach of Barbato et al."}
+#| label: fig-probanomaly
 tibble(n = exp(seq(log(3), log(1e6), l = 100))) %>%
   mutate(
     Tukey1 = 2 * (1 - pnorm(q3 + 1.5 * iqr)),
@@ -259,6 +270,7 @@ The problem that boxplots have with large data sets was addressed by @Hofmann201
 These can be produced using the `lvplot` package.
 
 ```{r cricketboxlv, fig.asp=0.2, fig.cap="Letter value plot of career batting averages for all men and women who played test cricket and batter more than 20 times."}
+#| label: fig-cricketboxlv
 library(lvplot)
 cricket_batting %>%
   filter(Innings > 20) %>%
@@ -290,9 +302,10 @@ Letter value plots were not designed to detect anomalies, but to be a useful dat
 
 In this cricketing example, it looks like there is one true anomaly (Don Bradman) and the remaining 8 observations displayed directly are simply in the tails of the distribution of the remaining data.
 
-When applied to the remaining examples, we see approximately 10--20 observations shown as individual points in each case. The code to produce these is very similar to that shown for Figure \@ref(fig:cricketboxlv), so is not reproduced here.
+When applied to the remaining examples, we see approximately 10--20 observations shown as individual points in each case. The code to produce these is very similar to that shown for @fig-cricketboxlv, so is not reproduced here.
 
 ```{r lvplots1, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of Old Faithful eruption durations, omitting the very long 2 hour duration."}
+#| label: fig-lvplots1
 oldfaithful %>%
   filter(duration < 7000) %>%
   ggplot(aes(x = 1, y = duration)) +
@@ -304,6 +317,7 @@ oldfaithful %>%
 ```
 
 ```{r lvplots2, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 1000 N(0,1) observations."}
+#| label: fig-lvplots2
 n01 %>%
   ggplot(aes(x = 1, y = v1)) +
   geom_lv(aes(fill = ..LV..)) +
@@ -314,6 +328,7 @@ n01 %>%
 ```
 
 ```{r lvplots3, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 19 N(0,1) observations with an anomaly at 4."}
+#| label: fig-lvplots3
 n01b %>%
   ggplot(aes(x = 1, y = v2)) +
   geom_lv(aes(fill = ..LV..)) +
@@ -335,9 +350,10 @@ There are numerous ways to define depth for multivariate data, nicely summarised
 The first approach to this problem was (again) due to John Tukey [@Tukey75] who defined the depth of a point $\bm{z}$ in a data set $\{\bm{y}_1,\dots,\bm{y}_n\}$ as the smallest number of $\bm{y}_i$ contained in any  halfspace that contains $\bm{z}$. This is often called the "Tukey depth" of the point. (The point $\bm{z}$ does not have to be one of the observations.)
 
 For bivariate data, a half space is either of the two parts formed by splitting the plane with a straight line.
-A diagram will help illustrate the idea. Suppose we have the observations shown in Figure \@ref(fig:tukeydepth). These are the first 10 observations from the first two variables of `n01`. The red line divides the plane into two sections which are called "half spaces". We are interested in the depth of the orange point (which is not one of the observations).
+A diagram will help illustrate the idea. Suppose we have the observations shown in @fig-tukeydepth. These are the first 10 observations from the first two variables of `n01`. The red line divides the plane into two sections which are called "half spaces". We are interested in the depth of the orange point (which is not one of the observations).
 
 ```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations (shown in black). The dividing red line splits the plane into two halfspaces. We are interested in the depth of the orange point."}
+#| label: fig-tukeydepth
 n01 %>%
   head(10) %>%
   ggplot(aes(x = v1, y = v2)) +
@@ -351,11 +367,11 @@ There are an infinite number of ways of dividing the plane into half spaces, and
 
 To find the depth of the orange point, we need to find the line which divides the plane into two sections where the half containing the orange point includes as few observations as possible. In fact, the red line is one such solution which has the orange point in a halfspace containing only 2 observations There are no dividing lines that would put the orange point in a halfspace on its own. So it has a Tukey depth of 2.
 
-The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at least $k$. These form a series of nested convex hulls where $D_{k+1} \subseteq D_k$. The depth regions for our example are shown in Figure \@ref(fig:depthregions). The blue region is depth 1, the orange region is depth 2, the pink region is depth 3, and the green region is depth 4.
-
-(ref:depthregions) The depth regions for the 10 bivariate observations from Figure \@ref(fig:tukeydepth). The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
+The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at least $k$. These form a series of nested convex hulls where $D_{k+1} \subseteq D_k$. The depth regions for our example are shown in @fig-depthregions. The blue region is depth 1, the orange region is depth 2, the pink region is depth 3, and the green region is depth 4.
 
 ```{r depthregions, echo=FALSE, fig.cap="(ref:depthregions)"}
+#| label: fig-depthregions
+#| fig-cap: The depth regions for the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
 median <- aplpack::compute.bagplot(n01[1:10, 1:2])
 z <- expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) %>%
   bind_rows(n01[1:10, 1:2])
@@ -382,15 +398,15 @@ p + geom_point() +
 
 ### Depth median
 
-A simple way to define a multivariate median is the "centre of gravity" of all points of maximum depth [@bivariatemedian]. In Figure \@ref(fig:depthregions), the points of maximum depth are shown in the central green region. The centre of gravity of this region is the yellow point in the middle.
+A simple way to define a multivariate median is the "centre of gravity" of all points of maximum depth [@bivariatemedian]. In @fig-depthregions, the points of maximum depth are shown in the central green region. The centre of gravity of this region is the yellow point in the middle.
 
 ### Convex hull peeling depths
 
-Imagine that each of the observations shown in Figure \@ref(fig:tukeydepth) is a nail hammered into a board and we are looking at it from above. An elastic band wrapped around all observations will form a "convex hull" as shown on the left of Figure \@ref(fig:convexhull).
+Imagine that each of the observations shown in @fig-tukeydepth is a nail hammered into a board and we are looking at it from above. An elastic band wrapped around all observations will form a "convex hull" as shown on the left of @fig-convexhull.
 
-(ref:convexhull) Left: The convex hull containing the 10 bivariate observations from Figure \@ref(fig:tukeydepth). Right: The second convex layer formed with the same points.
-
-```{r convexhull, fig.cap="(ref:convexhull)", echo=FALSE}
+```{r convexhull, echo=FALSE}
+#| label: fig-convexhull
+#| fig-cap: "Left: The convex hull containing the 10 bivariate observations from @fig-tukeydepth. Right: The second convex layer formed with the same points."
 hull <- chull(n01[1:10, 1:2])
 hull <- c(hull, hull[1])
 df <- n01[1:10, 1:2] %>%
@@ -412,11 +428,11 @@ p2 <- df %>%
 p1 | p2
 ```
 
-This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of Figure \@ref(fig:convexhull). The third convex layer will consist of the one remaining point that is within the second convex hull.
+This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of @fig-convexhull. The third convex layer will consist of the one remaining point that is within the second convex hull.
 
 The "convex hull peeling depth" [@barnett1976ordering] is the level of the convex layer that an observation belongs to. In this data set, points have convex hull peeling depths of 1, 2 or 3.
 
-In this example, the convex hulls shown in Figure \@ref(fig:convexhull) are equivalent to the depth regions shown in Figure \@ref(fig:depthregions). But that will not always be true.
+In this example, the convex hulls shown in @fig-convexhull are equivalent to the depth regions shown in @fig-depthregions. But that will not always be true.
 
 ## Bagplots
 
@@ -427,11 +443,11 @@ To define the bag, we first find the smallest depth region $D_k$ containing at l
 To find the loop, we first inflate the bag relative to the median by a factor of 3. This forms the "fence". 
 Then the loop is the convex hull of the points contained within the fence. 
 
-Figure \@ref(fig:bagplot) shows the bagplot from the same 10 observations as were used in the illustration of depth in the previous section, along with the observations themselves shown in black.
+@fig-bagplot shows the bagplot from the same 10 observations as were used in the illustration of depth in the previous section, along with the observations themselves shown in black.
 
-(ref:bagplot) A bagplot of the 10 bivariate observations from Figure \@ref(fig:tukeydepth). The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
-
-```{r bagplot, fig.cap="(ref:bagplot)"}
+```{r bagplot}
+#| label: fig-bagplot
+#| fig-cap: A bagplot of the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
 n01 %>%
   head(10) %>%
   gg_bagplot(v1, v2) +
@@ -441,6 +457,7 @@ n01 %>%
 A useful variation of the bagplot, especially for larger data sets, displays a scatterplot of the observations, but colored using the same colors as the bagplot, with the deepest observation in the strongest blue, the points within the bag in a lighter blue, and the points within the loop in the lightest color. Outliers are shown in black if any exist.
 
 ```{r bagplot2, fig.cap="A variation of the bagplot showing individual points colored according to the region in which they fall."}
+#| label: fig-bagplot2
 n01 %>%
   head(10) %>%
   gg_bagplot(v1, v2, scatterplot = TRUE)
@@ -448,9 +465,10 @@ n01 %>%
 
 ### Old faithful bagplot
 
-A more interesting example is obtained in Figure \@ref(fig:oldfaithfulbagplot), showing a bagplot of the durations and waiting times of Old Faithful eruptions.
+A more interesting example is obtained in @fig-oldfaithfulbagplot, showing a bagplot of the durations and waiting times of Old Faithful eruptions.
 
 ```{r oldfaithfulbagplot, fig.cap="Bagplot of the durations and waiting times of Old Faithful eruptions since 2015."}
+#| label: fig-oldfaithfulbagplot
 oldfaithful %>%
   filter(duration < 7200, waiting < 7200) %>%
   gg_bagplot(duration, waiting, scatterplot = TRUE)
@@ -460,6 +478,6 @@ This plot shows the value of the scatterplot version of a bagplot, as you can se
 
 ## General comments
 
-The idea of depth regions and the depth median can be easily generaized to data with more than two dimensions [@rousseeuw1998computing]. Consequently, it would be possible to define a higher-dimensional version of the bagplot, although it would be difficult to plot it in four or more dimensions. In any case, we will consider approaches to handle high-dimensional data in Chapter \@ref(highdim).
+The idea of depth regions and the depth median can be easily generaized to data with more than two dimensions [@rousseeuw1998computing]. Consequently, it would be possible to define a higher-dimensional version of the bagplot, although it would be difficult to plot it in four or more dimensions. In any case, we will consider approaches to handle high-dimensional data in @ch-highdim.
 
 Boxplots, letter value plots and bagplots are all extremely useful tools in exploratory data analysis, and deserve to be widely applied. They are particularly useful in summarising univariate and bivariate data distributions when they are unimodal. However, as we have seen, none of them are effective at anomaly detection and none of them allow for data with multiple modes.

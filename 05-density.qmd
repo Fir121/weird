@@ -1,4 +1,10 @@
-# Density-based methods {#density-methods}
+# Density-based methods {#sec-density-methods}
+
+```{r}
+#| echo: false
+#| include: false
+source("before-each-chapter.R")
+```
 
 ## Highest density regions
 
@@ -13,6 +19,8 @@ where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 Let's illustrate the idea with some simple examples.
 
 ```{r hdr, fig.asp=0.2}
+#| label: fig-hdr
+#| fig-cap: HDR boxplot of the Old Faithful durations
 library(gghdr)
 oldfaithful %>%
   filter(duration < 7000) %>%
@@ -27,7 +35,7 @@ Points outside the 99% region are shown separately and indicate possible outlier
 
 ## KDE scores {#kdescores}
 
-A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is \@ref(eq:mkde)
+A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is @eq-mkde
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$
@@ -47,6 +55,7 @@ $$
 For the Old Faithful eruption duration data, we obtain the following kde scores.
 
 ```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
+#| label: fig-ofscores
 of_scores <- oldfaithful %>%
   mutate(score = kde_scores(duration))
 of_scores %>% arrange(desc(score))
@@ -64,7 +73,7 @@ For data sets of low dimension (say $d \le 3$), this approach works quite well i
 
 A variation on the idea of kde scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation".
 
-Recall that the kernel density estimate at each observation is (equation \@ref(eq:mkde))
+Recall that the kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$
@@ -74,7 +83,7 @@ We also define the "leave-one-out" kernel density estimate --- the estimate of $
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
 
-In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section \@ref(evt), with the $90^{\text{th}}$ percentile as the threshold.
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section @evt, with the $90^{\text{th}}$ percentile as the threshold.
 
 ```{r ofpot}
 of_scores <- oldfaithful %>%
