@@ -1,9 +1,9 @@
 qmd_files := $(wildcard *.qmd)
-css_files := $(wildcard *.css)
+rds_files := $(wildcard *.rds)
 
 all: build launch
 
-build: $(qmd_files) $(css_files) weird.bib before-each-chapter.R apa-single-spaced.csl
+build: $(qmd_files) $(rds_files) weird.bib before-each-chapter.R apa-single-spaced.csl otexts.scss _quarto.yml
 	quarto render --to html
 
 launch: 
