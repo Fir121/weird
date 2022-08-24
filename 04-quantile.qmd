@@ -478,6 +478,6 @@ This plot shows the value of the scatterplot version of a bagplot, as you can se
 
 ## General comments
 
-The idea of depth regions and the depth median can be easily generaized to data with more than two dimensions [@rousseeuw1998computing]. Consequently, it would be possible to define a higher-dimensional version of the bagplot, although it would be difficult to plot it in four or more dimensions. In any case, we will consider approaches to handle high-dimensional data in @ch-highdim.
+The idea of depth regions and the depth median can be easily generaized to data with more than two dimensions [@rousseeuw1998computing]. Consequently, it would be possible to define a higher-dimensional version of the bagplot, although it would be difficult to plot it in four or more dimensions. In any case, we will consider approaches to handle high-dimensional data in [Chapter -@sec-highdim].
 
 Boxplots, letter value plots and bagplots are all extremely useful tools in exploratory data analysis, and deserve to be widely applied. They are particularly useful in summarising univariate and bivariate data distributions when they are unimodal. However, as we have seen, none of them are effective at anomaly detection and none of them allow for data with multiple modes.

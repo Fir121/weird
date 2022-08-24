@@ -83,7 +83,7 @@ We also define the "leave-one-out" kernel density estimate --- the estimate of $
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
 
-In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in Section @evt, with the $90^{\text{th}}$ percentile as the threshold.
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ percentile as the threshold.
 
 ```{r ofpot}
 of_scores <- oldfaithful %>%
