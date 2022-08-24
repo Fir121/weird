@@ -35,6 +35,9 @@ include-before-body: google_analytics.html
 bibliography: weird.bib
 biblio-style: authoryear-comp
 
+execute:
+  freeze: auto
+
 format: 
   html:
     theme: 
