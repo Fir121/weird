@@ -1,73 +1,99 @@
 /*-- scss:defaults --*/
-$h2-font-size:          1.6rem !default;
+$primary: #3c326e;
+$code-bg: #ebebeb;
+$code-blog-bg: #ebebeb;
 
 /*-- scss:rules --*/
 :root {
-  --main: #3c326e;
+  --headings: #3c326e;
   --brighter: #3e27b4;
   --highlight: #cfcbe6;
   --darkgray: #222222;
-  --gray: #cccccc;
   --lightgray: #ebebeb;
-  --menu: #ffcc00;
+  --sanserif: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+
+/* Titles */
 
 .quarto-title-banner {
   background-color: var(--lightgray) !important;
-  color: var(--main) !important;
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.quarto-title-meta,.quarto-title-meta-author {
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: var(--main) !important;
+.quarto-title-banner,
+.quarto-title-meta,
+.quarto-title-meta-author {
+  font-family: var(--sanserif) !important;
+  color: var(--headings) !important;
 }
 
-.quarto-title-banner,.quarto-secondary-nav h1 {
+.quarto-title-banner,
+.quarto-secondary-nav h1 {
   border-bottom: 0px;
-  color: var(--main) !important;
 }
 
-h1, h2 {
-  border-bottom: 2px solid var(--main);
-}
+/* Sidebar and footer */
 
-h1, h2, h3, h4 {
-  color: var(--main);
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+.sidebar,
+.nav-footer,
+.nav-page-text {
+  font-family: var(--sanserif) !important;
+}
+.sidebar nav[role=doc-toc] a,
+.sidebar-navigation,
+.sidebar-item a {
+  color: var(--headings) !important;
+}
+.sidebar nav[role=doc-toc] ul > li > ul > li > a.active,
+.sidebar nav[role=doc-toc] ul > li > a.active {
+  border-left: 1px solid !important;
+  font-weight: bold;
+}
+.sidebar-navigation,
+.sidebar-item a:hover,
+.sidebar nav[role=doc-toc] a:hover,
+.page-navigation a:hover {
+  color: #c14b14 !important;
+}
+.sidebar-item a.active {
   font-weight: bold;
 }
 
-h3 > span, h4 > span, h5 > span, h6 > span, h7 > span, h8 > span, h9 > span, h10 > .header-section-number { display: none; }
+/* Headers */
 
-a {
-  color: var(--brighter);
+h1,
+h2,
+h3,
+h4 {
+  color: var(--headings);
+  font-family: var(--sanserif) !important;
+  font-weight: bold;
 }
 
-dt {
-  color: var(--main);
+h1,
+h2 {
+  border-bottom: 2px solid var(--headings);
 }
 
-dd {
-  margin-bottom: 12px;
-  margin-left: 20px;
-  padding-left: 20px;
+h3 > span,
+h4 > span,
+h5 > span,
+h6 > span,
+h7 > span,
+h8 > span,
+h9 > span,
+h10 > .header-section-number {
+  display: none;
 }
 
-.figure-caption {
-  color: var(--darkgray);
-  background-color: var(--lightgray);
-  padding-left: 20px;
-  font-size: 12pt;
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
+/* Tables */
 
 table {
   background: var(--lightgray);
   border: 0px;
 }
 
-table td, table th {
+table td,
+table th {
   color: var(--darkgray);
   border: 1px;
   font-size: 11pt;
@@ -78,80 +104,57 @@ table td, table th {
   text-shadow: none;
 }
 
-td {
-  color: var(--lightgray);
-}
-
 th {
   color: var(--darkgray);
   background: var(--highlight);
   font-weight: bold;
 }
 
+/* Description lists */
+
+dt {
+  color: var(--headings);
+}
+
+dd {
+  margin-bottom: 12px;
+  margin-left: 20px;
+  padding-left: 20px;
+}
+
+/* Captions */
+
+.figure-caption {
+  color: var(--darkgray);
+  background-color: var(--lightgray);
+  padding-left: 20px;
+  font-size: 12pt;
+  font-family: var(--sanserif) !important;
+}
+
+/* Quotes */
+
 blockquote {
   quotes: none;
   text-shadow: none;
   background: var(--highlight);
-  padding:  7px 20px 7px 20px;
+  padding: 7px 20px 7px 20px;
   color: var(--bs-body-color) !important;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-left: 0px;
 }
 
-div.sourceCode {
-    background-color: var(--lightgray);
-}
-code, pre {
-    font-family: 'Hack', 'Source Code Pro', 'Courier New', 'Courier', monospace;
+/* Code */
+
+code,
+pre {
+  font-family: 'Hack', 'Source Code Pro', 'Courier New', 'Courier', monospace;
 }
 
-.sidebar {
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  background-color: var(--gray);
-}
-
-.sidebar nav[role=doc-toc] a  {
-  color: var(--main) !important;
-}
-
-.sidebar nav[role=doc-toc] ul>li>ul>li>a.active {
-  color: var(--brighter) !important;
-  border-left: 1px solid var(--brighter) !important;
-}
-
-.sidebar nav[role=doc-toc] ul>li>a.active {
-  color: var(--brighter) !important;
-  border-left: 1px solid var(--brighter) !important;
-}
-
-.sidebar nav[role=doc-toc] a:hover  {
-  color: #c14b14 !important;
-  background-color: var(--lightgray);
-}
-
-.sidebar-navigation,.sidebar-item a  {
-  color: var(--main) !important;
-}
-
-.sidebar-navigation,.sidebar-item a.active  {
-  color: var(--brighter) !important;
-}
-
-.sidebar-navigation,.sidebar-item a:hover  {
-  color: #c14b14 !important;
-  background-color: var(--lightgray);
-}
-
-.page-navigation a:hover  {
-  color: #c14b14 !important;
-}
+/* Bibliography */
 
 .csl-entry {
-  padding-left: 22px ;
-  text-indent: -22px ;
-}
-
-.nav-footer,.nav-page-text {
-  font-family: "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding-left: 22px;
+  text-indent: -22px;
 }
