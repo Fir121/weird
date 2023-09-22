@@ -15,7 +15,7 @@ launch:
 	vivaldi _book/index.html
 
 deploy:
-	cp .htaccess docs
+	cp .htaccess _book
 	rsync -zrvce 'ssh -p 18765' _book/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
 
 clean:
