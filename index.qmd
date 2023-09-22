@@ -2,8 +2,6 @@
 
 > This book is under development. Please don't ask me when it will be finished --- I have to fit this around my other work. In the meantime, I hope the incomplete book is useful.
 
-> Use the left hand menu to navigate between chapters, or to search within the whole book. Use the right hand menu to navigate between sections within a chapter.
-
 This book is about tools and techniques for finding and understanding anomalies. We will begin with some simple data sets containing only one variable, and build up slowly to much more complicated data. We will cover popular but inadvisable methods to identify anomalies (pointing out their shortcomings), as well as more reliable and recommended approaches.
 
 The book is written for two audiences: (1)&nbsp;people finding themselves doing data analysis without having had formal training in anomaly detection; and (2)&nbsp;students studying data science.
@@ -21,7 +19,7 @@ All R examples in the book assume that you have loaded the `weird` package first
 library(weird)
 ```
 
-This will load the relevant data sets and functions from the packages needed to reproduce the examples.
+This will load the relevant data sets, and various other packages needed to reproduce the examples.
 
 ### Outline {-}
 
@@ -42,7 +40,7 @@ This will load the relevant data sets and functions from the packages needed to 
 16. Deep learning for anomaly detection
 17. Applications: network intrusion, fraud detection
 18. Handling very large data sets
-  
+
 To include somewhere:
 
  * Isolation forests??
