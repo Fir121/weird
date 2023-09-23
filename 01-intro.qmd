@@ -6,13 +6,13 @@
 source("before-each-chapter.R")
 ```
 
-Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that hold true for most of the data. But sometimes we need to look at the weird observations --- the data that doesn't follow the crowd and behaves differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book they are what we find interesting.
+Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that hold true for most of the data. But sometimes we need to look at the weird observations --- those that don't follow the crowd and behave differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book, they are what we find interesting.
 
-Anomalies are often a nuisance. For example, they may be simply recording errors that are contaminating our data. We want to find them, remove them, and get on with analysing the bulk of the data. At other times, anomalies are the observations we care about. They tell us things that might otherwise go unnoticed if we only consider how the majority of observations behave.
+Anomalies are often a nuisance. For example, they may be simply recording errors that are contaminating our data. We want to find them, remove them, and get on with analysing the bulk of the data. At other times, anomalies are the observations we care about. They tell us things that might otherwise go unnoticed if we only consider how the majority of observations behave. Whether we want to remove them or study them, we first need to find them.
 
 ## Definitions
 
-An anomaly is an observation that behaves differently from the bulk of the data. They are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants".  We prefer to use "anomalies" as it is a more general term than outliers and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set.^[Some papers mistakenly use the term "inlier" to denote any point that is not an outlier. We shall use "inlier" to mean an observation that is an anomaly but which is surrounded by genuine observations.]
+An anomaly is an observation that behaves differently from the bulk of the data. Anomalies are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants".  We prefer to use "anomalies" as it is a more general term than outliers, and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set.^[Some papers use the term "inlier" to denote any point that is not an outlier. We shall use the earlier definition of "inlier", meaning an observation that is an anomaly but which is surrounded by genuine observations.]
 
 An old definition due to @Barnett1978 states
 
@@ -31,6 +31,9 @@ So rather than trying to define anomalies more precisely, we shall deliberately 
 Many analysts have thrown away apparent anomalies because they were assumed to be errors. There are even formal statistical tests to tell you which observations should be ignored. In my view, this is a dangerous practice. No anomalies should be removed unless you understand what led to their unusual behaviour in the first place.
 
 > Add story of ozone layer
+
+As this story illustrates, often the most interesting observations are the ones that appear anomalous. They are the ones that tell us something new and unexpected, so we should not be too quick to reject them. Sometimes we may want to use methods that are robust to anomalies, so that we can ignore them without worrying about their effect on the analysis. But this is not the same as removing them. Even when we use robust methods, it is still worth investigating any observations that appear anomalous, in order to fully understand the variation in the data.
+
 
 ## Approaches to anomaly detection
 
@@ -58,7 +61,7 @@ In this book, I make no attempt to distinguish methods as "statistical" or "mach
 
 ### Supervised vs unsupervised approaches {-}
 
-Some books and papers distinguish "supervised anomaly detection" from "unsupervised anomaly detection". In the former case, anomalies are identified using human input and then a model or algorithm is employed to learn how to identify new anomalies contained within new data. I do not regard this as anomaly detection and it will not be covered in this book. It is possible, for example, that what a human labels as "anomalous" is not anomalous in a statistical sense. What is called "supervised anomaly detection" is actually a classification problem where the aim is to mimic the human who labelled the training set. In that case, different tools are employed.
+Some books and papers distinguish "supervised anomaly detection" from "unsupervised anomaly detection". In the former case, anomalies are identified using human input and then a model or algorithm is employed to learn how to identify new anomalies contained within new data. I do not regard this as anomaly detection and it will not be covered in this book. It is possible, for example, that what a human labels as "anomalous" is not anomalous in a statistical sense. What is called "supervised anomaly detection" is actually a classification problem, where the aim is to mimic the human who labelled the training set. In that case, different tools are employed.
 
 In this book, we will only consider unsupervised problems. That is, we have no idea *a priori* what observations are anomalous, and there is no "right" answer.
 
@@ -90,11 +93,11 @@ Data on the eruptions of the Old Faithful Geyser in Yellowstone National Park, W
 oldfaithful
 ```
 
-Other than the time stamp, the variables here give the duration of each eruption and the time to the next eruption.
+Other than the time stamp, the variables here give the duration of each eruption and the time to the next eruption (both in seconds).
 
 ### Wine prices and quality {-}
 
-The `wine_reviews` data set contains data on `r NROW(wine_reviews)` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
+The `wine_reviews` data set contains data on `r scales::comma(NROW(wine_reviews))` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
 
 ```{r winedata}
 wine_reviews
@@ -117,7 +120,7 @@ Let's start with some examples using only one or two variables. These examples w
 ### Example: Don Bradman's batting averages
 
 ```{r cricket0, echo=FALSE}
-batting <- cricket_batting %>%
+batting <- cricket_batting |>
   filter(Innings > 20)
 donave <- max(batting$Average)
 ```
@@ -128,8 +131,8 @@ Don Bradman was an Australian cricketer in the first half of the 20th century, a
 #| fig-asp: 0.2
 #| fig-cap: "Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged `r scales::number(donave, 0.01)` over his career."
 
-cricket_batting %>%
-  filter(Innings > 20) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
   ggplot(aes(x = Average, y = 1)) +
   geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
@@ -145,7 +148,7 @@ Some anomalies are not so obvious, and occur within the range of the rest of the
 ```{r fig-oldfaithful1}
 #| fig-asp: 0.2
 #| fig-cap: "Old Faithful eruption durations since 2015. The large anomaly is an eruption recorded on 7&nbsp;December 2015 which apparently lasted nearly two hours."
-oldfaithful %>%
+oldfaithful |>
   ggplot(aes(x = duration, y = 1)) +
   geom_jitter(width = 0, alpha = 0.5) +
   labs(y = "", x = "Duration (seconds)") +
@@ -157,8 +160,8 @@ The big anomaly on the right was an eruption that apparently lasted nearly two h
 ```{r fig-oldfaithful2}
 #| fig-asp: 0.2
 #| fig-cap: "Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
-oldfaithful %>%
-  filter(duration < 7000) %>%
+oldfaithful |>
+  filter(duration < 7000) |>
   ggplot(aes(x = duration, y = 1)) +
   geom_jitter(width = 0, alpha = 0.5) +
   labs(y = "", x = "Duration (seconds)") +
@@ -173,8 +176,8 @@ The `oldfaithful` data set also contains the time between eruptions. For each ro
 
 ```{r fig-oldfaithful3}
 #| fig-cap: "Old Faithful eruption durations and waiting times since 2015, omitting waiting times and durations of two hours or more."
-oldfaithful %>%
-  filter(duration < 7200, waiting < 7200) %>%
+oldfaithful |>
+  filter(duration < 7200, waiting < 7200) |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.5) +
   labs(y = "Waiting time to next eruption (seconds)", x = "Duration (seconds)")
@@ -188,13 +191,13 @@ Similarly, there are two eruptions of 170 seconds, followed by waiting times of 
 
 ### Example: Wine prices and quality {-}
 
-@fig-shiraz shows a scatterplot of data on `r wine_reviews %>% filter(variety %in% c("Shiraz", "Syrah")) %>% NROW()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
+@fig-shiraz shows a scatterplot of data on `r wine_reviews |> filter(variety %in% c("Shiraz", "Syrah")) |> NROW() |> scales::comma()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
 ```{r fig-shiraz}
 #| fig-cap: "Wine prices and review points for Shiraz and Syrah wines."
-wine_reviews %>%
-  filter(variety %in% c("Shiraz", "Syrah")) %>%
-  select(points, price) %>%
+wine_reviews |>
+  filter(variety %in% c("Shiraz", "Syrah")) |>
+  select(points, price) |>
   ggplot(aes(y = price, x = points)) +
   geom_jitter(height = 0, width = 0.3, alpha = 0.5) +
   scale_y_log10()
@@ -206,12 +209,12 @@ Here the most interesting observations are the ones that have an unusual price g
 
 ```{r shiraz2}
 #| echo: true
-wine_reviews %>%
+wine_reviews |>
   filter(
     variety %in% c("Shiraz", "Syrah"),
     points > 95
-  ) %>%
-  filter(price == min(price)) %>%
+  ) |>
+  filter(price == min(price)) |>
   select(country, state, region, winery, variety, year, points, price)
 ```
 
@@ -232,8 +235,8 @@ When we have many variables, showing the pairwise scatterplots in a matrix is a 
 #| out-width: "100%"
 #| message: false
 #| fig-cap: "Scatterplots of all pairs of the synthetic `n01` data, where each variable has been generated from independent standard normal distributions."
-n01 %>%
+n01 |>
   GGally::ggpairs(mapping = aes(alpha = 0.1))
 ```
 
-Any points that appear slightly outside the main clouds of points are not genuine anomalies, because they were generated from the same N(0,1) distribution as the rest of the data. 
+Any points that appear slightly outside the main clouds of points are not genuine anomalies, because they were generated from the same N(0,1) distribution as the rest of the data.
