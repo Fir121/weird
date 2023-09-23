@@ -38,7 +38,7 @@ The sample quantiles $\hat{q}_{0.25}$ and $\hat{q}_{0.75}$ are known as the **qu
 Using this idea, we can calculate some of the quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings.
 
 ```{r battingsubset, echo=FALSE}
-batave <- cricket_batting %>% filter(Innings > 20)
+batave <- cricket_batting |> filter(Innings > 20)
 n <- NROW(batave)
 lv <- lvplot::lvtable(batave$Average, k = 4)
 d <- lv[4:7, "depth"]
@@ -48,8 +48,8 @@ k <- trunc(kplus)
 gamma <- kplus - k
 ```
 
-There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is 
-$$\hat{q}_{0.5} = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$ 
+There are $n=`r n`$ observations with a minimum of $\hat{q}_0 = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{q}_1 = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is
+$$\hat{q}_{0.5} = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$
 The sample quartiles are given by
 $$\hat{q}_{0.25} = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
 and
@@ -65,9 +65,9 @@ $$
 These values are easily computed using the `quantile()` function.
 
 ```{r battingquantiles}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  pull(Average) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
+  pull(Average) |>
   quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1))
 ```
 
@@ -139,8 +139,8 @@ Boxplots were invented by John Tukey as a quick summary of medium sized data set
 ```{r cricketbox, fig.asp=0.2}
 #| label: fig-cricketbox
 #| fig-cap: "Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged `r scales::number(donave, 0.01)` over his career."
-cricket_batting %>%
-  filter(Innings > 20) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
   ggplot(aes(x = Average, y = 1)) +
   geom_boxplot() +
   scale_y_discrete() +
@@ -170,7 +170,7 @@ To better understand the first problem, imagine the data comprised $n$ observati
 
 ```{r normalboxplot, fig.asp=0.2, fig.cap="Boxplot of 10000 draws from a standard normal distribution."}
 #| label: fig-normalboxplot
-tibble(x = rnorm(10000)) %>%
+tibble(x = rnorm(10000)) |>
   ggplot(aes(x = x, y = 1)) +
   geom_boxplot() +
   scale_y_discrete() +
@@ -183,8 +183,8 @@ The second problem is demonstrated using the Old Faithful eruption duration data
 
 ```{r oldfaithful2a, fig.asp=0.2, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
 #| label: fig-oldfaithful2a
-oldfaithful %>%
-  filter(duration < 6000) %>%
+oldfaithful |>
+  filter(duration < 6000) |>
   ggplot(aes(x = duration, y = 1)) +
   geom_boxplot() +
   labs(y = "", x = "Duration (seconds)") +
@@ -209,14 +209,14 @@ Under Tukey's boxplot approach to identifying outliers, a regular outlier is mor
 
 ```{r probanomaly, echo=FALSE, fig.cap="Probability of anomaly based on the boxplot approach of Tukey, and the modified IQR approach of Barbato et al."}
 #| label: fig-probanomaly
-tibble(n = exp(seq(log(3), log(1e6), l = 100))) %>%
+tibble(n = exp(seq(log(3), log(1e6), l = 100))) |>
   mutate(
     Tukey1 = 2 * (1 - pnorm(q3 + 1.5 * iqr)),
     Tukey2 = 2 * (1 - pnorm(q3 + 3 * iqr)),
     Barbato1 = 2 * (1 - pnorm(q3 + 1.5 * iqr * (1 + 0.1 * log(n / 10)))),
     Barbato2 = 2 * (1 - pnorm(q3 + 3 * iqr * (1 + 0.1 * log(n / 10))))
-  ) %>%
-  pivot_longer(Tukey1:Barbato2, names_to = "method", values_to = "probability") %>%
+  ) |>
+  pivot_longer(Tukey1:Barbato2, names_to = "method", values_to = "probability") |>
   mutate(
     level = stringr::str_extract(method, "\\d"),
     level = if_else(level == "1", "Regular outlier", "Extreme outlier"),
@@ -224,7 +224,7 @@ tibble(n = exp(seq(log(3), log(1e6), l = 100))) %>%
     level = factor(level, levels = c("Regular outlier", "Extreme outlier")),
     method = factor(method, levels = c("Tukey", "Barbato")),
     probability = 1 - (1 - probability)^n
-  ) %>%
+  ) |>
   ggplot(aes(x = n, y = probability)) +
   geom_line() +
   facet_grid(level ~ method) +
@@ -249,16 +249,16 @@ barbato_anomaly <- function(y, extreme = FALSE) {
   threshold <- (1.5 + 1.5 * extreme) * (q3 - q1) * (1 + log(n / 10))
   return(y > q3 + threshold | y < q1 - threshold)
 }
-cricket_batting %>%
-  filter(Innings > 20) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
   filter(barbato_anomaly(Average))
-oldfaithful %>% filter(barbato_anomaly(duration))
-n01 %>% filter(barbato_anomaly(v1))
-n01b <- n01 %>%
-  select(v2) %>%
+oldfaithful |> filter(barbato_anomaly(duration))
+n01 |> filter(barbato_anomaly(v1))
+n01b <- n01 |>
+  select(v2) |>
   head(20)
 n01b$v2[20] <- 4
-n01b %>% filter(barbato_anomaly(v2))
+n01b |> filter(barbato_anomaly(v2))
 ```
 
 Only the extreme outlier in the duration data is identified as an anomaly.
@@ -272,8 +272,8 @@ These can be produced using the `lvplot` package.
 ```{r cricketboxlv, fig.asp=0.2, fig.cap="Letter value plot of career batting averages for all men and women who played test cricket and batter more than 20 times."}
 #| label: fig-cricketboxlv
 library(lvplot)
-cricket_batting %>%
-  filter(Innings > 20) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
   ggplot(aes(x = 1, y = Average)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
@@ -283,8 +283,8 @@ cricket_batting %>%
 ```
 
 ```{r lv, echo=FALSE}
-lv <- cricket_batting %>%
-  filter(Innings > 20) %>%
+lv <- cricket_batting |>
+  filter(Innings > 20) |>
   stat_lv(mapping = aes(y = Average))
 ```
 
@@ -306,8 +306,8 @@ When applied to the remaining examples, we see approximately 10--20 observations
 
 ```{r lvplots1, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of Old Faithful eruption durations, omitting the very long 2 hour duration."}
 #| label: fig-lvplots1
-oldfaithful %>%
-  filter(duration < 7000) %>%
+oldfaithful |>
+  filter(duration < 7000) |>
   ggplot(aes(x = 1, y = duration)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
@@ -318,7 +318,7 @@ oldfaithful %>%
 
 ```{r lvplots2, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 1000 N(0,1) observations."}
 #| label: fig-lvplots2
-n01 %>%
+n01 |>
   ggplot(aes(x = 1, y = v1)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
@@ -329,7 +329,7 @@ n01 %>%
 
 ```{r lvplots3, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 19 N(0,1) observations with an anomaly at 4."}
 #| label: fig-lvplots3
-n01b %>%
+n01b |>
   ggplot(aes(x = 1, y = v2)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
@@ -354,8 +354,8 @@ A diagram will help illustrate the idea. Suppose we have the observations shown 
 
 ```{r tukeydepth, echo=FALSE, fig.cap="A data set of 10 bivariate observations (shown in black). The dividing red line splits the plane into two halfspaces. We are interested in the depth of the orange point."}
 #| label: fig-tukeydepth
-n01 %>%
-  head(10) %>%
+n01 |>
+  head(10) |>
   ggplot(aes(x = v1, y = v2)) +
   geom_point() +
   geom_abline(aes(intercept = -0.8, slope = -1.8), col = "red") +
@@ -373,20 +373,20 @@ The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at lea
 #| label: fig-depthregions
 #| fig-cap: The depth regions for the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
 median <- aplpack::compute.bagplot(n01[1:10, 1:2])
-z <- expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) %>%
+z <- expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) |>
   bind_rows(n01[1:10, 1:2])
 z$depth <- round(as.numeric(DepthProc::depthTukey(as.matrix(z), as.matrix(n01[1:10, 1:2]))) * 10)
 regions <- list()
 depths <- sort(unique(z$depth))
 depths <- depths[depths > 0]
 for (i in depths) {
-  tmp <- z %>% filter(depth == depths[i])
+  tmp <- z |> filter(depth == depths[i])
   hull <- chull(tmp)
   regions[[i]] <- tmp[c(hull, hull[1]), ]
 }
 cols <- discrete_colors[c(2, 1, 4, 3)]
-p <- n01 %>%
-  head(10) %>%
+p <- n01 |>
+  head(10) |>
   ggplot(aes(x = v1, y = v2))
 for (i in depths) {
   p <- p + geom_polygon(aes(x = v1, y = v2), data = regions[[i]], fill = cols[i], alpha = 0.8)
@@ -409,16 +409,16 @@ Imagine that each of the observations shown in @fig-tukeydepth is a nail hammere
 #| fig-cap: "Left: The convex hull containing the 10 bivariate observations from @fig-tukeydepth. Right: The second convex layer formed with the same points."
 hull <- chull(n01[1:10, 1:2])
 hull <- c(hull, hull[1])
-df <- n01[1:10, 1:2] %>%
+df <- n01[1:10, 1:2] |>
   mutate(hull = row_number() %in% hull)
-p1 <- df %>%
+p1 <- df |>
   ggplot(aes(x = v1, y = v2)) +
   geom_point() +
   geom_path(data = n01[hull, 1:2], col = "red") +
   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
 hull2 <- chull(df[!df$hull, 1:2])
 hull2 <- c(hull2, hull2[1])
-p2 <- df %>%
+p2 <- df |>
   ggplot(aes(x = v1, y = v2, col = hull)) +
   geom_point() +
   scale_color_manual(values = c(`TRUE` = "gray", `FALSE` = "black")) +
@@ -440,16 +440,16 @@ The bagplot was proposed by @bagplot as a bivariate version of a boxplot, constr
 
 To define the bag, we first find the smallest depth region $D_k$ containing at least $\lfloor n/2 \rfloor$ of the observations. Then the bag is linear interpolated between $D_k$ and $D_{k-1}$, with the linear interpolation depending on the number of observations in each depth region. Because the bag is interpolated between depth regions, it is also a convex polygon. It is slightly more complicated for very small data sets where only $D_1$ might contain more than half of the observations. For details, see ???
 
-To find the loop, we first inflate the bag relative to the median by a factor of 3. This forms the "fence". 
-Then the loop is the convex hull of the points contained within the fence. 
+To find the loop, we first inflate the bag relative to the median by a factor of 3. This forms the "fence".
+Then the loop is the convex hull of the points contained within the fence.
 
 @fig-bagplot shows the bagplot from the same 10 observations as were used in the illustration of depth in the previous section, along with the observations themselves shown in black.
 
 ```{r bagplot}
 #| label: fig-bagplot
 #| fig-cap: A bagplot of the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
-n01 %>%
-  head(10) %>%
+n01 |>
+  head(10) |>
   gg_bagplot(v1, v2) +
   geom_point(aes(x = v1, y = v2), data = n01[1:10, ])
 ```
@@ -458,8 +458,8 @@ A useful variation of the bagplot, especially for larger data sets, displays a s
 
 ```{r bagplot2, fig.cap="A variation of the bagplot showing individual points colored according to the region in which they fall."}
 #| label: fig-bagplot2
-n01 %>%
-  head(10) %>%
+n01 |>
+  head(10) |>
   gg_bagplot(v1, v2, scatterplot = TRUE)
 ```
 
@@ -469,8 +469,8 @@ A more interesting example is obtained in @fig-oldfaithfulbagplot, showing a bag
 
 ```{r oldfaithfulbagplot, fig.cap="Bagplot of the durations and waiting times of Old Faithful eruptions since 2015."}
 #| label: fig-oldfaithfulbagplot
-oldfaithful %>%
-  filter(duration < 7200, waiting < 7200) %>%
+oldfaithful |>
+  filter(duration < 7200, waiting < 7200) |>
   gg_bagplot(duration, waiting, scatterplot = TRUE)
 ```
 

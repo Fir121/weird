@@ -22,8 +22,8 @@ Let's illustrate the idea with some simple examples.
 #| label: fig-hdr
 #| fig-cap: HDR boxplot of the Old Faithful durations
 library(gghdr)
-oldfaithful %>%
-  filter(duration < 7000) %>%
+oldfaithful |>
+  filter(duration < 7000) |>
   ggplot() +
   geom_point(aes(x = 0, y = duration)) +
   geom_hdr_boxplot(aes(y = duration), prob = c(0.5, 0.99)) +
@@ -56,11 +56,11 @@ For the Old Faithful eruption duration data, we obtain the following kde scores.
 
 ```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
 #| label: fig-ofscores
-of_scores <- oldfaithful %>%
+of_scores <- oldfaithful |>
   mutate(score = kde_scores(duration))
-of_scores %>% arrange(desc(score))
-of_scores %>%
-  filter(duration < 7000) %>%
+of_scores |> arrange(desc(score))
+of_scores |>
+  filter(duration < 7000) |>
   ggplot(aes(x = duration, y = score)) +
   geom_point()
 ```
@@ -86,7 +86,7 @@ The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for
 In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ percentile as the threshold.
 
 ```{r ofpot}
-of_scores <- oldfaithful %>%
+of_scores <- oldfaithful |>
   mutate(
     score = kde_scores(duration),
     looscore = kde_scores(duration, loo = TRUE),
@@ -98,13 +98,13 @@ gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
 Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
 ```{r ofpot2}
-of_scores %>%
+of_scores |>
   mutate(
     pval = evd::pgpd(looscore,
       loc = threshold,
       scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
     )
-  ) %>%
+  ) |>
   arrange(pval)
 ```
 
@@ -113,23 +113,23 @@ Low probabilities indicate likely outliers and high probabilities indicate norma
 The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
 
 ```{r lookout}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  mutate(lookout = lookout_prob(Average)) %>%
-  filter(lookout < 0.05) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(lookout = lookout_prob(Average)) |>
+  filter(lookout < 0.05) |>
   select(Player, Average, lookout)
-oldfaithful %>%
-  mutate(lookout = lookout_prob(duration)) %>%
+oldfaithful |>
+  mutate(lookout = lookout_prob(duration)) |>
   filter(lookout < 0.05)
-n01 %>%
-  mutate(lookout = lookout_prob(v1)) %>%
+n01 |>
+  mutate(lookout = lookout_prob(v1)) |>
   filter(lookout < 0.05)
-n01b <- n01 %>%
-  select(v2) %>%
+n01b <- n01 |>
+  select(v2) |>
   head(20)
 n01b$v2[20] <- 4
-n01b %>%
-  mutate(lookout = lookout_prob(v2)) %>%
+n01b |>
+  mutate(lookout = lookout_prob(v2)) |>
   filter(lookout < 0.05)
 ```
 

@@ -25,13 +25,13 @@ df <- tibble(
 )
 chosen <- c(3, 11)
 knn <- dbscan::kNN(df, 5)$id[chosen, ]
-df <- df %>%
+df <- df |>
   mutate(
     d = dbscan::kNNdist(df, 5),
     n15 = if_else(row_number() %in% knn[1, ], "N15", "NO"),
     n25 = if_else(row_number() %in% knn[2, ], "N25", "NO")
   )
-df %>%
+df |>
   ggplot() +
   ggforce::geom_circle(aes(x0 = x, y0 = y, r = d, col = c("N15", "N25"), fill = c("N15", "N25")),
     alpha = 0.2, data = df[chosen, ]
@@ -84,11 +84,11 @@ Another problem is that it can be difficult to determine an appropriate value fo
 ```{r}
 #| label: fig-ofscores
 #| fig-cap: TBC
-of_scores <- oldfaithful %>%
+of_scores <- oldfaithful |>
   mutate(lof = lof_scores(duration, k = 150))
-of_scores %>% arrange(desc(lof))
-of_scores %>%
-  filter(duration < 7000) %>%
+of_scores |> arrange(desc(lof))
+of_scores |>
+  filter(duration < 7000) |>
   ggplot(aes(x = duration, y = lof)) +
   geom_point()
 ```

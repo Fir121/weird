@@ -21,11 +21,11 @@ We will use four simple univariate examples to illustrate the ideas, two with re
 
 ```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
 #| label: fig-n01b
-n01b <- n01 %>%
-  select(v2) %>%
+n01b <- n01 |>
+  select(v2) |>
   head(20)
 n01b$v2[20] <- 4
-n01b %>%
+n01b |>
   ggplot(aes(x = v2, y = 1)) +
   geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
@@ -45,8 +45,8 @@ tibble(
   `t(2)` = dt(x, df = 2),
   `Chi-squared(4)` = dchisq(x, df = 4),
   `Normal(0,1)` = dnorm(x)
-) %>%
-  pivot_longer(-x, names_to = "Distribution", values_to = "pdf") %>%
+) |>
+  pivot_longer(-x, names_to = "Distribution", values_to = "pdf") |>
   ggplot(aes(x = x, y = pdf, col = Distribution)) +
   geom_line() +
   labs(y = "Probability density")
@@ -69,20 +69,20 @@ Some books recommend that observations where the absolute value of $z$ is above 
 Let's see what happens when we apply this test to the four examples.
 
 ```{r zscore1}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  mutate(z = (Average - mean(Average)) / sd(Average)) %>%
-  filter(abs(z) > 3) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(z = (Average - mean(Average)) / sd(Average)) |>
+  filter(abs(z) > 3) |>
   select(Player, Average, z)
-oldfaithful %>%
-  mutate(z = (duration - mean(duration)) / sd(duration)) %>%
+oldfaithful |>
+  mutate(z = (duration - mean(duration)) / sd(duration)) |>
   filter(abs(z) > 3)
-n01 %>%
-  select(v1) %>%
-  mutate(z = (v1 - mean(v1)) / sd(v1)) %>%
+n01 |>
+  select(v1) |>
+  mutate(z = (v1 - mean(v1)) / sd(v1)) |>
   filter(abs(z) > 3)
-n01b %>%
-  mutate(z = (v2 - mean(v2)) / sd(v2)) %>%
+n01b |>
+  mutate(z = (v2 - mean(v2)) / sd(v2)) |>
   filter(abs(z) > 3)
 ```
 
@@ -92,22 +92,22 @@ n01b %>%
  4. The anomaly added to the 19 N(0,1) observations has been identified.
 
 ```{r check2, include=FALSE}
-n1 <- cricket_batting %>%
-  filter(Innings > 20) %>%
-  mutate(z = (Average - mean(Average)) / sd(Average)) %>%
-  filter(abs(z) > 3) %>%
+n1 <- cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(z = (Average - mean(Average)) / sd(Average)) |>
+  filter(abs(z) > 3) |>
   NROW()
-n2 <- oldfaithful %>%
-  mutate(z = (duration - mean(duration)) / sd(duration)) %>%
-  filter(abs(z) > 3) %>%
+n2 <- oldfaithful |>
+  mutate(z = (duration - mean(duration)) / sd(duration)) |>
+  filter(abs(z) > 3) |>
   NROW()
-n3 <- n01 %>%
-  mutate(z = (v1 - mean(v1)) / sd(v1)) %>%
-  filter(abs(z) > 3) %>%
+n3 <- n01 |>
+  mutate(z = (v1 - mean(v1)) / sd(v1)) |>
+  filter(abs(z) > 3) |>
   NROW()
-n4 <- n01b %>%
-  mutate(z = (v2 - mean(v2)) / sd(v2)) %>%
-  filter(abs(z) > 3) %>%
+n4 <- n01b |>
+  mutate(z = (v2 - mean(v2)) / sd(v2)) |>
+  filter(abs(z) > 3) |>
   NROW()
 stopifnot(n1 == 1, n2 == 1, n3 == 1, n4 == 1)
 ```
@@ -116,38 +116,38 @@ If we replace the mean and standard deviation by more robust estimates (the medi
 
 ```{r check, include=FALSE}
 # Check last statement
-n1 <- cricket_batting %>%
-  filter(Innings > 20) %>%
-  mutate(z = (Average - median(Average)) / IQR(Average) * 1.34) %>%
-  filter(abs(z) > 3) %>%
-  select(Player, Average, z) %>%
+n1 <- cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(z = (Average - median(Average)) / IQR(Average) * 1.34) |>
+  filter(abs(z) > 3) |>
+  select(Player, Average, z) |>
   NROW()
-n2 <- oldfaithful %>%
-  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
-  filter(abs(z) > 3) %>%
+n2 <- oldfaithful |>
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) |>
+  filter(abs(z) > 3) |>
   NROW()
-n3 <- n01 %>%
-  mutate(z = (v1 - median(v1)) / IQR(v1) * 1.34) %>%
-  filter(abs(z) > 3) %>%
+n3 <- n01 |>
+  mutate(z = (v1 - median(v1)) / IQR(v1) * 1.34) |>
+  filter(abs(z) > 3) |>
   NROW()
-n4 <- n01b %>%
-  mutate(z = (v2 - median(v2)) / IQR(v2) * 1.34) %>%
-  filter(abs(z) > 3) %>%
+n4 <- n01b |>
+  mutate(z = (v2 - median(v2)) / IQR(v2) * 1.34) |>
+  filter(abs(z) > 3) |>
   NROW()
 stopifnot(n1 == 1L)
 stopifnot(n2 == 243L)
 stopifnot(n3 == 1L)
 stopifnot(n4 == 1L)
-of_threshold <- oldfaithful %>%
-  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) %>%
-  filter(abs(z) <= 3) %>%
-  pull(duration) %>%
+of_threshold <- oldfaithful |>
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) |>
+  filter(abs(z) <= 3) |>
+  pull(duration) |>
   min()
 ```
 
 ```{r zscore2}
-oldfaithful %>%
-  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) %>%
+oldfaithful |>
+  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) |>
   filter(abs(z) > 3)
 ```
 
@@ -192,19 +192,19 @@ breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 if (file.exists("zspuriousdf.rds")) {
   zspuriousdf <- readRDS("zspuriousdf.rds")
 } else {
-  zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) %>%
+  zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
     mutate(
       # pmax = 1-pt(c, n-1)^(2*n)
       pmax = pspurious(n, rnorm, c = c)
     )
   saveRDS(zspuriousdf, "zspuriousdf.rds")
 }
-labels <- zspuriousdf %>%
-  group_by(c) %>%
-  filter(abs(pmax - 0.75) == min(abs(pmax - 0.75))) %>%
-  slice(1) %>%
+labels <- zspuriousdf |>
+  group_by(c) |>
+  filter(abs(pmax - 0.75) == min(abs(pmax - 0.75))) |>
+  slice(1) |>
   mutate(label = paste0("c=", sprintf("%.1f", c)))
-zspuriousdf %>%
+zspuriousdf |>
   ggplot(aes(x = n, y = pmax, group = c, col = factor(c))) +
   geom_line() +
   scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
@@ -222,19 +222,19 @@ Let's also compute the probability of spurious anomalies for different data dist
 if (file.exists("zspurious2df.rds")) {
   zspurious2df <- readRDS("zspurious2df.rds")
 } else {
-  zspurious2df <- tibble(n = n, c = 3) %>%
+  zspurious2df <- tibble(n = n, c = 3) |>
     mutate(
       ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
       Normal = pspurious(n, rnorm, c = c),
       `t(2)` = pspurious(n, rt, df = 2, c = c),
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
-    ) %>%
-    select(-c) %>%
+    ) |>
+    select(-c) |>
     pivot_longer(-n, values_to = "Probability", names_to = "Distribution")
   saveRDS(zspurious2df, "zspurious2df.rds")
 }
-zspurious2df %>%
-  filter(Distribution != "ApproxNormal") %>%
+zspurious2df |>
+  filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
   geom_line() +
   labs(x = "n (sample size)", y = "Probability of at least one spurious anomaly") +
@@ -252,7 +252,7 @@ Even if we were prepared to believe that the data come from a normal distributio
 
 ### Peirce's criterion {-}
 
-Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies. 
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies.
 
 @fig-zscorecriteria shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
@@ -262,7 +262,7 @@ threshold <- numeric(length(n))
 for (i in seq_along(n)) {
   threshold[i] <- weird:::peirce_threshold(n[i])
 }
-tibble(n = n, c = threshold) %>%
+tibble(n = n, c = threshold) |>
   ggplot(aes(x = n, y = c)) +
   geom_line() +
   geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
@@ -277,12 +277,12 @@ The threshold increases with sample size $n$ to allow for the increasing likelih
 The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the four examples.
 
 ```{r peirce_examples}
-cricket_batting %>% filter(peirce_anomalies(Average))
-oldfaithful %>% filter(peirce_anomalies(duration))
-n01 %>%
-  select(v1) %>%
+cricket_batting |> filter(peirce_anomalies(Average))
+oldfaithful |> filter(peirce_anomalies(duration))
+n01 |>
+  select(v1) |>
   filter(peirce_anomalies(v1))
-n01b %>% filter(peirce_anomalies(v2))
+n01b |> filter(peirce_anomalies(v2))
 ```
 
 1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
@@ -299,17 +299,17 @@ Peirce's proposal was largely superseded by an alternative proposed by the astro
 The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
 
 ```{r checkchauvenet, include=FALSE}
-n1 <- cricket_batting %>%
-  filter(chauvenet_anomalies(Average)) %>%
+n1 <- cricket_batting |>
+  filter(chauvenet_anomalies(Average)) |>
   NROW()
-n2 <- oldfaithful %>%
-  filter(chauvenet_anomalies(duration)) %>%
+n2 <- oldfaithful |>
+  filter(chauvenet_anomalies(duration)) |>
   NROW()
-n3 <- n01 %>%
-  filter(chauvenet_anomalies(v1)) %>%
+n3 <- n01 |>
+  filter(chauvenet_anomalies(v1)) |>
   NROW()
-n4 <- n01b %>%
-  filter(chauvenet_anomalies(v2)) %>%
+n4 <- n01b |>
+  filter(chauvenet_anomalies(v2)) |>
   NROW()
 stopifnot(n1 == 0L)
 stopifnot(n2 == 1L)
@@ -337,18 +337,18 @@ $$
 #| label: fig-zscoretests
 #| fig-cap: Critical values for maximum $z$-score tests with $\alpha=0.05$.
 alpha <- 0.05
-df <- tibble(n = n) %>%
-  filter(n >= 3) %>%
+df <- tibble(n = n) |>
+  filter(n >= 3) |>
   mutate(
     t1 = qt(1 - alpha / n, n - 2),
     t2 = qt(1 - alpha / (2 * n), n - 2),
     pearson = t1 * sqrt((n - 1) / (n - 2 + t1^2)),
     chauvenet = qnorm(1 - 0.25 / n),
     grubbs = (n - 1) / sqrt(n) * sqrt(t2^2 / (n - 2 + t2^2)),
-  ) %>%
-  select(-t1, -t2) %>%
+  ) |>
+  select(-t1, -t2) |>
   pivot_longer(pearson:grubbs, values_to = "c", names_to = "test")
-df %>%
+df |>
   ggplot(aes(x = n, y = c, col = test)) +
   geom_line() +
   scale_x_log10(limits = c(3, 9e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
@@ -370,11 +370,11 @@ From these, we can compute the probability of a false positive (detecting an ano
 if (file.exists("pzscoredf.rds")) {
   pzscoredf <- readRDS("pzscoredf.rds")
 } else {
-  pzscoredf <- df %>%
+  pzscoredf <- df |>
     mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6))
   saveRDS(pzscoredf, "pzscoredf.rds")
 }
-pzscoredf %>%
+pzscoredf |>
   ggplot(aes(x = n, y = pmax, group = test, col = test)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
   geom_line() +
@@ -403,20 +403,20 @@ However, when we allow for different data distributions, Grubbs' test also gives
 if (file.exists("pgrubbsdf.rds")) {
   pgrubbsdf <- readRDS("pgrubbsdf.rds")
 } else {
-  pgrubbsdf <- pzscoredf %>%
-    filter(test == "grubbs") %>%
+  pgrubbsdf <- pzscoredf |>
+    filter(test == "grubbs") |>
     mutate(
       Normal = pmax,
       ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
       `t(2)` = pspurious(n, rt, df = 2, c = c),
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
-    ) %>%
-    select(-c, -test, -pmax) %>%
+    ) |>
+    select(-c, -test, -pmax) |>
     pivot_longer(-n, values_to = "Probability", names_to = "Distribution")
   saveRDS(pgrubbsdf, "pgrubbsdf.rds")
 }
-pgrubbsdf %>%
-  filter(Distribution != "ApproxNormal") %>%
+pgrubbsdf |>
+  filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
   geom_line() +
@@ -430,15 +430,15 @@ pgrubbsdf %>%
 We can apply the test using the `grubbs_anomalies()` function.
 
 ```{r}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  filter(grubbs_anomalies(Average)) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
+  filter(grubbs_anomalies(Average)) |>
   select(Player, Country, Average)
-oldfaithful %>%
+oldfaithful |>
   filter(grubbs_anomalies(duration))
-n01 %>%
+n01 |>
   filter(grubbs_anomalies(v1))
-n01b %>%
+n01b |>
   filter(grubbs_anomalies(v2))
 ```
 
@@ -488,7 +488,7 @@ pspuriousdixon <- function(n, dist, rep = 1e6, ...) {
 if (file.exists("dixondf.rds")) {
   dixondf <- readRDS("dixondf.rds")
 } else {
-  dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) %>%
+  dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
     mutate(
       Normal = pspuriousdixon(n, rnorm),
       `t(2)` = pspuriousdixon(n, rt, df = 2),
@@ -496,8 +496,8 @@ if (file.exists("dixondf.rds")) {
     )
   saveRDS(dixondf, "dixondf.rds")
 }
-dixondf %>%
-  pivot_longer(-n, values_to = "Probability", names_to = "Distribution") %>%
+dixondf |>
+  pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
   geom_line() +
@@ -508,15 +508,15 @@ dixondf %>%
 We can apply the test using the `dixon_anomalies()` function, which does a two-sided test of both minimum and maximum observations.
 
 ```{r}
-cricket_batting %>%
-  filter(Innings > 20) %>%
-  filter(dixon_anomalies(Average)) %>%
+cricket_batting |>
+  filter(Innings > 20) |>
+  filter(dixon_anomalies(Average)) |>
   select(Player, Country, Average)
-oldfaithful %>%
+oldfaithful |>
   filter(dixon_anomalies(duration))
-n01 %>%
+n01 |>
   filter(dixon_anomalies(v1))
-n01b %>%
+n01b |>
   filter(dixon_anomalies(v2))
 ```
 
