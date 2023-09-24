@@ -2,7 +2,7 @@ project:
   type: book
 
 book:
-  title: "That's weird: Anomaly&nbsp;detection using&nbsp;R"
+  title: "That's weird! Anomaly&nbsp;detection using&nbsp;R"
   author:
     name: "<a href='https://robjhyndman.com'>Rob J Hyndman</a>"
     affiliation: "Monash University, Australia"
@@ -17,15 +17,15 @@ book:
     - "06-distance.qmd"
     - "07-highdim.qmd"
     - "99-refs.qmd"
-  page-footer: 
-    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>" 
+  page-footer:
+    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>"
     border: false
     background: light
-  sidebar: 
+  sidebar:
     background: "#cccccc"
     style: "docked"
   favicon: "https://otexts.com/favicon.ico"
-  
+
 toc-title: "<b>Sections</b>"
 html-math-method: katex
 published-title: "Last updated"
@@ -38,9 +38,9 @@ biblio-style: authoryear-comp
 execute:
   freeze: auto
 
-format: 
+format:
   html:
-    theme: 
+    theme:
       - cosmo
       - otexts.scss
     fontsize: 16px
