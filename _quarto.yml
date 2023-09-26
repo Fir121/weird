@@ -46,5 +46,3 @@ format:
     fontsize: 16px
     mainfont: "Merriweather, Georgia, serif"
     code-link: true
-  pdf:
-    documentclass: scrreprt
