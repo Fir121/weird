@@ -12,7 +12,7 @@ Anomalies are often a nuisance. For example, they may be simply recording errors
 
 ## Definitions
 
-An anomaly is an observation that behaves differently from the bulk of the data. Anomalies are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants".  We prefer to use "anomalies" as it is a more general term than outliers, and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set.^[Some papers use the term "inlier" to denote any point that is not an outlier. We shall use the earlier definition of "inlier", meaning an observation that is an anomaly but which is surrounded by genuine observations.]
+An anomaly is an observation that behaves differently from the bulk of the data. Anomalies are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants".  I prefer to use "anomalies" as it is a more general term than outliers, and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set.^[Some papers use the term "inlier" to denote any point that is not an outlier. We shall use the earlier definition of "inlier", meaning an observation that is an anomaly but which is surrounded by genuine observations.]
 
 An old definition due to @Barnett1978 states
 
@@ -28,12 +28,13 @@ So rather than trying to define anomalies more precisely, we shall deliberately 
 
 ### Rejecting anomalies {-}
 
-Many analysts have thrown away apparent anomalies because they were assumed to be errors. There are even formal statistical tests to tell you which observations should be ignored. In my view, this is a dangerous practice. No anomalies should be removed unless you understand what led to their unusual behaviour in the first place.
+Many analysts have thrown away apparent anomalies because they were assumed to be errors. There are even formal statistical tests to tell you which observations should be ignored. In my view, this is a dangerous practice. No anomalies should be removed unless you understand what led to their unusual behaviour in the first place. Often the most interesting observations are the ones that appear anomalous. They are the ones that tell us something new and unexpected, so we should not be too quick to reject them.
 
-> Add story of ozone layer
+Sometimes we may want to use methods that are robust to anomalies, so that we can ignore them without worrying about their effect on the analysis. But this is not the same as removing them. Even when we use robust methods, it is still worth investigating any observations that appear anomalous, in order to fully understand the variation in the data.
 
-As this story illustrates, often the most interesting observations are the ones that appear anomalous. They are the ones that tell us something new and unexpected, so we should not be too quick to reject them. Sometimes we may want to use methods that are robust to anomalies, so that we can ignore them without worrying about their effect on the analysis. But this is not the same as removing them. Even when we use robust methods, it is still worth investigating any observations that appear anomalous, in order to fully understand the variation in the data.
+There is a widespread myth that NASA did not discover the hole in the ozone layer above the Antarctic, because they had been throwing away anomalous data which would have revealed it. While this is not true, the real story is also instructive [@christie2004data]. Scientists had expected ozone depletion since the early 1970s, and NASA was continuously monitoring ozone levels worldwide using satellite data. The satellite data provided about 140,000 observations per day, and so exploratory data analysis was difficult using the primitive computing tools available. Instead, observations were flagged as anomalous when they were below 180 units. Before 1975, measurements were routinely above 280 units, so the threshold of 180 was much lower than what had previously been observed. Between 1975 and 1984, ozone levels steadily dropped, but did not cross the 180 threshold until 1985. Only then did an analysis of the historical data reveal that the problem had been developing for a decade.
 
+It is not clear how the 180 threshold was determined. However, a better approach would have been to construct a probability distribution of ozone levels based on historical values, and then identify observations as anomalous if they did not appear to come from this distribution. In that way, the ozone hole could have been detected several years earlier.
 
 ## Approaches to anomaly detection
 
