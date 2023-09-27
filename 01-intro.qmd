@@ -36,21 +36,23 @@ Sometimes we may want to use methods that are robust to anomalies, so that we ca
 
 There is a widespread myth that NASA did not discover the hole in the ozone layer above the Antarctic, because they had been throwing away anomalous data which would have revealed it. While this is not true, the real story is also instructive [@christie2004data;@Christie2001]. NASA had been continuously monitoring ozone levels worldwide using satellite data since the late 1970s, and there were ground-based monitoring stations with measurements going back to the 1950s. The satellite data provided about 140,000 observations per day, and so exploratory data analysis was difficult using the primitive computing tools available. Instead, observations were flagged as anomalous when they were below 180 units. Before 1975, measurements were routinely above 280 units, so the threshold of 180 was much lower than what had previously been observed. Between 1975 and 1984, ozone levels steadily dropped, but did not cross the 180 threshold until 1985. Only then did an analysis of the historical data reveal that the problem had been developing for a decade.
 
+Graph^[Thanks to Leslie R Lait (NASA) for providing the NASA satellite data, and Jonathan Shanklin (British Antarctic Survey) for providing the Halley data. The graph shown is a reproduction of the one by Lait at https://ozonewatch.gsfc.nasa.gov/facts/history_SH.html.]
+
 ```{r}
 tmp <- readr::read_csv(here::here("data/halley_toms_ozone.txt"), skip=2)
-ozone <- tmp |> 
-  filter(!is.na(instrument)) |> 
+ozone <- tmp |>
+  filter(!is.na(instrument)) |>
   rename(year = "#   year")
-halley <- tmp |> 
-  rename(year = "#   year") |> 
-  filter(is.na(instrument), !stringr::str_detect(year, "^#")) |> 
+halley <- tmp |>
+  rename(year = "#   year") |>
+  filter(is.na(instrument), !stringr::str_detect(year, "^#")) |>
   mutate(instrument = "Halley")
-ozone <- bind_rows(ozone, halley) |> 
+ozone <- bind_rows(ozone, halley) |>
   mutate(
     year = readr::parse_integer(year),
     ozone = readr::parse_number(ozone)
   )
-ozone |> 
+ozone |>
   ggplot(aes(x = year, y = ozone, color = instrument)) +
   geom_point() +
   geom_hline(aes(yintercept = 180))
