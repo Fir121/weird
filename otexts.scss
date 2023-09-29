@@ -16,6 +16,8 @@ $font-family-monospace: 'Hack', monospace;
 
 $h2-font-size: 1.5rem !default;
 $h3-font-size: 1.3rem !default;
+$h4-font-size: 1.1rem !default;
+$h5-font-size: 0.9rem !default;
 
 $code-block-bg: $theme-gray;
 
@@ -24,8 +26,7 @@ $code-block-bg: $theme-gray;
 
 h1,
 h2,
-h3,
-h4 {
+h3 {
   color: $theme-main;
   font-family: $font-family-sans-serif;
   font-weight: bold;
@@ -36,6 +37,11 @@ h1, h2 {
   margin-top: 50px !important;
 }
 
+h4, h5 {
+  color: $body-color;
+  font-family: $font-family-sans-serif;
+  font-weight: bold;
+}
 .header-section-number {
   color: $theme-main;
 }
