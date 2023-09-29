@@ -6,9 +6,52 @@
 source("before-each-chapter.R")
 ```
 
-This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference.
+This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. Feel free to skip the chapter entirely, and refer back to it as needed.
 
 ## Probability distributions
+
+We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: discrete and continuous random variables.
+
+### Discrete random variables
+
+A discrete random variable can take values on a finite, or countably infinite, space. For example, if $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$. If we can list the values that the variable can take, it is a discrete random variable. On the other hand, a continuous random variable can take values on an uncountably infinite space. For example, if $Y$ can take any real value, it is a continuous random variable.
+
+We will start with discrete random variables, because they are easier to understand. The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then it is often helpful to also define the cumulative probability distribution (cdf), given by
+$$F(y) = \text{Pr}(Y <= y).
+$$ {#eq-cdf}
+For discrete random variables, $F(y)$ is a step function with jumps at the values of $Y$ that are possible.  The size of the jump at $y$ is equal to $p(y)$.
+
+
+#### Bernoulli distribution
+
+Some probability distributions are widely used, and then they are given a name, often taken from the person who first discovered or proposed the distribution. For example, the **Bernoulli** distribution (named after Swiss mathematician, Jacob Bernoulli) is used to model binary data, where $Y$ can take only two values, 0 and 1, with probabilities $p$ and $1-p$ respectively. An example is the result of a coin toss, where $Y=1$ if the coin lands heads and $Y=0$ if the coin lands tails. Then $p=0.5$, and the probability mass function is given by $p(y)=0.5$ when $y\in\{0,1\}$. The cumulative distribution function of a Bernoulli distribution is given by $F(y)=0$ when $y<0$, $F(y)=p$ when $0\leq y < 1$ and $F(y)=1$ when $y\geq 1$.
+
+#### Poisson distribution
+
+Another widely used discrete distribution is the **Poisson** distribution, named after the French mathematician Siméon Poisson. It is often used to model count data, where $Y$ can take any non-negative integer value. The probability mass function is given by
+$$
+  p(y) = \frac{\lambda^y e^{-\lambda}}{y!},
+$$
+for $y=0,1,2,\dots$, where $\lambda$ is a positive parameter.
+
+### Continuous random variables
+
+For a continuous random variable, it is easier to start with the cdf, given by @eq-cdf. Then the probability density function (pdf) is defined as the derivative of the cumulative distribution function, so $f(y) = F'(y)$, assuming the derivative exists at $y$.
+
+#### Normal distribution
+
+
+If we can define the cumulative probability distribution, then we can define the quantiles of that distribution, given by
+
+
+This definition is valid for both discrete and continuous random variables.For continuous random variables, $F(y)$ is a continuous function of $y$.
+
+For discr
+
+The probability density function (pdf) is defined as the derivative of the cumulative distribution function, so
+
+ where the probability mass changes. For continuous random variables, $F(y)$ is a continuous function of $y$.
+
 
   * cdf
   * density
