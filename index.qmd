@@ -33,7 +33,7 @@ This will load the relevant data sets, and various other packages needed to repr
 8. Non-Euclidean spaces
 10. Time series anomalies
 11. Spatial, network and graph data
-12. Functional data
+12. Functional data (see https://github.com/otsegun/fdaoutlier)
 13. Video data
 14. Categorical and text data
 15. Distributional observations

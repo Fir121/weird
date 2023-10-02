@@ -6,62 +6,238 @@
 source("before-each-chapter.R")
 ```
 
-This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. Feel free to skip the chapter entirely, and refer back to it as needed.
+This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. Feel free to skip the chapter entirely, or just read those parts that are unfamiliar, and refer back to it as needed.
 
-## Probability distributions
+Our aim here is to provide a relatively informal introduction to some of the tools that will be used in the book. Some of this material (especially @sec-distributions and @sec-clt) should be familiar to all readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters. References will be provided for those who want to learn more about the topics covered here.
 
-We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: discrete and continuous random variables.
+## Univariate probability distributions {#sec-distributions}
+
+We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: univariate discrete and continuous random variables. A good introduction to probability distributions is provided by @Forbes2011, with more advanced treatments in @JKunidiscrete, @JKunicontinuous1 and @JKunicontinuous2.
 
 ### Discrete random variables
 
-A discrete random variable can take values on a finite, or countably infinite, space. For example, if $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$. If we can list the values that the variable can take, it is a discrete random variable. On the other hand, a continuous random variable can take values on an uncountably infinite space. For example, if $Y$ can take any real value, it is a continuous random variable.
+A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
 
-We will start with discrete random variables, because they are easier to understand. The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then it is often helpful to also define the cumulative probability distribution (cdf), given by
+The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then it is often helpful to also define the cumulative probability distribution (cdf), given by
 $$F(y) = \text{Pr}(Y <= y).
 $$ {#eq-cdf}
-For discrete random variables, $F(y)$ is a step function with jumps at the values of $Y$ that are possible.  The size of the jump at $y$ is equal to $p(y)$.
-
+For discrete random variables, $F(y)$ is a step function with jumps at the possible values of $Y$.  The size of the jump at $y$ is equal to $p(y)$.
 
 #### Bernoulli distribution
 
-Some probability distributions are widely used, and then they are given a name, often taken from the person who first discovered or proposed the distribution. For example, the **Bernoulli** distribution (named after Swiss mathematician, Jacob Bernoulli) is used to model binary data, where $Y$ can take only two values, 0 and 1, with probabilities $p$ and $1-p$ respectively. An example is the result of a coin toss, where $Y=1$ if the coin lands heads and $Y=0$ if the coin lands tails. Then $p=0.5$, and the probability mass function is given by $p(y)=0.5$ when $y\in\{0,1\}$. The cumulative distribution function of a Bernoulli distribution is given by $F(y)=0$ when $y<0$, $F(y)=p$ when $0\leq y < 1$ and $F(y)=1$ when $y\geq 1$.
+Some probability distributions are widely used, and then they are given a name, often taken from the person who first discovered or proposed the distribution. For example, the **Bernoulli** distribution (named after Swiss mathematician, Jacob Bernoulli) is used to model binary data, where $Y$ can take only two values, 0 and 1, with probabilities $p$ and $1-p$ respectively.
 
 #### Poisson distribution
 
-Another widely used discrete distribution is the **Poisson** distribution, named after the French mathematician Siméon Poisson. It is often used to model count data, where $Y$ can take any non-negative integer value. The probability mass function is given by
+Another widely used discrete distribution is the **Poisson** distribution, named after the French mathematician Siméon Poisson. It is often used to model count data. The probability mass function is given by
 $$
   p(y) = \frac{\lambda^y e^{-\lambda}}{y!},
 $$
-for $y=0,1,2,\dots$, where $\lambda$ is a positive parameter.
+for $y=0,1,2,\dots$, where $\lambda$ is a positive parameter. Both the mean and variance of a Poisson distribution are equal to $\lambda$. We refer to a Poisson random variable with parameter $\lambda$ as $Y \sim \text{Poisson}(\lambda)$.
+
+The Poisson distribution arises when we count the number of events that occur in a fixed time interval, when the events occur independently of each other, and the rate of events ($\lambda$) is constant. For example, the number of customers arriving at a shop each hour, or the number of road accidents per day in a specified area.
+
+Three examples of Poisson distributions are shown in @fig-poisson. Although the points are connected to aid visualization, the distribution only takes values on the non-negative integers (shown as solid points), and the probability is zero at all other values.
+
+```{r}
+#| label: fig-poisson
+#| echo: false
+#| fig-cap: Probability mass functions for three Poisson distributions. As the parameter $\lambda$ increases, the distribution becomes more symmetric and can be approximated by the Normal distribution $N(\lambda, \lambda)$.
+tibble(
+    y = 0:25,
+    `Poisson(1)` = dpois(0:25, 1),
+    `Poisson(5)` = dpois(0:25, 5),
+    `Poisson(10)` = dpois(0:25, 10),
+  ) |>
+  pivot_longer(-y, names_to = "lambda", values_to = "density") |>
+  mutate(
+    lambda = factor(lambda, levels = paste0("Poisson(",c(1,5,10),")"))
+  ) |>
+  ggplot(aes(x = y, y = density, col = lambda)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "y", y = "Probability Mass Function: p(y)") +
+  guides(col = guide_legend(title = latex2exp::TeX("Poisson($\\lambda$)")))
+```
 
 ### Continuous random variables
 
-For a continuous random variable, it is easier to start with the cdf, given by @eq-cdf. Then the probability density function (pdf) is defined as the derivative of the cumulative distribution function, so $f(y) = F'(y)$, assuming the derivative exists at $y$.
+A continuous random variable can take values on an uncountably infinite space. For example, when $Y$ can take any real value, or when $Y$ can take any positive value. For a continuous random variable, it is easiest to start with the cdf, given by @eq-cdf. For continuous random variables, $F(y)$ is a continuous function of $y$, and is monotonically increasing in $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
 
-#### Normal distribution
+If $Y$ takes only real values, then the probability that $Y$ lies in the interval $[a,b]$ is given by $\text{Pr}(a \leq Y \leq b) = \int_a^b f(y)dy$.
 
+#### Normal (Gaussian) distribution
+
+The most widely used continuous distribution is the **Normal** distribution, also known as the **Gaussian** distribution, named after the German mathematician Carl Friedrich Gauss. It takes two parameters, the mean $\mu$, and the variance, $\sigma^2$. The pdf is given by
+$$
+  f(y) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(y-\sigma)^2}{2\sigma^2}\right).
+$$
+We refer to a Normal random variable with mean $\mu$ and variance $\sigma^2$ as $Y \sim N(\mu, \sigma^2)$. When $\mu=0$ and $\sigma^2=1$, we call it the **standard Normal** distribution N(0,1), and denote the pdf as $\phi(y)$ and the cdf as $\Phi(y)$.
+
+Three Normal distributions are shown in @fig-normal.
+
+```{r}
+#| label: fig-normal
+#| echo: false
+#| fig-cap: Probability density functions for three Normal distributions. The mean $\mu$ controls the location of the distribution, while the variance $\sigma^2$ controls the spread.
+tibble(
+    y = seq(-7.5,7.5,l=501),
+    `N(0,1)` = dnorm(y, 0, 1),
+    `N(0,4)` = dnorm(y, 0, 2),
+    `N(1,1)` = dnorm(y, 1, 1)
+  ) |>
+  pivot_longer(-y, names_to = "norm", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = norm)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  guides(col = guide_legend(title = latex2exp::TeX("N($\\mu$,$\\sigma^2$)")))
+```
+
+#### $\chi^2$ distribution
+
+The $\chi^2$ (or **chi-squared**) distribution takes one parameter, the degrees of freedom $k$. The pdf is given by
+$$
+  f(y) = \frac{y^{k/2-1}e^{-y/2}}{2^{k/2}\Gamma(k/2)}.
+$$
+where $\Gamma(u) = \int_0^\infty x^{u-1}e^{-x}dx$ is the gamma function. For positive integers $u$, $\Gamma(u) = (u-1)!$. The $\chi^2$ distribution arises naturally as the sum of the squares of $k$ independent standard Normal random variables. We refer to a $\chi^2$ random variable with $k$ degrees of freedom as $Y \sim \chi^2(k)$.
+
+Three $\chi^2$ distributions are shown in @fig-chisq.
+
+```{r}
+#| label: fig-chisq
+#| echo: false
+#| fig-cap: Probability density functions for three $\chi^2$ distributions. As the degrees of freedom $k$ increases, the distribution becomes more symmetric, and converges to a Normal distribution.
+tibble(
+    y = seq(0, 15, l = 501),
+    `x1` = dchisq(y, 1),
+    `x2` = dchisq(y, 2),
+    `x5` = dchisq(y, 5)
+  ) |>
+  pivot_longer(-y, names_to = "chisq", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = chisq)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  guides(col = guide_legend(title = latex2exp::TeX("$\\chi^2$$(k)$"))) +
+  coord_cartesian(ylim=c(0,1)) +
+  scale_color_manual(
+    values = discrete_colors[1:3],
+    labels = c(latex2exp::TeX("$\\chi^2$$(1)$"),
+               latex2exp::TeX("$\\chi^2$$(2)$"),
+               latex2exp::TeX("$\\chi^2$$(5)$"))
+  )
+```
+
+#### t distribution
+
+The **t** distribution was first described by the English statistician and chemist, William Gosset, who worked for the Guinness brewery in Dublin, Ireland, and published under the pseudonym "Student". It arises naturally as the ratio $Z/S$, where $Z\sim N(0,1)$ and $S\sim\sqrt{\chi^2(k)/k}$ are independent, and is commonly used in variations of $t$-tests. It takes one parameter, the degrees of freedom $k$. The pdf is given by
+$$
+  f(y) = \frac{\Gamma\left(\frac{k+1}{2}\right)}{\sqrt{k\pi}\Gamma\left(\frac{k}{2}\right)}
+  \left(1 + \frac{y^2}{k}\right)^{-\frac{k+1}{2}}.
+$$
+We refer to a t random variable with $k$ degrees of freedom as $Y \sim t(k)$. The t distribution is similar in shape to the standard Normal distribution, but has heavier tails. When $k=1$, the t distribution is known as the "Cauchy" distribution (after the French mathematician Augustin-Louis Cauchy), which has undefined mean and variance. When $k\rightarrow\infty$, the t distribution converges to the standard Normal distribution.
+
+Three t distributions are shown in @fig-t.
+
+```{r}
+#| label: fig-t
+#| echo: false
+#| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
+tibble(
+    y = seq(-7.5, 7.5, l = 501),
+    `t(1)` = dt(y, 1),
+    `t(5)` = dt(y, 5),
+    `t(99)` = dt(y, 99)
+  ) |>
+  pivot_longer(-y, names_to = "t", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = t)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  guides(col = guide_legend(title = latex2exp::TeX("t($k$)")))
+```
+
+#### Gamma distribution
+
+The **gamma** distribution is a generalization of the $\chi^2$ distribution, and is used in many statistical models. There are several parameterizations. Here, we use the shape/rate parameterization which uses the shape $\alpha$ and the rate $\beta$. The pdf is given by
+$$
+  \Gamma(y) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
+$$
+We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. 
+
+Three gamma distributions are shown in @fig-gamma.
+
+```{r}
+#| label: fig-gamma
+#| echo: false
+#| fig-cap: Probability density functions for three gamma distributions.
+tibble(
+    y = seq(0, 7.5, l = 501),
+    `Gamma(1,1)` = dgamma(y, 1, 1),
+    `Gamma(1,2)` = dgamma(y, 1, 2),
+    `Gamma(2,1)` = dgamma(y, 2, 1)
+  ) |>
+  pivot_longer(-y, names_to = "gamma", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = gamma)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$,$\\beta$)")))
+```
+
+### Quantiles
 
 If we can define the cumulative probability distribution, then we can define the quantiles of that distribution, given by
+$$
+  Q(p) = \inf\{y: F(y) \geq p\}.
+$$
+This definition is valid for both discrete and continuous random variables. For a continuous random variable, the quantile function is the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
+
+```{r}
+#| label: fig-quantile
+#| echo: false
+#| fig-cap: Quantile function for a standard Normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution.
+tibble(
+    p = seq(0,1,l=501),
+    qy1 = qnorm(p, 0, 1),
+    qy2 = qt(p, 5),
+    qy3 = qchisq(p, 5)
+  ) |>
+  pivot_longer(-p, names_to = "distribution", values_to = "Q") |> 
+  ggplot(aes(x = p, y = Q, col = distribution)) +
+  geom_line() +
+  labs(x = "p", y = "Quantile function: Q(p)") +
+  guides(col = guide_legend(title = "Distribution")) + 
+  scale_color_manual(
+    values = discrete_colors[1:3],
+    labels = c(latex2exp::TeX("N(0,1)"),
+               latex2exp::TeX("t(5)"),
+               latex2exp::TeX("$\\chi^2$$(5)$"))
+  ) +
+  theme(legend.text.align = 0)
+```
+
+Because the cdf of a discrete distribution is a step function, the inverse is also a step function. For example, the quantile function for a Poisson(5) variable is shown in @fig-quantile2.
+
+```{r}
+#| label: fig-quantile2
+#| echo: false
+#| fig-cap: Quantile function for a Poisson(5) distribution.
+z <- tibble(
+    y = c(0,0:25),
+    Fy = c(0,ppois(y[-1], 5))
+  ) 
+z |> 
+  ggplot(aes(x = Fy, y = y)) +
+  geom_step() +
+  geom_point(data = tail(z,-1)) +
+  labs(x = "p", y = "Quantile function: Q(p)")  +
+  coord_cartesian(ylim = c(0,15))
+```
+
+## Central limit theorem {#sec-clt}
+
+The central limit theorem (CLT) is one of the most important results in statistics. It says that the sum of a large number of independent random variables, each with finite mean and variance, is approximately Normally distributed. This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables, other than that they have finite mean and variance. It is also a very useful result as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
 
-This definition is valid for both discrete and continuous random variables.For continuous random variables, $F(y)$ is a continuous function of $y$.
-
-For discr
-
-The probability density function (pdf) is defined as the derivative of the cumulative distribution function, so
-
- where the probability mass changes. For continuous random variables, $F(y)$ is a continuous function of $y$.
-
-
-  * cdf
-  * density
-  * quantile
-  * Normal
-  * t
-  * Chi-squared
-  * Gamma
-
-## Central limit theorem
+The CLT is the basis of many statistical methods, including hypothesis testing, confidence intervals, and linear regression.
 
 ## Pairwise distances
 

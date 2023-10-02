@@ -1,4 +1,5 @@
 library(codetools)
 library(languageserver)
+library(httpgd)
 library(downlit)
 library(xml2)
