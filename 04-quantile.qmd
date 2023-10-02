@@ -10,7 +10,7 @@ Once computing had developed to the point where more sophisticated calculations 
 
 In the last chapter, we considered methods based only on one variable at a time. In this chapter (and the next two), we will look at methods that use either one or two variables.
 
-## Sample quantiles {#quantiles}
+## Sample quantiles {#sec-quantiles}
 
 A quantile for a single variable is a point that divides the sample space into two based on the probability of observations falling below or above the quantile value. For example, if the quantile corresponding to probability 0.8 is denoted by $q_{0.8}$, and $y$ is a new observation, then $P(y \le q_{0.8}) = 0.8$ and $P(y > q_{0.8}) = 0.2$.
 

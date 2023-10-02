@@ -12,13 +12,13 @@ Our aim here is to provide a relatively informal introduction to some of the too
 
 ## Univariate probability distributions {#sec-distributions}
 
-We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: univariate discrete and continuous random variables. A good introduction to probability distributions is provided by @Forbes2011, with more advanced treatments in @JKunidiscrete, @JKunicontinuous1 and @JKunicontinuous2.
+We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: univariate discrete and continuous random variables. A good introduction to such probability distributions is provided by @Forbes2011, with more advanced treatments in @JKunidiscrete, @JKunicontinuous1 and @JKunicontinuous2.
 
 ### Discrete random variables
 
 A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
 
-The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then it is often helpful to also define the cumulative probability distribution (cdf), given by
+The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then we can also define the cumulative probability distribution (cdf), given by
 $$F(y) = \text{Pr}(Y <= y).
 $$ {#eq-cdf}
 For discrete random variables, $F(y)$ is a step function with jumps at the possible values of $Y$.  The size of the jump at $y$ is equal to $p(y)$.
@@ -161,7 +161,7 @@ The **gamma** distribution is a generalization of the $\chi^2$ distribution, and
 $$
   \Gamma(y) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
 $$
-We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. 
+We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively.
 
 Three gamma distributions are shown in @fig-gamma.
 
@@ -182,13 +182,36 @@ tibble(
   guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$,$\\beta$)")))
 ```
 
+### Central limit theorem {#sec-clt}
+
+The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed. That is, if $X_1,\dots,X_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
+$$
+  \frac{\sum_{i=1}^n X_i - n\mu}{\sigma\sqrt{n}} \longrightarrow N(0,1).
+$$
+
+This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $X_1,\dots,X_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
+
+Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent, but not necessarily identically distributed, or to be weakly dependent.
+
+It is because of the CLT that a $\chi^2(k)$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2(k)$ distribution.)
+
+The CLT is also the reason that a Poisson distribution with large $\lambda$ is approximately Normal. This arises because the sum of Poisson random variables also has a Poisson distribution, so the sum of $\lambda$ independent Poisson(1) variables has a Poisson($\lambda$) distribution. When $\lambda$ is large, the CLT shows that it is approximately a Normal($\lambda,\lambda$) distribution.
+
 ### Quantiles
 
 If we can define the cumulative probability distribution, then we can define the quantiles of that distribution, given by
 $$
   Q(p) = \inf\{y: F(y) \geq p\}.
 $$
-This definition is valid for both discrete and continuous random variables. For a continuous random variable, the quantile function is the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
+This definition is valid for both discrete and continuous random variables. 
+
+Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$. 
+
+#### Continuous random variables
+
+For a continuous random variable, the quantile function is equal the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. Thus $\text{Pr}(Y \le Q(p)) = p$.
+
+The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
 
 ```{r}
 #| label: fig-quantile
@@ -200,11 +223,11 @@ tibble(
     qy2 = qt(p, 5),
     qy3 = qchisq(p, 5)
   ) |>
-  pivot_longer(-p, names_to = "distribution", values_to = "Q") |> 
+  pivot_longer(-p, names_to = "distribution", values_to = "Q") |>
   ggplot(aes(x = p, y = Q, col = distribution)) +
   geom_line() +
   labs(x = "p", y = "Quantile function: Q(p)") +
-  guides(col = guide_legend(title = "Distribution")) + 
+  guides(col = guide_legend(title = "Distribution")) +
   scale_color_manual(
     values = discrete_colors[1:3],
     labels = c(latex2exp::TeX("N(0,1)"),
@@ -214,30 +237,116 @@ tibble(
   theme(legend.text.align = 0)
 ```
 
-Because the cdf of a discrete distribution is a step function, the inverse is also a step function. For example, the quantile function for a Poisson(5) variable is shown in @fig-quantile2.
+#### Discrete random variables
+
+Because the cdf of a discrete distribution is a step function, there is no unique inverse. Instead, we define the quantile function $Q(p)$ as the smallest value of $y$ such that $F(y) \ge p$. This is also a step function. For example, the quantile function for a Poisson(5) variable is shown in @fig-quantile2.
 
 ```{r}
 #| label: fig-quantile2
 #| echo: false
-#| fig-cap: Quantile function for a Poisson(5) distribution.
+#| fig-cap: Quantile function for a Poisson(5) distribution. The function is left-continuous, as indicated by the plotted points (where the value of the function equals the lower value at each step). 
 z <- tibble(
     y = c(0,0:25),
-    Fy = c(0,ppois(y[-1], 5))
-  ) 
-z |> 
+    Fy = c(0, ppois(y[-1], 5))
+  )
+z |>
   ggplot(aes(x = Fy, y = y)) +
   geom_step() +
-  geom_point(data = tail(z,-1)) +
+  geom_point(pch=1) +
+  geom_point(data = tibble(y=c(0, z$y-1), Fy = c(0,z$Fy))) +
   labs(x = "p", y = "Quantile function: Q(p)")  +
   coord_cartesian(ylim = c(0,15))
 ```
 
-## Central limit theorem {#sec-clt}
+### Sample quantiles
 
-The central limit theorem (CLT) is one of the most important results in statistics. It says that the sum of a large number of independent random variables, each with finite mean and variance, is approximately Normally distributed. This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables, other than that they have finite mean and variance. It is also a very useful result as it allows us to use the Normal distribution to approximate the distribution of many statistics.
+Usually we won't know the distribution of our data, and then we will need to estimate the quantiles. We leave this topic until @sec-quantiles.
 
+## Multivariate probability distributions
 
-The CLT is the basis of many statistical methods, including hypothesis testing, confidence intervals, and linear regression.
+While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
+
+### Bivariate distributions
+
+The bivariate distribution of two random variables $X$ and $Y$ is defined by the joint cdf $F(x,y) = \text{Pr}(X \le x, Y \le y)$. The marginal cdfs are defined by $F_X(x) = \text{Pr}(X \le x) = F(x,\infty)$ and $F_Y(y) = \text{Pr}(Y \le y) = F(\infty,y)$.  
+
+If both variables are discrete, we can define the joint pmf as $p(x,y) = \text{Pr}(X=x,Y=y)$. The marginal pmfs are defined by $p_X(x) = \sum_y p(x,y)$ and $p_Y(y) = \sum_x p(x,y)$. If the two variables are independent, then the joint pmf is the product of the marginal pmfs, $p(x,y) = p_X(x) p_Y(y)$.
+
+If both variables are continuous, we can define the joint pdf as $f(x,y) = \frac{\partial^2 F(x,y)}{\partial x \partial y}$. The marginal pdfs are defined by $f_X(x) = \int_{-\infty}^\infty f(x,y) dy$ and $f_Y(y) = \int_{-\infty}^\infty f(x,y) dx$. If the two variables are independent, then the joint pdf is the product of the marginal pdfs, $f(x,y) = f_X(x) f_Y(y)$.
+
+When $X$ is discrete, and $Y$ is continuous, describing the joint distribution is more tricky, and we will skip that situation for now.
+
+#### Bivariate Normal distribution
+
+For example, the pdf of the bivariate Normal distribution is given by
+$$
+f(x,y) = \frac{1}{2\pi \sqrt{1-\rho^2}} \exp\left\{-\frac{1}{2(1-\rho^2)}\left(x^2 - 2\rho x y + y^2\right)\right\},
+$$
+where $\rho$ is the correlation between $X$ and $Y$. We often write this as 
+$$
+\begin{bmatrix}x\\y\end{bmatrix} \sim N(\bm{0}, \bm{\Sigma}),
+$$
+where $\bm{0} = \begin{bmatrix}0\\0\end{bmatrix}$ is the mean, and $\bm{\Sigma} = \begin{bmatrix}1 & \rho \\ \rho & 1\end{bmatrix}$ is the covariance matrix. Multivariate Normal distributions have the interesting property that the marginal distributions are also Normal.
+
+Bivariate distributions can be visualized using contour plots. When plotting contours of a pdf, it is helpful to show contours corresponding to highest density regions (HDRs). HDRs are discussed in more detail in @sec-hdr. For now, it is sufficient to note that an HDR is a region of the sample space that contains a specified proportion of the probability mass, and where every point inside the region has higher density than any point outside the region.
+
+For example, the bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ is shown in @fig-bivariate as a series of HDR contours, each containing an additional 10% of the probability mass.
+
+```{r}
+#| label: fig-bivariate
+#| echo: false
+#| message: false
+#| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
+library(mvtnorm)
+library(hdrcde)
+# Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
+prob <- seq(9)/10
+grid <- seq(-2.5, 2.5, l=999)
+den <- list(x=grid, y=grid)
+den$z <- dmvnorm(cbind(den$x,den$y), c(0,0), matrix(c(1,0.5,0.5,1),2,2)) |> 
+  matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
+falpha <- hdr.2d(x = grid, y = grid, den = den, prob = prob)$falpha 
+expand_grid(
+    x = seq(-3.5,3.5,l=99),
+    y = seq(-3.5,3.5,l=99)
+  ) |>
+  mutate(z = dmvnorm(cbind(x,y), c(0,0), matrix(c(1,0.5,0.5,1),2,2))) |> 
+  ggplot(aes(x = x, y = y, z = z)) +
+  geom_contour_filled(breaks = rev(c(falpha, 100))) +
+  labs(x = "x", y = "y", z = "f(x,y)") +
+  scale_fill_manual(values = rev(viridisLite::viridis(10)),
+                    labels = rev(paste0(100*rev(prob),"%"))) +
+  guides(fill = guide_legend(title = "HDR coverage")) 
+```
+
+### Joint distributions
+
+More generally, the joint distribution of $n$ random variables $X_1,\dots,X_n$ is defined by the joint cdf $F(x_1,\dots,x_n) = \text{Pr}(X_1 \le x_1,\dots,X_n \le x_n)$ (assuming they all have a natural ordering). If all variables are discrete, then we can define the joint probability mass function 
+$$
+p(x_1,\dots,x_n) = \text{Pr}(X_1 = x_1,\dots,X_n = x_n).
+$$
+If all variables are continuous, then we can define the joint density function 
+$$
+f(x_1,\dots,x_n) = \frac{\partial^n F(x_1,\dots,x_n)}{\partial x_1 \dots \partial x_n}.
+$$
+
+### Conditional distributions
+
+A fundamental concept in statistics is a **conditional distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
+
+The conditional distribution of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf $F(y|x_1,\dots,x_n) = \text{Pr}(Y \le y | X_1 = x_1,\dots,X_n = x_n)$. If all variables are continuous, then the conditional density function is given by
+$$
+f(y | x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
+$$
+If all variables are discrete, then the conditional probability mass function is given by
+$$
+p(y | x_1, \dots, x_n) = \frac{p(y,x_1,\dots,x_n)}{p(x_1,\dots,x_n)}.
+$$
+
+### Multivariate quantiles
+
+Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
+
 
 ## Pairwise distances
 
