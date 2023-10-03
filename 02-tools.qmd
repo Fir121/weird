@@ -16,7 +16,7 @@ We are interested in data obtained from a range of possible sample spaces, but l
 
 ### Discrete random variables
 
-A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
+A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, then it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
 
 The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then we can also define the cumulative probability distribution (cdf), given by
 $$F(y) = \text{Pr}(Y <= y).
@@ -203,9 +203,9 @@ If we can define the cumulative probability distribution, then we can define the
 $$
   Q(p) = \inf\{y: F(y) \geq p\}.
 $$
-This definition is valid for both discrete and continuous random variables. 
+This definition is valid for both discrete and continuous random variables.
 
-Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$. 
+Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$.
 
 #### Continuous random variables
 
@@ -244,7 +244,7 @@ Because the cdf of a discrete distribution is a step function, there is no uniqu
 ```{r}
 #| label: fig-quantile2
 #| echo: false
-#| fig-cap: Quantile function for a Poisson(5) distribution. The function is left-continuous, as indicated by the plotted points (where the value of the function equals the lower value at each step). 
+#| fig-cap: Quantile function for a Poisson(5) distribution. The function is left-continuous, as indicated by the plotted points (where the value of the function equals the lower value at each step).
 z <- tibble(
     y = c(0,0:25),
     Fy = c(0, ppois(y[-1], 5))
@@ -268,7 +268,7 @@ While we will cover anomaly detection in univariate data, most of the methods we
 
 ### Bivariate distributions
 
-The bivariate distribution of two random variables $X$ and $Y$ is defined by the joint cdf $F(x,y) = \text{Pr}(X \le x, Y \le y)$. The marginal cdfs are defined by $F_X(x) = \text{Pr}(X \le x) = F(x,\infty)$ and $F_Y(y) = \text{Pr}(Y \le y) = F(\infty,y)$.  
+The bivariate distribution of two random variables $X$ and $Y$ is defined by the joint cdf $F(x,y) = \text{Pr}(X \le x, Y \le y)$. The marginal cdfs are defined by $F_X(x) = \text{Pr}(X \le x) = F(x,\infty)$ and $F_Y(y) = \text{Pr}(Y \le y) = F(\infty,y)$.
 
 If both variables are discrete, we can define the joint pmf as $p(x,y) = \text{Pr}(X=x,Y=y)$. The marginal pmfs are defined by $p_X(x) = \sum_y p(x,y)$ and $p_Y(y) = \sum_x p(x,y)$. If the two variables are independent, then the joint pmf is the product of the marginal pmfs, $p(x,y) = p_X(x) p_Y(y)$.
 
@@ -282,7 +282,7 @@ For example, the pdf of the bivariate Normal distribution is given by
 $$
 f(x,y) = \frac{1}{2\pi \sqrt{1-\rho^2}} \exp\left\{-\frac{1}{2(1-\rho^2)}\left(x^2 - 2\rho x y + y^2\right)\right\},
 $$
-where $\rho$ is the correlation between $X$ and $Y$. We often write this as 
+where $\rho$ is the correlation between $X$ and $Y$. We often write this as
 $$
 \begin{bmatrix}x\\y\end{bmatrix} \sim N(\bm{0}, \bm{\Sigma}),
 $$
@@ -303,29 +303,29 @@ library(hdrcde)
 prob <- seq(9)/10
 grid <- seq(-2.5, 2.5, l=999)
 den <- list(x=grid, y=grid)
-den$z <- dmvnorm(cbind(den$x,den$y), c(0,0), matrix(c(1,0.5,0.5,1),2,2)) |> 
+den$z <- dmvnorm(cbind(den$x,den$y), c(0,0), matrix(c(1,0.5,0.5,1),2,2)) |>
   matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
-falpha <- hdr.2d(x = grid, y = grid, den = den, prob = prob)$falpha 
+falpha <- hdr.2d(x = grid, y = grid, den = den, prob = prob)$falpha
 expand_grid(
     x = seq(-3.5,3.5,l=99),
     y = seq(-3.5,3.5,l=99)
   ) |>
-  mutate(z = dmvnorm(cbind(x,y), c(0,0), matrix(c(1,0.5,0.5,1),2,2))) |> 
+  mutate(z = dmvnorm(cbind(x,y), c(0,0), matrix(c(1,0.5,0.5,1),2,2))) |>
   ggplot(aes(x = x, y = y, z = z)) +
   geom_contour_filled(breaks = rev(c(falpha, 100))) +
   labs(x = "x", y = "y", z = "f(x,y)") +
   scale_fill_manual(values = rev(viridisLite::viridis(10)),
                     labels = rev(paste0(100*rev(prob),"%"))) +
-  guides(fill = guide_legend(title = "HDR coverage")) 
+  guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
 ### Joint distributions
 
-More generally, the joint distribution of $n$ random variables $X_1,\dots,X_n$ is defined by the joint cdf $F(x_1,\dots,x_n) = \text{Pr}(X_1 \le x_1,\dots,X_n \le x_n)$ (assuming they all have a natural ordering). If all variables are discrete, then we can define the joint probability mass function 
+More generally, the joint distribution of $n$ random variables $X_1,\dots,X_n$ is defined by the joint cdf $F(x_1,\dots,x_n) = \text{Pr}(X_1 \le x_1,\dots,X_n \le x_n)$ (assuming they all have a natural ordering). If all variables are discrete, then we can define the joint probability mass function
 $$
 p(x_1,\dots,x_n) = \text{Pr}(X_1 = x_1,\dots,X_n = x_n).
 $$
-If all variables are continuous, then we can define the joint density function 
+If all variables are continuous, then we can define the joint density function
 $$
 f(x_1,\dots,x_n) = \frac{\partial^n F(x_1,\dots,x_n)}{\partial x_1 \dots \partial x_n}.
 $$
@@ -346,6 +346,20 @@ $$
 ### Multivariate quantiles
 
 Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
+
+## Highest density regions {#sec-hdr}
+
+A **highest density region** is defined as the region of the sample space where the density is higher than a given threshold [@HDR96], and are usually specified using the probability mass that they contain. For example, a 95% HDR is the region of the sample space that contains 95% of the probability mass, and where every point inside the region has higher density than any point outside the region.
+
+Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
+$$
+  R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
+$$
+where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
+
+HDRs are equivalent to level sets of the density function, and so are contours for bivariate density functions. An example of a bivariate density function with HDR contours is shown in @fig-bivariate.
+
+
 
 
 ## Pairwise distances
