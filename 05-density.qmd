@@ -20,6 +20,8 @@ Let's illustrate the idea with some simple examples.
 
 ```{r hdr, fig.asp=0.2}
 #| label: fig-hdr
+#| warning: false
+#| message: false
 #| fig-cap: HDR boxplot of the Old Faithful durations
 library(gghdr)
 oldfaithful |>

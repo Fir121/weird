@@ -275,7 +275,7 @@ library(lvplot)
 cricket_batting |>
   filter(Innings > 20) |>
   ggplot(aes(x = 1, y = Average)) +
-  geom_lv(aes(fill = ..LV..)) +
+  geom_lv(aes(fill = after_stat(LV))) +
   scale_x_discrete() +
   coord_flip() +
   labs(x = "", y = "Career batting average") +

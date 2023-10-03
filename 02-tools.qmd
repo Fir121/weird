@@ -476,7 +476,7 @@ ggplot() +
   geom_line(data = of2021kde, aes(x = x, y = y, group = eruption), col = "gray") +
   geom_rug(
     data = of2021, mapping = aes(x = duration, y = 0),
-    size = 1, length = unit(0.06, "npc"), sides = "b"
+    linewidth = 1, length = unit(0.06, "npc"), sides = "b"
   ) +
   labs(x = "y = Duration (seconds)", y = latex2exp::TeX("$K_h(y - y_i)/n$"))
 ```
