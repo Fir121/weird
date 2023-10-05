@@ -388,26 +388,32 @@ expand_grid(
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
-### Conditional distributions
+### Conditional probability distributions
 
-A fundamental concept in statistics is a **conditional distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
+A fundamental concept in statistics is a **conditional probability distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
 
 The conditional distribution of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
 $$
- F(y|x_1,\dots,x_n) = \text{Pr}(Y \le y | X_1 = x_1,\dots,X_n = x_n).
+ F(y\mid x_1,\dots,x_n) = \text{Pr}(Y \le y \mid  X_1 = x_1,\dots,X_n = x_n).
 $$
 The conditional density function is given by
 $$
-f(y | x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
+f(y \mid  x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
 $$
+
+Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
 
 ### Multivariate quantiles
 
 Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
 
+### Further reading
+
+A good reference on multivariate probability distributions is @JKmulticontinuous1.
+
 ## Pairwise distances
 
-Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$. There are approximate pairwise distance algorithms that are faster, but we will not discuss them here.
+Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$. 
 
 Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
 $$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
@@ -459,6 +465,8 @@ Terms with zero numerator and denominator are omitted from the sum. This distanc
 Binary:
 : This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
 
+For more information about pairwise distances, see @Borg2005.
+
 ## Nearest neighbours
 
 Some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
@@ -501,8 +509,9 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are inde
 $$
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
 $$ {#eq-kde}
-where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. The bandwidth $h$ controls the variance of the kernel functions. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by
 $K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
+
 
 ```{r of2021, include=FALSE}
 of2021 <- oldfaithful |>
@@ -666,7 +675,7 @@ When a Gaussian kernel is used, a kernel density estimate assumes that the under
 
 There are modified estimators which deal with this situation, but we won't concern ourselves with them here as this situation will not come up very often in the context of anomaly detection.
 
-## Multivarate kernel density estimation
+### Multivarate kernel density estimation
 
 Suppose our observations are $d$-dimensional vectors, $\bm{y}_1,\dots,\bm{y}_n$. Then the multivariate version of @eq-kde is given by [@Scott2015]
 $$
@@ -756,11 +765,17 @@ oldfaithful |>
   geom_density_2d(adjust = 2) +
   labs(x = "Duration (seconds)")
 ```
+
+
+### Further reading
+
+There is a rich literature on kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
+
 ## Extreme value theory {#sec-evt}
 
 Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
-It is well known, due to the central limit theorem, that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
+It is well known, due to the [central limit theorem](02-tools.html#sec-clt), that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
 
 ### Fisher-Tippett-Gnedenko Theorem {-}
 
