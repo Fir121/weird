@@ -8,71 +8,38 @@ source("before-each-chapter.R")
 
 This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. Feel free to skip the chapter entirely, or just read those parts that are unfamiliar, and refer back to it as needed.
 
-Our aim here is to provide a relatively informal introduction to some of the tools that will be used in the book. Some of this material (especially @sec-distributions and @sec-clt) should be familiar to all readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters. References will be provided for those who want to learn more about the topics covered here.
+The aim here is to provide a relatively informal introduction to some of the tools that will be used in the book. Some of this material (especially @sec-distributions and @sec-clt) should be familiar to all readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters. 
+
+We are interested in data obtained from a range of possible sample spaces in this book, but for now we will assume that all data are real numbers, and come from continuous probability distributions. Later we will consider other types of data, including discrete data, data that are functions, images, video, networks, text, or even probability distributions. But for the first half of the book, we will only deal with numerical data.
+
+References will be provided at the end of each section for those who want to learn more about the topics covered here.
 
 ## Univariate probability distributions {#sec-distributions}
 
-We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: univariate discrete and continuous random variables. A good introduction to such probability distributions is provided by @Forbes2011, with more advanced treatments in @JKunidiscrete, @JKunicontinuous1 and @JKunicontinuous2.
-
-### Discrete random variables
-
-A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, then it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
-
-The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then we can also define the cumulative probability distribution (cdf), given by
+Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$, with its cumulative probability distribution (cdf) given by
 $$F(y) = \text{Pr}(Y <= y).
 $$ {#eq-cdf}
-For discrete random variables, $F(y)$ is a step function with jumps at the possible values of $Y$.  The size of the jump at $y$ is equal to $p(y)$.
+This function is monotonically increasing in $y$, and takes values between 0 and 1. Because we are assuming that $Y$ is a continuous random variable, $F(y)$ is a continuous function of $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
 
-#### Bernoulli distribution
+The probability that $Y$ lies in the interval $[a,b]$ is given by $\text{Pr}(a \leq Y \leq b) = \int_a^b f(y)dy$.
 
-Some probability distributions are widely used, and then they are given a name, often taken from the person who first discovered or proposed the distribution. For example, the **Bernoulli** distribution (named after Swiss mathematician, Jacob Bernoulli) is used to model binary data, where $Y$ can take only two values, 0 and 1, with probabilities $p$ and $1-p$ respectively.
-
-#### Poisson distribution
-
-Another widely used discrete distribution is the **Poisson** distribution, named after the French mathematician Siméon Poisson. It is often used to model count data. The probability mass function is given by
+The expected value (or mean) of $Y$ is given by
 $$
-  p(y) = \frac{\lambda^y e^{-\lambda}}{y!},
+\text{E}(Y) = \int_{-\infty}^\infty y f(y)dy,
 $$
-for $y=0,1,2,\dots$, where $\lambda$ is a positive parameter. Both the mean and variance of a Poisson distribution are equal to $\lambda$. We refer to a Poisson random variable with parameter $\lambda$ as $Y \sim \text{Poisson}(\lambda)$.
+and the variance is given by
+$$
+\text{Var}(Y) = \text{E}[(Y-\text{E}(Y))^2] = \int_{-\infty}^\infty (y-\text{E}(Y))^2 f(y)dy.
+$$
+The standard deviation is the square root of the variance.
 
-The Poisson distribution arises when we count the number of events that occur in a fixed time interval, when the events occur independently of each other, and the rate of events ($\lambda$) is constant. For example, the number of customers arriving at a shop each hour, or the number of road accidents per day in a specified area.
-
-Three examples of Poisson distributions are shown in @fig-poisson. Although the points are connected to aid visualization, the distribution only takes values on the non-negative integers (shown as solid points), and the probability is zero at all other values.
-
-```{r}
-#| label: fig-poisson
-#| echo: false
-#| fig-cap: Probability mass functions for three Poisson distributions. As the parameter $\lambda$ increases, the distribution becomes more symmetric and can be approximated by the Normal distribution $N(\lambda, \lambda)$.
-tibble(
-    y = 0:25,
-    `Poisson(1)` = dpois(0:25, 1),
-    `Poisson(5)` = dpois(0:25, 5),
-    `Poisson(10)` = dpois(0:25, 10),
-  ) |>
-  pivot_longer(-y, names_to = "lambda", values_to = "density") |>
-  mutate(
-    lambda = factor(lambda, levels = paste0("Poisson(",c(1,5,10),")"))
-  ) |>
-  ggplot(aes(x = y, y = density, col = lambda)) +
-  geom_point() +
-  geom_line() +
-  labs(x = "y", y = "Probability Mass Function: p(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("Poisson($\\lambda$)")))
-```
-
-### Continuous random variables
-
-A continuous random variable can take values on an uncountably infinite space. For example, when $Y$ can take any real value, or when $Y$ can take any positive value. For a continuous random variable, it is easiest to start with the cdf, given by @eq-cdf. For continuous random variables, $F(y)$ is a continuous function of $y$, and is monotonically increasing in $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
-
-If $Y$ takes only real values, then the probability that $Y$ lies in the interval $[a,b]$ is given by $\text{Pr}(a \leq Y \leq b) = \int_a^b f(y)dy$.
-
-#### Normal (Gaussian) distribution
+### Normal (Gaussian) distribution
 
 The most widely used continuous distribution is the **Normal** distribution, also known as the **Gaussian** distribution, named after the German mathematician Carl Friedrich Gauss. It takes two parameters, the mean $\mu$, and the variance, $\sigma^2$. The pdf is given by
 $$
-  f(y) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(y-\sigma)^2}{2\sigma^2}\right).
+  f(y; \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(y-\sigma)^2}{2\sigma^2}\right).
 $$
-We refer to a Normal random variable with mean $\mu$ and variance $\sigma^2$ as $Y \sim N(\mu, \sigma^2)$. When $\mu=0$ and $\sigma^2=1$, we call it the **standard Normal** distribution N(0,1), and denote the pdf as $\phi(y)$ and the cdf as $\Phi(y)$.
+We refer to a Normal random variable with mean $\mu$ and variance $\sigma^2$ as $Y \sim N(\mu, \sigma^2)$. When $\mu=0$ and $\sigma^2=1$, we call it the **standard Normal** distribution N(0,1), and denote the pdf as $\phi(y)$ and the cdf as $\Phi(y)$. 
 
 Three Normal distributions are shown in @fig-normal.
 
@@ -93,20 +60,20 @@ tibble(
   guides(col = guide_legend(title = latex2exp::TeX("N($\\mu$,$\\sigma^2$)")))
 ```
 
-#### $\chi^2$ distribution
+### $\chi^2$ distribution
 
 The $\chi^2$ (or **chi-squared**) distribution takes one parameter, the degrees of freedom $k$. The pdf is given by
 $$
-  f(y) = \frac{y^{k/2-1}e^{-y/2}}{2^{k/2}\Gamma(k/2)}.
+  f(y;k) = \frac{y^{k/2-1}e^{-y/2}}{2^{k/2}\Gamma(k/2)}.
 $$
-where $\Gamma(u) = \int_0^\infty x^{u-1}e^{-x}dx$ is the gamma function. For positive integers $u$, $\Gamma(u) = (u-1)!$. The $\chi^2$ distribution arises naturally as the sum of the squares of $k$ independent standard Normal random variables. We refer to a $\chi^2$ random variable with $k$ degrees of freedom as $Y \sim \chi^2(k)$.
+where $\Gamma(u) = \int_0^\infty x^{u-1}e^{-x}dx$ is the gamma function. For positive integers $u$, $\Gamma(u) = (u-1)!$. The $\chi^2$ distribution arises naturally as the sum of the squares of $k$ independent standard Normal random variables. We refer to a $\chi^2$ random variable with $k$ degrees of freedom as $Y \sim \chi^2(k)$. It has mean $k$ and variance $2k$.
 
 Three $\chi^2$ distributions are shown in @fig-chisq.
 
 ```{r}
 #| label: fig-chisq
 #| echo: false
-#| fig-cap: Probability density functions for three $\chi^2$ distributions. As the degrees of freedom $k$ increases, the distribution becomes more symmetric, and converges to a Normal distribution.
+#| fig-cap: Probability density functions for three $\chi^2$ distributions. As the degrees of freedom $k$ increases, the distribution becomes more symmetric, and converges to the Normal distribution N(k,2k)$.
 tibble(
     y = seq(0, 15, l = 501),
     `x1` = dchisq(y, 1),
@@ -127,14 +94,14 @@ tibble(
   )
 ```
 
-#### t distribution
+### t distribution
 
-The **t** distribution was first described by the English statistician and chemist, William Gosset, who worked for the Guinness brewery in Dublin, Ireland, and published under the pseudonym "Student". It arises naturally as the ratio $Z/S$, where $Z\sim N(0,1)$ and $S\sim\sqrt{\chi^2(k)/k}$ are independent, and is commonly used in variations of $t$-tests. It takes one parameter, the degrees of freedom $k$. The pdf is given by
+The **t** distribution was first described by the English statistician and chemist, William Gosset, who worked for the Guinness brewery in Dublin, Ireland, and published under the pseudonym "Student". It arises naturally as the ratio $Z/\sqrt{S/k}$, where $Z\sim N(0,1)$ and $S\sim \chi^2(k)$ are independent, and is commonly used in variations of $t$-tests. It takes one parameter, the degrees of freedom $k$. The pdf is given by
 $$
-  f(y) = \frac{\Gamma\left(\frac{k+1}{2}\right)}{\sqrt{k\pi}\Gamma\left(\frac{k}{2}\right)}
+  f(y;k) = \frac{\Gamma\left(\frac{k+1}{2}\right)}{\sqrt{k\pi}\Gamma\left(\frac{k}{2}\right)}
   \left(1 + \frac{y^2}{k}\right)^{-\frac{k+1}{2}}.
 $$
-We refer to a t random variable with $k$ degrees of freedom as $Y \sim t(k)$. The t distribution is similar in shape to the standard Normal distribution, but has heavier tails. When $k=1$, the t distribution is known as the "Cauchy" distribution (after the French mathematician Augustin-Louis Cauchy), which has undefined mean and variance. When $k\rightarrow\infty$, the t distribution converges to the standard Normal distribution.
+We refer to a t random variable with $k$ degrees of freedom as $Y \sim t(k)$. The t distribution is similar in shape to the standard Normal distribution, but has heavier tails. When $k=1$, the t distribution is known as the "Cauchy" distribution (after the French mathematician Augustin-Louis Cauchy), which has undefined mean and variance. For $k=2$, it has mean 0 and infinite variance. For $k > 2$, it has mean $0$ and variance $k/(k-2)$. When $k\rightarrow\infty$, the t distribution converges to the standard Normal distribution.
 
 Three t distributions are shown in @fig-t.
 
@@ -155,20 +122,20 @@ tibble(
   guides(col = guide_legend(title = latex2exp::TeX("t($k$)")))
 ```
 
-#### Gamma distribution
+### Gamma distribution
 
 The **gamma** distribution is a generalization of the $\chi^2$ distribution, and is used in many statistical models. There are several parameterizations. Here, we use the shape/rate parameterization which uses the shape $\alpha$ and the rate $\beta$. The pdf is given by
 $$
-  \Gamma(y) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
+  f(y; \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
 $$
-We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively.
+We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. The $\chi^2(k)$ distribution is a special case of the gamma distribution, with $\alpha = k/2$ and $\beta = 1/2$. The Exponential distribution is also a special case of the gamma distribution, with $\alpha = 1$. The sum of $k$ independent Exponential random variables with rate $\beta$ has a $\text{Gamma}(k, \beta)$ distribution.
 
 Three gamma distributions are shown in @fig-gamma.
 
 ```{r}
 #| label: fig-gamma
 #| echo: false
-#| fig-cap: Probability density functions for three gamma distributions.
+#| fig-cap: Probability density functions for three gamma distributions. As $\alpha$ increases, the distribution to a $N(\alpha/\beta, \alpha/\beta^2)$ distribution.
 tibble(
     y = seq(0, 7.5, l = 501),
     `Gamma(1,1)` = dgamma(y, 1, 1),
@@ -182,6 +149,45 @@ tibble(
   guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$,$\\beta$)")))
 ```
 
+### Mixture distributions
+
+A **mixture distribution** is a distribution that is formed by mixing together other distributions. That is, a sample value is drawn from a mixture distribution by first randomly selecting one of the component distributions with some specified probability, and then sampling from the selected component distribution. 
+
+The pdf of a mixture distribution is given by the weighted sum of the pdfs of the component distributions, where the weights correspond to the probability of sampling from each component. For example, suppose $Y$ is a mixture of two Normal distributions, with parameters $(\mu,\sigma_1^2)$ and $(\mu_2,\sigma_2^2$), where the first distribution has weight $p$ and the second has weight $1-p$. Then the resulting pdf of the mixture distribution is given by
+$$
+  f(y) = pf(y;\mu_1,\sigma_1^2) + (1-p)f(y;\mu_2,\sigma_2^2).
+$$
+The mean and variance of the mixture distribution are given by
+$$
+  \text{E}(Y) = p\mu_1 + (1-p)\mu_2,
+$$
+and 
+$$
+\text{Var}(Y) = p\sigma_1^2 + (1-p)\sigma_2^2 + p(1-p)(\mu_1 - \mu_2)^2,
+$$
+respectively. 
+
+An example is shown in @fig-mixture, where $\mu_1 = -2$, $\mu_2 = 2$, $\sigma_1^2 = \sigma_2^2 = 1$, and $p=1/3$.
+
+```{r}
+#| label: fig-mixture
+#| echo: false
+#| fig-cap: Probability density functions for a mixture of two Normal distributions. The dashed lines show the (scaled) component densities, and the solid line shows the mixture density, equal to the sum of the dashed lines.
+tibble(
+    y = seq(-5, 5, l = 501),
+    pdf1 = dnorm(y, -2, 1),
+    pdf2 = dnorm(y, 2, 1),
+    fy = 1/3 * pdf1 + 2/3 * pdf2
+  ) |> 
+  ggplot(aes(x=y, y=fy)) +
+  geom_line() +
+  geom_line(aes(y=1/3*pdf1), linetype="dashed") +
+  geom_line(aes(y=2/3*pdf2), linetype="dashed")  +
+  labs(x = "y", y = "Probability Density Function: f(y)") 
+```
+
+This is an example of a multimodal density function, with modes at $-2$ and $2$. The mixture distribution is not Normal, even though both component distributions are Normal. The mixture distribution is also not symmetric, even though both component distributions are symmetric. 
+
 ### Central limit theorem {#sec-clt}
 
 The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed. That is, if $X_1,\dots,X_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
@@ -191,25 +197,17 @@ $$
 
 This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $X_1,\dots,X_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
-Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent, but not necessarily identically distributed, or to be weakly dependent.
+Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent (but not necessarily identically distributed), or to be weakly dependent.
 
 It is because of the CLT that a $\chi^2(k)$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2(k)$ distribution.)
 
-The CLT is also the reason that a Poisson distribution with large $\lambda$ is approximately Normal. This arises because the sum of Poisson random variables also has a Poisson distribution, so the sum of $\lambda$ independent Poisson(1) variables has a Poisson($\lambda$) distribution. When $\lambda$ is large, the CLT shows that it is approximately a Normal($\lambda,\lambda$) distribution.
+Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
 
 ### Quantiles
 
-If we can define the cumulative probability distribution, then we can define the quantiles of that distribution, given by
-$$
-  Q(p) = \inf\{y: F(y) \geq p\}.
-$$
-This definition is valid for both discrete and continuous random variables.
+The quantiles of a distribution are given by the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. That is, the $p$th quantile is such that $\text{Pr}(Y \le Q(p)) = p$. So it divides the sample space into two regions, with probability $p$ in the lower region and $1-p$ in the upper region.
 
 Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$.
-
-#### Continuous random variables
-
-For a continuous random variable, the quantile function is equal the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. Thus $\text{Pr}(Y \le Q(p)) = p$.
 
 The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
 
@@ -237,60 +235,131 @@ tibble(
   theme(legend.text.align = 0)
 ```
 
-#### Discrete random variables
+### Highest density regions {#sec-hdr}
 
-Because the cdf of a discrete distribution is a step function, there is no unique inverse. Instead, we define the quantile function $Q(p)$ as the smallest value of $y$ such that $F(y) \ge p$. This is also a step function. For example, the quantile function for a Poisson(5) variable is shown in @fig-quantile2.
+A **highest density region** is defined as the region of the sample space where the density is higher than a given threshold [@HDR96]. It is commonly specified using the probability mass that the HDR contains. For example, a 95% HDR is the region of the sample space that contains 95% of the probability mass, and where every point inside the region has higher density than any point outside the region.
+
+For the univariate random variable $Y$, with a smooth, continuous density function $f$, the $100(1-\alpha)$% HDR is the set
+$$
+  R_\alpha = \{y: f(y) \ge f_\alpha\}
+$$
+where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
+
+A useful property of the HDR is that it is the smallest region containing $1-\alpha$ of the probability mass.
+
+For a symmetric unimodal distribution such as the Normal or t distributions, the HDR is an interval centered on the mean (or median), with the ends given by the $\alpha/2$ and $1-\alpha/2$ quantiles. For a skewed unimodal distribution such as the $\chi^2$ or Gamma distributions, the HDR is also an interval, but it is not centered on the mean (or median), and the ends are not given by symmetric quantiles. For example, @fig-hdr shows two 90% regions for a $\chi^2(5)$ distribution. The one shown in blue is based on the 0.05 and 0.95 quantiles, while the red region is the 90% HDR. Notice that both are intervals, and that the red interval is smaller than the blue interval. The value of the density at the ends of the HDR is the same, and is given by $f_\alpha$.
 
 ```{r}
-#| label: fig-quantile2
+#| label: fig-hdr
 #| echo: false
-#| fig-cap: Quantile function for a Poisson(5) distribution. The function is left-continuous, as indicated by the plotted points (where the value of the function equals the lower value at each step).
-z <- tibble(
-    y = c(0,0:25),
-    Fy = c(0, ppois(y[-1], 5))
-  )
-z |>
-  ggplot(aes(x = Fy, y = y)) +
-  geom_step() +
-  geom_point(pch=1) +
-  geom_point(data = tibble(y=c(0, z$y-1), Fy = c(0,z$Fy))) +
-  labs(x = "p", y = "Quantile function: Q(p)")  +
-  coord_cartesian(ylim = c(0,15))
+#| fig-cap: Highest density region for a $\chi^2(5)$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass. 
+interval1 <- qchisq(p = c(0.05, 0.95), 5)
+interval2 <- hdrcde::hdr(prob = 90, 
+  den=list(x=seq(0,20,l=501), y=dchisq(seq(0,20,l=501), 5))
+  )$hdr |> 
+  as.numeric()
+falpha <- dchisq(interval2[1], 5)
+
+tibble(
+    y = seq(0, 15, l = 501),
+    fy = dchisq(y, 5)
+  ) |>
+  ggplot(aes(x = y, y = fy)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  geom_line(data = tibble(x=interval1), aes(x = x, y=-0.002), col="blue", linewidth=2) +
+  geom_line(data = tibble(x=interval2), aes(x = x, y=0.001), col="red", linewidth=2) +
+  geom_line(data = tibble(x=rep(interval2[1], 2), y=c(0, falpha)),
+            aes(x=x,y=y), col="red", linetype="dashed") +
+  geom_line(data = tibble(x=rep(interval2[2], 2), y=c(0, falpha)),
+            aes(x=x,y=y), col="red", linetype="dashed") +
+  geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
+  scale_y_continuous(breaks = c(seq(0, 0.15, by=0.05), falpha),
+                     minor_breaks = NULL,
+                     labels = latex2exp::TeX(c(seq(0, 0.15, by=0.05), 
+                                "$f_\\alpha$")),
+                     ) +
+  theme(axis.text=element_text(size=11))
 ```
 
-### Sample quantiles
+For a multimodal distribution, the HDR may be a union of intervals. For example, the HDR for the mixture shown in @fig-mixture is displayed in @fig-hdr-mixture.
 
-Usually we won't know the distribution of our data, and then we will need to estimate the quantiles. We leave this topic until @sec-quantiles.
+```{r}
+#| label: fig-hdr-mixture
+#| echo: false
+#| fig-cap: Highest density region for the mixture distribution shown in @fig-mixture. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass. 
+den <- list(x = seq(-5, 5, l = 501))
+den$y <- 1/3 * dnorm(den$x, -2, 1) + 2/3 * dnorm(den$x, 2, 1)
+interval1 <- quantile(c(rnorm(100000, -2, 1), rnorm(200000, 2, 1)), c(0.05, 0.95))
+hdr <- hdrcde::hdr(prob = 90, den=den)
+interval2 <- as.numeric(hdr$hdr)
+falpha <- hdr$falpha
+p <- as_tibble(den) |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  geom_line(data = tibble(x=interval1), aes(x = x, y=-0.0028), col="blue", linewidth=2) +
+  geom_line(data = tibble(x=interval2[1:2]), aes(x = x, y=0.0018), col="red", linewidth=2) +
+  geom_line(data = tibble(x=interval2[3:4]), aes(x = x, y=0.0018), col="red", linewidth=2) 
+for(i in seq_along(interval2)) {
+  p <- p + geom_line(data = tibble(x=rep(interval2[i], 2), y=c(0, falpha)),
+            aes(x=x,y=y), col="red", linetype="dashed") 
+}
+p +
+  geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
+  scale_y_continuous(breaks = c(seq(0, 0.2, by=0.1), falpha),
+                     minor_breaks = NULL,
+                     labels = latex2exp::TeX(c(seq(0, 0.2, by=0.1), 
+                                "$f_\\alpha$")),
+                     ) +
+  theme(axis.text=element_text(size=12))
+```
+
+
+
+### Further reading
+
+A good introduction to probability distributions on real sample spaces is provided by @Forbes2011, with more advanced treatments in @JKunicontinuous1 and @JKunicontinuous2. @Wasserman2004 provides an introduction to the CLT. For a discussion of HDRs, see @HDR96
 
 ## Multivariate probability distributions
 
 While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
 
-### Bivariate distributions
+The joint distribution of $d$ random variables $Y_1,\dots,Y_n$ is defined by the joint cdf 
+$$
+F(y_1,\dots,y_d) = \text{Pr}(Y_1 \le y_1,\dots,Y_d \le y_d),
+$$
+while the joint density function is given by
+$$
+f(y_1,\dots,y_d) = \frac{\partial^n F(y_1,\dots,y_d)}{\partial y_1 \dots \partial y_d}.
+$$
 
-The bivariate distribution of two random variables $X$ and $Y$ is defined by the joint cdf $F(x,y) = \text{Pr}(X \le x, Y \le y)$. The marginal cdfs are defined by $F_X(x) = \text{Pr}(X \le x) = F(x,\infty)$ and $F_Y(y) = \text{Pr}(Y \le y) = F(\infty,y)$.
+The marginal cdfs are defined by $F_i(y) = \text{Pr}(Y_i \le y)$, with corresponding marginal pdfs given by $f_i(y) = F'(y_i)$, $i=1,\dots,d$.
 
-If both variables are discrete, we can define the joint pmf as $p(x,y) = \text{Pr}(X=x,Y=y)$. The marginal pmfs are defined by $p_X(x) = \sum_y p(x,y)$ and $p_Y(y) = \sum_x p(x,y)$. If the two variables are independent, then the joint pmf is the product of the marginal pmfs, $p(x,y) = p_X(x) p_Y(y)$.
+If the variables are independent, then the joint pdf is the product of the marginal pdfs, $f(y_1,\dots,y_d) = \prod_{i=1}^d f_i(y_i)$.
 
-If both variables are continuous, we can define the joint pdf as $f(x,y) = \frac{\partial^2 F(x,y)}{\partial x \partial y}$. The marginal pdfs are defined by $f_X(x) = \int_{-\infty}^\infty f(x,y) dy$ and $f_Y(y) = \int_{-\infty}^\infty f(x,y) dx$. If the two variables are independent, then the joint pdf is the product of the marginal pdfs, $f(x,y) = f_X(x) f_Y(y)$.
-
-When $X$ is discrete, and $Y$ is continuous, describing the joint distribution is more tricky, and we will skip that situation for now.
-
-#### Bivariate Normal distribution
+### Bivariate Normal distribution
 
 For example, the pdf of the bivariate Normal distribution is given by
 $$
-f(x,y) = \frac{1}{2\pi \sqrt{1-\rho^2}} \exp\left\{-\frac{1}{2(1-\rho^2)}\left(x^2 - 2\rho x y + y^2\right)\right\},
+f(y_1,y_2) = \frac{1}{2\pi \sqrt{1-\rho^2}} \exp\left\{-\frac{1}{2(1-\rho^2)}\left(y_1^2 - 2\rho y_1 y_2 + y_2^2\right)\right\},
 $$
-where $\rho$ is the correlation between $X$ and $Y$. We often write this as
+where $\rho$ is the correlation between $Y_1$ and $Y_2$. We often write this as
 $$
-\begin{bmatrix}x\\y\end{bmatrix} \sim N(\bm{0}, \bm{\Sigma}),
+\bm{y} = \begin{bmatrix}y_1\\y_2\end{bmatrix} \sim N(\bm{0}, \bm{\Sigma}),
 $$
 where $\bm{0} = \begin{bmatrix}0\\0\end{bmatrix}$ is the mean, and $\bm{\Sigma} = \begin{bmatrix}1 & \rho \\ \rho & 1\end{bmatrix}$ is the covariance matrix. Multivariate Normal distributions have the interesting property that the marginal distributions are also Normal.
 
-Bivariate distributions can be visualized using contour plots. When plotting contours of a pdf, it is helpful to show contours corresponding to highest density regions (HDRs). HDRs are discussed in more detail in @sec-hdr. For now, it is sufficient to note that an HDR is a region of the sample space that contains a specified proportion of the probability mass, and where every point inside the region has higher density than any point outside the region.
 
-For example, the bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ is shown in @fig-bivariate as a series of HDR contours, each containing an additional 10% of the probability mass.
+### Highest density regions
+
+As with univariate distributions, a **highest density region** for a multivariate distribution is defined as the region of the sample space where the density is higher than a given threshold. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
+$$
+  R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
+$$
+where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
+
+HDRs are equivalent to level sets of the density function, and so can be plotted as contours for bivariate density functions. For example, the bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ is shown in @fig-bivariate as a series of HDR contours, each containing an additional 10% of the probability mass.
 
 ```{r}
 #| label: fig-bivariate
@@ -319,56 +388,28 @@ expand_grid(
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
-### Joint distributions
-
-More generally, the joint distribution of $n$ random variables $X_1,\dots,X_n$ is defined by the joint cdf $F(x_1,\dots,x_n) = \text{Pr}(X_1 \le x_1,\dots,X_n \le x_n)$ (assuming they all have a natural ordering). If all variables are discrete, then we can define the joint probability mass function
-$$
-p(x_1,\dots,x_n) = \text{Pr}(X_1 = x_1,\dots,X_n = x_n).
-$$
-If all variables are continuous, then we can define the joint density function
-$$
-f(x_1,\dots,x_n) = \frac{\partial^n F(x_1,\dots,x_n)}{\partial x_1 \dots \partial x_n}.
-$$
-
 ### Conditional distributions
 
 A fundamental concept in statistics is a **conditional distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
 
-The conditional distribution of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf $F(y|x_1,\dots,x_n) = \text{Pr}(Y \le y | X_1 = x_1,\dots,X_n = x_n)$. If all variables are continuous, then the conditional density function is given by
+The conditional distribution of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
+$$
+ F(y|x_1,\dots,x_n) = \text{Pr}(Y \le y | X_1 = x_1,\dots,X_n = x_n).
+$$
+The conditional density function is given by
 $$
 f(y | x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
-$$
-If all variables are discrete, then the conditional probability mass function is given by
-$$
-p(y | x_1, \dots, x_n) = \frac{p(y,x_1,\dots,x_n)}{p(x_1,\dots,x_n)}.
 $$
 
 ### Multivariate quantiles
 
 Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
 
-## Highest density regions {#sec-hdr}
-
-A **highest density region** is defined as the region of the sample space where the density is higher than a given threshold [@HDR96], and are usually specified using the probability mass that they contain. For example, a 95% HDR is the region of the sample space that contains 95% of the probability mass, and where every point inside the region has higher density than any point outside the region.
-
-Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
-$$
-  R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
-$$
-where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
-
-HDRs are equivalent to level sets of the density function, and so are contours for bivariate density functions. An example of a bivariate density function with HDR contours is shown in @fig-bivariate.
-
-
-
-
 ## Pairwise distances
 
-Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
+Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$. There are approximate pairwise distance algorithms that are faster, but we will not discuss them here.
 
-Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. For now, we will assume these are numerical vectors of observations. Later in the book, we will allow the observations to be more complicated, where they may denote images, or video, or probability distributions, for example. But for the first half of the book, we will only deal with numerical data.
-
-When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
+Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
 $$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
 This is also known as the $L_2$ distance.
 

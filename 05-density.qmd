@@ -6,7 +6,7 @@
 source("before-each-chapter.R")
 ```
 
-## Highest density regions {#sec-hdr}
+## Highest density regions 
 
 For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
 
