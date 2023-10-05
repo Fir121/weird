@@ -269,7 +269,7 @@ A similar phenomenon occurs whenever you consider additional variables. An anoma
 
 While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two numerical variables, we will need alternative tools once we have three or more variables, or a very large data set, or non-numerical data.
 
-We will consider the problem of high dimensions in [Chapter -@sec-highdim], while various types of non-numerical data are considered in the later chapters of the book. Finally [Chapter -@sec-largedata] will consider the problem of finding anomalies in very large data sets.
+We will consider the problem of high dimensions in [Chapter -@sec-highdim], while various types of non-numerical data are considered in the later chapters of the book.
 
 ### Example: Synthetic standard normal data
 
