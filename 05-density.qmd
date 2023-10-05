@@ -6,7 +6,7 @@
 source("before-each-chapter.R")
 ```
 
-## Highest density regions 
+## Highest density regions
 
 For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
 
@@ -19,7 +19,7 @@ where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 Let's illustrate the idea with some simple examples.
 
 ```{r hdr, fig.asp=0.2}
-#| label: fig-hdr
+#| label: fig-hdr-faithful
 #| warning: false
 #| message: false
 #| fig-cap: HDR boxplot of the Old Faithful durations

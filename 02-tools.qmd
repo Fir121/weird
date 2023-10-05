@@ -6,17 +6,15 @@
 source("before-each-chapter.R")
 ```
 
-This chapter covers various statistical and computational tools that will be used in subsequent chapters, collected here for easy reference. Feel free to skip the chapter entirely, or just read those parts that are unfamiliar, and refer back to it as needed.
-
-The aim here is to provide a relatively informal introduction to some of the tools that will be used in the book. Some of this material (especially @sec-distributions and @sec-clt) should be familiar to all readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters. 
+This chapter covers various statistical and computational tools that will be used in subsequent chapters. Some of this material (especially @sec-univariate) should be familiar to most readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters.
 
 We are interested in data obtained from a range of possible sample spaces in this book, but for now we will assume that all data are real numbers, and come from continuous probability distributions. Later we will consider other types of data, including discrete data, data that are functions, images, video, networks, text, or even probability distributions. But for the first half of the book, we will only deal with numerical data.
 
 References will be provided at the end of each section for those who want to learn more about the topics covered here.
 
-## Univariate probability distributions {#sec-distributions}
+## Univariate probability distributions {#sec-univariate}
 
-Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$, with its cumulative probability distribution (cdf) given by
+Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$ (the real numbers), with its cumulative probability distribution (cdf) given by
 $$F(y) = \text{Pr}(Y <= y).
 $$ {#eq-cdf}
 This function is monotonically increasing in $y$, and takes values between 0 and 1. Because we are assuming that $Y$ is a continuous random variable, $F(y)$ is a continuous function of $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
@@ -33,13 +31,39 @@ $$
 $$
 The standard deviation is the square root of the variance.
 
+### Uniform distribution
+
+The simplest continuous distribution is the **Uniform** distribution, which takes two parameters, $a$ and $b$, and has pdf given by
+$$
+  f(y;a,b) = \begin{cases}
+    \frac{1}{b-a} & \text{if } a \leq y \leq b, \\
+    0 & \text{otherwise}.
+  \end{cases}
+$$
+Thus, it can only take values between $a$ and $b$, and every value in that range is equally likely. We refer to a Uniform random variable with parameters $a$ and $b$ as $Y \sim \text{U}(a,b)$. It has mean $(a+b)/2$ and variance $(b-a)^2/12$.
+
+The $U(0,1)$ distribution is shown in @fig-uniform.
+
+```{r}
+#| label: fig-uniform
+#| echo: false
+#| fig-cap: Probability density function for a $U(0,1)$ distribution. The mean is 0.5 and the variance is 1/12.
+tibble(
+    y = seq(-0.5,1.5,l=501),
+    fy = dunif(y, 0, 1)
+  ) |>
+  ggplot(aes(x = y, y = fy)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)")
+```
+
 ### Normal (Gaussian) distribution
 
 The most widely used continuous distribution is the **Normal** distribution, also known as the **Gaussian** distribution, named after the German mathematician Carl Friedrich Gauss. It takes two parameters, the mean $\mu$, and the variance, $\sigma^2$. The pdf is given by
 $$
   f(y; \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(y-\sigma)^2}{2\sigma^2}\right).
 $$
-We refer to a Normal random variable with mean $\mu$ and variance $\sigma^2$ as $Y \sim N(\mu, \sigma^2)$. When $\mu=0$ and $\sigma^2=1$, we call it the **standard Normal** distribution N(0,1), and denote the pdf as $\phi(y)$ and the cdf as $\Phi(y)$. 
+We refer to a Normal random variable with mean $\mu$ and variance $\sigma^2$ as $Y \sim N(\mu, \sigma^2)$. When $\mu=0$ and $\sigma^2=1$, we call it the **standard Normal** distribution N(0,1), and denote the pdf as $\phi(y)$ and the cdf as $\Phi(y)$.
 
 Three Normal distributions are shown in @fig-normal.
 
@@ -151,7 +175,7 @@ tibble(
 
 ### Mixture distributions
 
-A **mixture distribution** is a distribution that is formed by mixing together other distributions. That is, a sample value is drawn from a mixture distribution by first randomly selecting one of the component distributions with some specified probability, and then sampling from the selected component distribution. 
+A **mixture distribution** is a distribution that is formed by mixing together other distributions. That is, a sample value is drawn from a mixture distribution by first randomly selecting one of the component distributions with some specified probability, and then sampling from the selected component distribution.
 
 The pdf of a mixture distribution is given by the weighted sum of the pdfs of the component distributions, where the weights correspond to the probability of sampling from each component. For example, suppose $Y$ is a mixture of two Normal distributions, with parameters $(\mu,\sigma_1^2)$ and $(\mu_2,\sigma_2^2$), where the first distribution has weight $p$ and the second has weight $1-p$. Then the resulting pdf of the mixture distribution is given by
 $$
@@ -161,11 +185,11 @@ The mean and variance of the mixture distribution are given by
 $$
   \text{E}(Y) = p\mu_1 + (1-p)\mu_2,
 $$
-and 
+and
 $$
 \text{Var}(Y) = p\sigma_1^2 + (1-p)\sigma_2^2 + p(1-p)(\mu_1 - \mu_2)^2,
 $$
-respectively. 
+respectively.
 
 An example is shown in @fig-mixture, where $\mu_1 = -2$, $\mu_2 = 2$, $\sigma_1^2 = \sigma_2^2 = 1$, and $p=1/3$.
 
@@ -178,15 +202,15 @@ tibble(
     pdf1 = dnorm(y, -2, 1),
     pdf2 = dnorm(y, 2, 1),
     fy = 1/3 * pdf1 + 2/3 * pdf2
-  ) |> 
+  ) |>
   ggplot(aes(x=y, y=fy)) +
   geom_line() +
   geom_line(aes(y=1/3*pdf1), linetype="dashed") +
   geom_line(aes(y=2/3*pdf2), linetype="dashed")  +
-  labs(x = "y", y = "Probability Density Function: f(y)") 
+  labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
-This is an example of a multimodal density function, with modes at $-2$ and $2$. The mixture distribution is not Normal, even though both component distributions are Normal. The mixture distribution is also not symmetric, even though both component distributions are symmetric. 
+This is an example of a multimodal density function, with modes at $-2$ and $2$. The mixture distribution is not Normal, even though both component distributions are Normal. The mixture distribution is also not symmetric, even though both component distributions are symmetric.
 
 ### Central limit theorem {#sec-clt}
 
@@ -197,11 +221,15 @@ $$
 
 This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $X_1,\dots,X_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
+For example, the sample mean (or average), is simply the sum of the observations divided by the sample size. So by the CLT, for a large sample size, the sample mean will have a Normal distribution. That is, for a large sample size, if the observations come from a distribution with mean $\mu$ and variance $\sigma^2$, then the sample mean will have distribution $N(\mu, \sigma^2/n)$, regardless of the underlying distribution of the observations.
+
 Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent (but not necessarily identically distributed), or to be weakly dependent.
 
 It is because of the CLT that a $\chi^2(k)$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2(k)$ distribution.)
 
 Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
+
+@Wasserman2004 provides some further details and examples of the CLT.
 
 ### Quantiles
 
@@ -252,11 +280,11 @@ For a symmetric unimodal distribution such as the Normal or t distributions, the
 ```{r}
 #| label: fig-hdr
 #| echo: false
-#| fig-cap: Highest density region for a $\chi^2(5)$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass. 
+#| fig-cap: Highest density region for a $\chi^2(5)$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 interval1 <- qchisq(p = c(0.05, 0.95), 5)
-interval2 <- hdrcde::hdr(prob = 90, 
+interval2 <- hdrcde::hdr(prob = 90,
   den=list(x=seq(0,20,l=501), y=dchisq(seq(0,20,l=501), 5))
-  )$hdr |> 
+  )$hdr |>
   as.numeric()
 falpha <- dchisq(interval2[1], 5)
 
@@ -276,7 +304,7 @@ tibble(
   geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
   scale_y_continuous(breaks = c(seq(0, 0.15, by=0.05), falpha),
                      minor_breaks = NULL,
-                     labels = latex2exp::TeX(c(seq(0, 0.15, by=0.05), 
+                     labels = latex2exp::TeX(c(seq(0, 0.15, by=0.05),
                                 "$f_\\alpha$")),
                      ) +
   theme(axis.text=element_text(size=11))
@@ -287,29 +315,29 @@ For a multimodal distribution, the HDR may be a union of intervals. For example,
 ```{r}
 #| label: fig-hdr-mixture
 #| echo: false
-#| fig-cap: Highest density region for the mixture distribution shown in @fig-mixture. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass. 
+#| fig-cap: Highest density region for the mixture distribution shown in @fig-mixture. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 den <- list(x = seq(-5, 5, l = 501))
 den$y <- 1/3 * dnorm(den$x, -2, 1) + 2/3 * dnorm(den$x, 2, 1)
 interval1 <- quantile(c(rnorm(100000, -2, 1), rnorm(200000, 2, 1)), c(0.05, 0.95))
 hdr <- hdrcde::hdr(prob = 90, den=den)
 interval2 <- as.numeric(hdr$hdr)
 falpha <- hdr$falpha
-p <- as_tibble(den) |> 
+p <- as_tibble(den) |>
   ggplot(aes(x = x, y = y)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
   geom_line(data = tibble(x=interval1), aes(x = x, y=-0.0028), col="blue", linewidth=2) +
   geom_line(data = tibble(x=interval2[1:2]), aes(x = x, y=0.0018), col="red", linewidth=2) +
-  geom_line(data = tibble(x=interval2[3:4]), aes(x = x, y=0.0018), col="red", linewidth=2) 
+  geom_line(data = tibble(x=interval2[3:4]), aes(x = x, y=0.0018), col="red", linewidth=2)
 for(i in seq_along(interval2)) {
   p <- p + geom_line(data = tibble(x=rep(interval2[i], 2), y=c(0, falpha)),
-            aes(x=x,y=y), col="red", linetype="dashed") 
+            aes(x=x,y=y), col="red", linetype="dashed")
 }
 p +
   geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
   scale_y_continuous(breaks = c(seq(0, 0.2, by=0.1), falpha),
                      minor_breaks = NULL,
-                     labels = latex2exp::TeX(c(seq(0, 0.2, by=0.1), 
+                     labels = latex2exp::TeX(c(seq(0, 0.2, by=0.1),
                                 "$f_\\alpha$")),
                      ) +
   theme(axis.text=element_text(size=12))
@@ -321,35 +349,44 @@ p +
 
 A good introduction to probability distributions on real sample spaces is provided by @Forbes2011, with more advanced treatments in @JKunicontinuous1 and @JKunicontinuous2. @Wasserman2004 provides an introduction to the CLT. For a discussion of HDRs, see @HDR96
 
-## Multivariate probability distributions
+## Multivariate probability distributions {#sec-multivariate}
 
 While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
 
-The joint distribution of $d$ random variables $Y_1,\dots,Y_n$ is defined by the joint cdf 
+Suppose $\bm{Y} = [Y_1,\dots,Y_n]'$ is a random variable taking values in $\mathbb{R}^d$, the $d$-dimensional real numbers. Then the joint distribution of $\bm{y}$ is defined by the joint cdf
 $$
-F(y_1,\dots,y_d) = \text{Pr}(Y_1 \le y_1,\dots,Y_d \le y_d),
+F(\bm{y}) = \text{Pr}(\bm{Y} = \bm{y}),
 $$
 while the joint density function is given by
 $$
-f(y_1,\dots,y_d) = \frac{\partial^n F(y_1,\dots,y_d)}{\partial y_1 \dots \partial y_d}.
+f(\bm{y}) = \frac{\partial^n F(\bm{y})}{\partial y_1 \dots \partial y_d}.
 $$
 
-The marginal cdfs are defined by $F_i(y) = \text{Pr}(Y_i \le y)$, with corresponding marginal pdfs given by $f_i(y) = F'(y_i)$, $i=1,\dots,d$.
+The marginal cdfs are defined by $F_i(y) = \text{Pr}(Y_i \le y)$, with corresponding marginal pdfs given by $f_i(y) = F_i'(y)$, $i=1,\dots,d$.
 
-If the variables are independent, then the joint pdf is the product of the marginal pdfs, $f(y_1,\dots,y_d) = \prod_{i=1}^d f_i(y_i)$.
+If the variables are independent, then the joint pdf is the product of the marginal pdfs, $f(\bm{y}) = \prod_{i=1}^d f_i(y_i)$.
 
-### Bivariate Normal distribution
+The expected value of $\bm{y}$ is given by
+$$
+\text{E}(\bm{Y}) = \int_{\mathbb{R}^d} \bm{y} f(\bm{y})d\bm{y},
+$$
+and the covariance matrix is given by
+$$
+\text{Var}(\bm{Y}) = \text{E}[(\bm{Y}-\text{E}(\bm{Y}))(\bm{Y}-\text{E}(\bm{Y}))'].
+$$
+The covariance matrix is a $d\times d$ matrix, with $(i,j)$th element given by $\text{Cov}(Y_i,Y_j) = \text{E}[(Y_i-\text{E}(Y_i))(Y_j-\text{E}(Y_j))]$. The diagonal elements are the variances of the individual variables, while the off-diagonal elements are the covariances between the variables.
 
-For example, the pdf of the bivariate Normal distribution is given by
-$$
-f(y_1,y_2) = \frac{1}{2\pi \sqrt{1-\rho^2}} \exp\left\{-\frac{1}{2(1-\rho^2)}\left(y_1^2 - 2\rho y_1 y_2 + y_2^2\right)\right\},
-$$
-where $\rho$ is the correlation between $Y_1$ and $Y_2$. We often write this as
-$$
-\bm{y} = \begin{bmatrix}y_1\\y_2\end{bmatrix} \sim N(\bm{0}, \bm{\Sigma}),
-$$
-where $\bm{0} = \begin{bmatrix}0\\0\end{bmatrix}$ is the mean, and $\bm{\Sigma} = \begin{bmatrix}1 & \rho \\ \rho & 1\end{bmatrix}$ is the covariance matrix. Multivariate Normal distributions have the interesting property that the marginal distributions are also Normal.
+### Multivariate Normal distribution
 
+If random variable $\bm{Y}$ has a multivariate Normal distribution, we write $\bm{Y} \sim N(\bm{\mu}, \bm{\Sigma})$, where $\bm{\mu}$ is the mean and $\bm{\Sigma}$ is the covariance matrix.
+
+The multivariate Normal distribution has pdf given by
+$$
+f(\bm{y}; \bm{\mu}, \bm{\Sigma}) = (2\pi)^{-d/2}|\bm{\Sigma}|^{-1/2} \exp\left\{-\frac{1}{2}(\bm{y}-\bm{\mu})'\bm{\Sigma}^{-1}(\bm{y}-\bm{\mu})\right\}.
+$$
+The notation $|\bm{\Sigma}|$ denotes the determinant of the matrix $\bm{\Sigma}$.
+
+Multivariate Normal distributions have the interesting property that the marginal distributions are also Normal.
 
 ### Highest density regions
 
@@ -370,23 +407,71 @@ library(mvtnorm)
 library(hdrcde)
 # Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
 prob <- seq(9)/10
-grid <- seq(-2.5, 2.5, l=999)
+mu <- c(0,0)
+Sigma <- matrix(c(1,0.5,0.5,1),2,2)
+grid <- seq(-5.5, 5.5, l=999)
 den <- list(x=grid, y=grid)
-den$z <- dmvnorm(cbind(den$x,den$y), c(0,0), matrix(c(1,0.5,0.5,1),2,2)) |>
+den$z <- dmvnorm(expand_grid(grid, grid), mu, Sigma) |>
   matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
-falpha <- hdr.2d(x = grid, y = grid, den = den, prob = prob)$falpha
+samp <- rmvnorm(10000, mu, Sigma)
+falpha <- hdr.2d(x = samp[,1], y = samp[,2], den = den, prob = prob)$falpha
 expand_grid(
-    x = seq(-3.5,3.5,l=99),
-    y = seq(-3.5,3.5,l=99)
+    x = seq(-3,3,l=199),
+    y = seq(-3,3,l=199)
   ) |>
-  mutate(z = dmvnorm(cbind(x,y), c(0,0), matrix(c(1,0.5,0.5,1),2,2))) |>
+  mutate(z = dmvnorm(cbind(x,y), mu, Sigma)) |>
   ggplot(aes(x = x, y = y, z = z)) +
   geom_contour_filled(breaks = rev(c(falpha, 100))) +
+  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+       title = latex2exp::TeX("Contours of $f(y_1,y_2)$")) +
+  scale_fill_manual(values = rev(viridisLite::viridis(10)),
+                    labels = rev(paste0(100*rev(prob),"%"))) +
+  guides(fill = guide_legend(title = "HDR coverage"))
+```
+
+Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two bivariate Normal distributions with means $(0,0)$ and $(2,2)$, and covariance matrices equal to  $\begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and the identity matrix $\bm{I}_2$ respectively. Then the HDRs for an equal mixture of these two distributions is shown in @fig-bivariate-mixture.
+
+```{r}
+#| label: fig-bivariate-mixture
+#| echo: false
+#| message: false
+#| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(2,2)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
+library(mvtnorm)
+library(hdrcde)
+# Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
+p1 <- 0.5
+p2 <- 0.5
+mu1 <- c(0,0)
+mu2 <- c(2,2)
+Sigma1 <- matrix(c(1,0.5,0.5,1),2,2)
+Sigma2 <- diag(2)
+n1 <- round(10000*p1)
+n2 <- round(10000*p2)
+samp <- rbind(rmvnorm(n1, mu1, Sigma1), rmvnorm(n2, mu2, Sigma2))
+den <- list(x=seq(-5,7,l=999), y=seq(-5,7,l=999))
+den$z <- matrix(
+          p1 * dmvnorm(expand_grid(den$x,den$y), mu1, Sigma1) +
+          p2 * dmvnorm(expand_grid(den$x,den$y), mu2, Sigma2),
+      nrow = length(den$x), ncol = length(den$y))
+prob <- seq(9)/10
+falpha <- hdr.2d(x = samp[,1], y = samp[,2], den = den, prob = prob)$falpha
+expand_grid(
+    x = seq(-2.5,4.5,l=99),
+    y = seq(-2.5,4.5,l=99)
+  ) |>
+  mutate(
+    z = p1 * dmvnorm(cbind(x,y), mu1, Sigma1) +
+        p2 * dmvnorm(cbind(x,y), mu2, Sigma2)
+  ) |>
+  ggplot(aes(x = x, y = y, z = z)) +
+  geom_contour_filled(breaks = rev(c(falpha,100))) +
   labs(x = "x", y = "y", z = "f(x,y)") +
   scale_fill_manual(values = rev(viridisLite::viridis(10)),
                     labels = rev(paste0(100*rev(prob),"%"))) +
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
+
+Here, the 10% and 20% HDRs contain disconnected regions, but for the larger HDRs, there is just one region for each.
 
 ### Conditional probability distributions
 
@@ -413,7 +498,7 @@ A good reference on multivariate probability distributions is @JKmulticontinuous
 
 ## Pairwise distances
 
-Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$. 
+Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
 
 Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
 $$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
@@ -503,15 +588,14 @@ Here the fifth closest observation has been omitted, and another nearby observat
 
 ## Kernel density estimation {#sec-kde}
 
-Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
+Unlike the examples discussed in @sec-univariate and @sec-multivariate, we will not normally know what distribution our data come from, and they will almost never be from a standard parametric distribution such as a Normal, t, $\chi^2$ or Gamma distribution. Instead, we will need to estimate the probability density function from the data. Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
 Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are independent draws from a probability distribution, and we want to estimate the underlying probability density function. The kernel estimate [see @WJ1995] is given by
 $$
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
 $$ {#eq-kde}
-where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. The bandwidth $h$ controls the variance of the kernel functions. For example, $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$ is the Gaussian density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. For example, the "Gaussian" kernel is $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$, equal to the Normal density function with mean zero and standard deviation $h$. (When we use the Normal density function as a kernel, we will call it a "Gaussian" kernel, to distinguish it from the Normal distribution.) Another popular kernel is the quadratic Epanechnikov kernel given by
 $K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
-
 
 ```{r of2021, include=FALSE}
 of2021 <- oldfaithful |>
@@ -525,7 +609,7 @@ h <- 0.9 * min(s, iqr/1.34) * NROW(of2021)^(-1/5)
 
 Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
 
-Let's suppose $K_h$ is a Gaussian density function and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
+Let's suppose $K_h$ is a Gaussian kernel and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
 
 ```{r kde1, fig.asp=0.2, echo=FALSE, dependson="of2021"}
 #| label: fig-kde1
@@ -579,7 +663,7 @@ of2021 |>
   geom_label(x = 320, y = .004, label = "h = 40", col = "#009E73")
 ```
 
-When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ uses Silverman's "rule-of-thumb" [@Silverman1986,48]:
+When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ uses Silverman's "rule-of-thumb" [@Silverman1986,p48]:
 $$
   h = 0.9 \min(s, \text{IQR}/1.34) n^{-1/5},
 $$  {#eq-ruleofthumb}
@@ -639,11 +723,11 @@ $$
 $$ {#eq-opth}
 So the optimal $h$ is proportional to $n^{-1/5}$, which clearly satisfies the conditions @eq-asymptotickde.
 
-However, this value of $h$ depends on the underlying density $f$ which we don't know. For a Gaussian density $g$ with variance $\sigma^2$, $R(g) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(g'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, and assume the underlying density has the same roughness as a Gaussian density, we obtain the "normal reference rule":
+However, this value of $h$ depends on the underlying density $f$ which we don't know. For a Normal density $g$ with variance $\sigma^2$, $R(g) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(g'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, and assume the underlying density has the same roughness as a Normal density, we obtain the "normal reference rule":
 $$
   h = \sigma\left(\frac{4}{3n}\right)^{1/5} = 1.06\sigma n^{-1/5},
 $$ {#eq-nrr}
-where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Gaussian distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.34)$, giving his rule-of-thumb @eq-ruleofthumb.
+where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.34)$, giving his rule-of-thumb @eq-ruleofthumb.
 
 Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data.  To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
 
@@ -683,7 +767,7 @@ $$
 $$ {#eq-mkde}
 where $K_H$ is a multivariate probability density with covariance matrix $\bm{H}$. Whenever we estimate a multivariate kernel density estimate, we will use a multivariate Gaussian kernel given by
 $$
-  K_H(\bm{u}) = (2\pi)^{-d/2} \text{det}(\bm{H})^{-1/2} \exp \{-\textstyle\frac12 \bm{u}'\bm{H}^{-1}\bm{u} \}.
+  K_H(\bm{u}) = (2\pi)^{-d/2} |\bm{H}|^{-1/2} \exp \{-\textstyle\frac12 \bm{u}'\bm{H}^{-1}\bm{u} \}.
 $$
 
 ```{r bivariatebandwidths, include=FALSE}
@@ -773,9 +857,9 @@ There is a rich literature on kernel density estimation. A good starting point i
 
 ## Extreme value theory {#sec-evt}
 
-Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a distribution function $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the distribution of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
+Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a cdf $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the cdf of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
-It is well known, due to the [central limit theorem](02-tools.html#sec-clt), that the average of a set of iid random variables will converge to the normal distribution under relatively weak conditions on the underlying distribution. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
+It is well known, due to the [central limit theorem](02-tools.html#sec-clt), that the average of a set of iid random variables will converge to the normal distribution if the mean and variance both exist and are finite. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
 
 ### Fisher-Tippett-Gnedenko Theorem {-}
 
@@ -783,7 +867,7 @@ If there exist sequences $\{a_n\}$ and $\{b_n\}$ such that
 $$
   P\left\{ \frac{(M_n - a_n)}{b_n} \leq z \right\} \rightarrow G(z) \quad \text{as} \quad n \to \infty,
 $$
-where $G$ is a non-degenerate distribution function, then $G$ belongs to one of the following families:
+where $G$ is a non-degenerate cumulative distribution function, then $G$ belongs to one of the following families:
 \begin{align*}
   &\text{Gumbel} :  && G(z) = \exp\left(-\exp \left[- \Big(\frac{z-b}{a}\Big) \right] \right), \quad -\infty < z < \infty , \\
   &\text{Fréchet} : && G(z) =
@@ -810,7 +894,7 @@ If we take the negative of the random variables $Y_1,\dots,Y_n$, it becomes clea
 The three types of limits correspond to different forms of the tail behaviour of $F$.
 
   * When $F$ has a finite upper bound, such as with a uniform distribution, then $G$ is a Weibull distribution.
-  * When $F$ has exponential tails, such as with a normal distribution or an exponential distribution, then $G$ is a Gumbel distribution.
+  * When $F$ has exponential tails, such as with a normal distribution or a Gamma distribution, then $G$ is a Gumbel distribution.
   * When $F$ has heavy tails including polynomial decay, then $G$ is a Fréchet distribution. One example is when $F$ itself is a Fréchet distribution with $F(y)= e^{-1/y}$, $y>0$.
 
 To illustrate, suppose $F$ is a standard normal distribution N(0,1) and we have $n=1000$ observations. Then the distribution of the maximum can be obtained via simulation. We will fit both a kernel density estimate and an extreme value distribution to the resulting maximums obtained.
@@ -834,7 +918,7 @@ tibble(maximum = maximums) |>
 
 ### The Generalized Pareto Distribution {-}
 
-The Peaks Over Threshold (POT) approach regards extremes as observations greater than a threshold $u$. The probability distribution of *exceedances* above a specified threshold $u$ can be expressed as
+The Peaks Over Threshold (POT) approach regards extremes as observations greater than a threshold $u$. The probability distribution of *exceedances* above a specified threshold $u$ can be expressed as the conditional distribution
 $$
   H(y) = P\left \{Y \leq u + y \mid Y > u \right \}
   = \frac{ F(u+y) - F(u)}{1 - F(u)}.
