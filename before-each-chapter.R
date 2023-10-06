@@ -5,12 +5,10 @@ library(patchwork)
 
 knitr::opts_chunk$set(
   comment = "#>",
-  collapse = TRUE,
-  echo = TRUE,
-  cache = TRUE,
+  dev = "ragg_png",
   out.width = "100%",
   fig.align = "center",
-  fig.width = 7,
+  fig.width = 8,
   fig.asp = 0.618 # 1 / phi
 )
 
@@ -26,7 +24,7 @@ options(
   ggplot2.discrete.colour = discrete_colors,
   ggplot2.discrete.fill = discrete_colors
 )
-# ggplot2::theme_set(theme_get() + theme(text = element_text(family = 'Carlito')))
+ggplot2::theme_set(theme_get() + theme(text = element_text(family = 'Fira Sans')))
 
 # Avoid some conflicts
 conflicted::conflict_prefer("select", "dplyr")

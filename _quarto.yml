@@ -44,6 +44,9 @@ biblio-style: authoryear-comp
 
 execute:
   freeze: auto
+  collapse: true
+  echo: true
+  cache: true
 
 format:
   html:
