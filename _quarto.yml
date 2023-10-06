@@ -16,19 +16,16 @@ book:
     - "05-density.qmd"
     - "06-distance.qmd"
     - "07-highdim.qmd"
-    - "08-non-euclidean.qmd"
-    - "09-modelling.qmd"
-    - "10-timeseries.qmd"
-    - "11-functional.qmd"
-    - "12-network.qmd"
-    - "13-imagevideo.qmd"
-    - "14-text.qmd"
-    - "15-distributions.qmd"
-    - "16-deeplearning.qmd"
-    - "17-cybersecurity.qmd"
+    - "08-timeseries.qmd"
+    - "09-functional.qmd"
+    - "10-network.qmd"
+    - "11-imagevideo.qmd"
+    - "12-text.qmd"
+    - "13-distributions.qmd"
+    - "14-cybersecurity.qmd"
     - "99-refs.qmd"
   page-footer:
-    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © 2022, <a href='https://robjhyndman.com'>Rob J Hyndman</a>"
+    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © <a href='https://robjhyndman.com'>Rob J Hyndman</a>"
     border: false
     background: light
   sidebar:
