@@ -30,7 +30,7 @@ oldfaithful |>
   geom_point(aes(x = 0, y = duration)) +
   geom_hdr_boxplot(aes(y = duration), prob = c(0.5, 0.99)) +
   labs(x = "", y = "Duration (seconds)") +
-  coord_flip()
+  coord_flip() 
 ```
 
 Points outside the 99% region are shown separately and indicate possible outliers.

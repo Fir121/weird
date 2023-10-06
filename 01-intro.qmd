@@ -41,7 +41,6 @@ The British Antarctic Survey had collected data at the Halley Research Station, 
 ```{r}
 #| label: fig-halley
 #| fig-cap: "Observations of Antarctic ozone levels since 1957, measured in Dobson units (DU). Observations are mean daily values from October each year. Ground observations are from Halley Research Station, while satellite observations were obtained using a Total Ozone Mapping Spectrometer (TOMS). The satellite data were obtained from [Leslie R Lait (NASA)](https://ozonewatch.gsfc.nasa.gov/facts/history_SH.html), while the Halley ground observations were obtained from [Jonathan Shanklin (British Antarctic Survey)](https://www.antarctica.ac.uk/met/jds/ozone/). The horizontal line shows the threshold of 180 DU, used by NASA to determine when the ozone level was unusually low. The graph shown is a modification of [one by Lait](https://ozonewatch.gsfc.nasa.gov/facts/history_SH.html)."
-#| echo: false
 #| warning: false
 #| message: false
 #| fig-height: 3

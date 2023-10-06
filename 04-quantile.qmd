@@ -136,9 +136,16 @@ Boxplots were invented by John Tukey as a quick summary of medium sized data set
 
 @fig-cricketbox shows a boxplot of the cricket batting average data, previously shown in @fig-cricket1.
 
+```{r donave, echo=FALSE}
+batting <- cricket_batting |>
+  filter(Innings > 20)
+donave <- max(batting$Average)
+```
+
 ```{r cricketbox, fig.asp=0.2}
 #| label: fig-cricketbox
-#| fig-cap: "Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged `r scales::number(donave, 0.01)` over his career."
+#| depends: cricket_batting
+#| fig-cap: !expr paste("Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged", scales::number(donave, 0.01), "over his career.")
 cricket_batting |>
   filter(Innings > 20) |>
   ggplot(aes(x = Average, y = 1)) +

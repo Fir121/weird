@@ -32,7 +32,6 @@ Three examples of Poisson distributions are shown in @fig-poisson. Although the 
 
 ```{r}
 #| label: fig-poisson
-#| echo: false
 #| fig-cap: Probability mass functions for three Poisson distributions. As the parameter $\lambda$ increases, the distribution becomes more symmetric and can be approximated by the Normal distribution $N(\lambda, \lambda)$.
 tibble(
     y = 0:25,
@@ -61,7 +60,6 @@ Because the cdf of a discrete distribution is a step function, there is no uniqu
 
 ```{r}
 #| label: fig-quantile2
-#| echo: false
 #| fig-cap: Quantile function for a Poisson(5) distribution. The function is left-continuous, as indicated by the plotted points (where the value of the function equals the lower value at each step).
 z <- tibble(
     y = c(0,0:25),

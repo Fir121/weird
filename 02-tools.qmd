@@ -46,10 +46,9 @@ The $U(0,1)$ distribution is shown in @fig-uniform.
 
 ```{r}
 #| label: fig-uniform
-#| echo: false
 #| fig-cap: Probability density function for a $U(0,1)$ distribution. The mean is 0.5 and the variance is 1/12.
 tibble(
-    y = seq(-0.5,1.5,l=501),
+    y = seq(-0.5, 1.5, l = 501),
     fy = dunif(y, 0, 1)
   ) |>
   ggplot(aes(x = y, y = fy)) +
@@ -69,19 +68,17 @@ Three Normal distributions are shown in @fig-normal.
 
 ```{r}
 #| label: fig-normal
-#| echo: false
 #| fig-cap: Probability density functions for three Normal distributions. The mean $\mu$ controls the location of the distribution, while the variance $\sigma^2$ controls the spread.
 tibble(
-    y = seq(-7.5,7.5,l=501),
+    y = seq(-7.5, 7.5, l = 501),
     `N(0,1)` = dnorm(y, 0, 1),
     `N(0,4)` = dnorm(y, 0, 2),
     `N(1,1)` = dnorm(y, 1, 1)
   ) |>
-  pivot_longer(-y, names_to = "norm", values_to = "density") |>
-  ggplot(aes(x = y, y = density, col = norm)) +
+  pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
-  labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("N($\\mu,\\sigma^2$)")))
+  labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
 ### $\chi^2$ distribution
@@ -96,7 +93,6 @@ Three $\chi^2$ distributions are shown in @fig-chisq.
 
 ```{r}
 #| label: fig-chisq
-#| echo: false
 #| fig-cap: Probability density functions for three $\chi^2$ distributions. As the degrees of freedom $k$ increases, the distribution becomes more symmetric, and converges to the Normal distribution N(k,2k)$.
 tibble(
     y = seq(0, 15, l = 501),
@@ -104,17 +100,19 @@ tibble(
     `x2` = dchisq(y, 2),
     `x5` = dchisq(y, 5)
   ) |>
-  pivot_longer(-y, names_to = "chisq", values_to = "density") |>
-  ggplot(aes(x = y, y = density, col = chisq)) +
+  pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("$\\chi ^2$$(k)$"))) +
-  coord_cartesian(ylim=c(0,1)) +
+  coord_cartesian(ylim = c(0, 1)) +
   scale_color_manual(
+    breaks = c("x1", "x2", "x5"),
     values = discrete_colors[1:3],
-    labels = c(latex2exp::TeX("$\\chi^2$$(1)$"),
-               latex2exp::TeX("$\\chi^2$$(2)$"),
-               latex2exp::TeX("$\\chi^2$$(5)$"))
+    labels = c(
+      latex2exp::TeX("$\\chi^2(1)$"),
+      latex2exp::TeX("$\\chi^2(2)$"),
+      latex2exp::TeX("$\\chi^2(5)$")
+    )
   )
 ```
 
@@ -131,7 +129,6 @@ Three t distributions are shown in @fig-t.
 
 ```{r}
 #| label: fig-t
-#| echo: false
 #| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
 tibble(
     y = seq(-7.5, 7.5, l = 501),
@@ -139,11 +136,10 @@ tibble(
     `t(5)` = dt(y, 5),
     `t(99)` = dt(y, 99)
   ) |>
-  pivot_longer(-y, names_to = "t", values_to = "density") |>
-  ggplot(aes(x = y, y = density, col = t)) +
+  pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
-  labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("t($k$)")))
+  labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
 ### Gamma distribution
@@ -158,19 +154,17 @@ Three gamma distributions are shown in @fig-gamma.
 
 ```{r}
 #| label: fig-gamma
-#| echo: false
-#| fig-cap: Probability density functions for three gamma distributions. As $\alpha$ increases, the distribution to a $N(\alpha/\beta, \alpha/\beta^2)$ distribution.
+#| fig-cap: Probability density functions for three Gamma distributions. As $\alpha$ increases, the distribution to a $N(\alpha/\beta, \alpha/\beta^2)$ distribution.
 tibble(
-    y = seq(0, 7.5, l = 501),
-    `Gamma(1,1)` = dgamma(y, 1, 1),
-    `Gamma(1,2)` = dgamma(y, 1, 2),
-    `Gamma(2,1)` = dgamma(y, 2, 1)
-  ) |>
-  pivot_longer(-y, names_to = "gamma", values_to = "density") |>
-  ggplot(aes(x = y, y = density, col = gamma)) +
+  y = seq(0, 7.5, l = 501),
+  `Gamma(1,1)` = dgamma(y, 1, 1),
+  `Gamma(1,2)` = dgamma(y, 1, 2),
+  `Gamma(2,1)` = dgamma(y, 2, 1)
+) |>
+  pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
+  ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
-  labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$, $\\beta$)")))
+  labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
 ### Mixture distributions
@@ -195,18 +189,17 @@ An example is shown in @fig-mixture, where $\mu_1 = -2$, $\mu_2 = 2$, $\sigma_1^
 
 ```{r}
 #| label: fig-mixture
-#| echo: false
 #| fig-cap: Probability density functions for a mixture of two Normal distributions. The dashed lines show the (scaled) component densities, and the solid line shows the mixture density, equal to the sum of the dashed lines.
 tibble(
     y = seq(-5, 5, l = 501),
-    pdf1 = dnorm(y, -2, 1),
-    pdf2 = dnorm(y, 2, 1),
-    fy = 1/3 * pdf1 + 2/3 * pdf2
+    pdf1 = 1/3 * dnorm(y, -2, 1),
+    pdf2 = 2/3 * dnorm(y, 2, 1),
+    fy = pdf1 + pdf2
   ) |>
-  ggplot(aes(x=y, y=fy)) +
+  ggplot(aes(x = y, y = fy)) +
   geom_line() +
-  geom_line(aes(y=1/3*pdf1), linetype="dashed") +
-  geom_line(aes(y=2/3*pdf2), linetype="dashed")  +
+  geom_line(aes(y = pdf1), linetype = "dashed") +
+  geom_line(aes(y = pdf2), linetype = "dashed") +
   labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
@@ -241,24 +234,24 @@ The quantile functions for a standard normal distribution, a $t(5)$ distribution
 
 ```{r}
 #| label: fig-quantile
-#| echo: false
 #| fig-cap: Quantile function for a standard Normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution.
 tibble(
-    p = seq(0,1,l=501),
+    p = seq(0, 1, l = 501),
     qy1 = qnorm(p, 0, 1),
     qy2 = qt(p, 5),
     qy3 = qchisq(p, 5)
   ) |>
-  pivot_longer(-p, names_to = "distribution", values_to = "Q") |>
-  ggplot(aes(x = p, y = Q, col = distribution)) +
+  pivot_longer(-p, names_to = "Distribution", values_to = "Q") |>
+  ggplot(aes(x = p, y = Q, col = Distribution)) +
   geom_line() +
   labs(x = "p", y = "Quantile function: Q(p)") +
-  guides(col = guide_legend(title = "Distribution")) +
   scale_color_manual(
     values = discrete_colors[1:3],
-    labels = c(latex2exp::TeX("N(0,1)"),
-               latex2exp::TeX("t(5)"),
-               latex2exp::TeX("$\\chi^2$$(5)$"))
+    labels = c(
+      latex2exp::TeX("N(0,1)"),
+      latex2exp::TeX("t(5)"),
+      latex2exp::TeX("$\\chi^2$$(5)$")
+    )
   ) +
   theme(legend.text.align = 0)
 ```
@@ -279,15 +272,13 @@ For a symmetric unimodal distribution such as the Normal or t distributions, the
 
 ```{r}
 #| label: fig-hdr
-#| echo: false
 #| fig-cap: Highest density region for a $\chi^2(5)$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 interval1 <- qchisq(p = c(0.05, 0.95), 5)
-interval2 <- hdrcde::hdr(prob = 90,
-  den=list(x=seq(0,20,l=501), y=dchisq(seq(0,20,l=501), 5))
-  )$hdr |>
-  as.numeric()
-falpha <- dchisq(interval2[1], 5)
-
+den <- list(x = seq(0, 20, l = 501))
+den$y <- dchisq(den$x, 5)
+hdr <- hdrcde::hdr(prob = 90, den = den)
+interval2 <- as.numeric(hdr$hdr)
+falpha <- hdr$falpha
 tibble(
     y = seq(0, 15, l = 501),
     fy = dchisq(y, 5)
@@ -295,52 +286,63 @@ tibble(
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x=interval1), aes(x = x, y=-0.002), col="blue", linewidth=2) +
-  geom_line(data = tibble(x=interval2), aes(x = x, y=0.001), col="red", linewidth=2) +
-  geom_line(data = tibble(x=rep(interval2[1], 2), y=c(0, falpha)),
-            aes(x=x,y=y), col="red", linetype="dashed") +
-  geom_line(data = tibble(x=rep(interval2[2], 2), y=c(0, falpha)),
-            aes(x=x,y=y), col="red", linetype="dashed") +
-  geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
-  scale_y_continuous(breaks = c(seq(0, 0.15, by=0.05), falpha),
-                     minor_breaks = NULL,
-                     labels = latex2exp::TeX(c(seq(0, 0.15, by=0.05),
-                                "$f_\\alpha$")),
-                     ) +
-  theme(axis.text=element_text(size=11))
+  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.002), 
+            col = "blue", linewidth = 2) +
+  geom_line(data = tibble(x = interval2), aes(x = x, y = 0.001), 
+            col = "red", linewidth = 2) +
+  geom_line(
+    data = tibble(x = rep(interval2[1], 2), y = c(0, falpha)),
+    aes(x = x, y = y), col = "red", linetype = "dashed"
+  ) +
+  geom_line(
+    data = tibble(x = rep(interval2[2], 2), y = c(0, falpha)),
+    aes(x = x, y = y), col = "red", linetype = "dashed"
+  ) +
+  geom_hline(aes(yintercept = falpha), col = "red", linetype = "dashed") +
+  scale_y_continuous(
+    breaks = c(seq(0, 0.15, by = 0.05), falpha),
+    minor_breaks = NULL,
+    labels = latex2exp::TeX(c(seq(0, 0.15, by = 0.05), "$f_\\alpha$")),
+  )
 ```
 
 For a multimodal distribution, the HDR may be a union of intervals. For example, the HDR for the mixture shown in @fig-mixture is displayed in @fig-hdr-mixture.
 
 ```{r}
 #| label: fig-hdr-mixture
-#| echo: false
 #| fig-cap: Highest density region for the mixture distribution shown in @fig-mixture. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The red bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 den <- list(x = seq(-5, 5, l = 501))
 den$y <- 1/3 * dnorm(den$x, -2, 1) + 2/3 * dnorm(den$x, 2, 1)
 interval1 <- quantile(c(rnorm(100000, -2, 1), rnorm(200000, 2, 1)), c(0.05, 0.95))
-hdr <- hdrcde::hdr(prob = 90, den=den)
+hdr <- hdrcde::hdr(prob = 90, den = den)
 interval2 <- as.numeric(hdr$hdr)
 falpha <- hdr$falpha
 p <- as_tibble(den) |>
   ggplot(aes(x = x, y = y)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x=interval1), aes(x = x, y=-0.0028), col="blue", linewidth=2) +
-  geom_line(data = tibble(x=interval2[1:2]), aes(x = x, y=0.0018), col="red", linewidth=2) +
-  geom_line(data = tibble(x=interval2[3:4]), aes(x = x, y=0.0018), col="red", linewidth=2)
-for(i in seq_along(interval2)) {
-  p <- p + geom_line(data = tibble(x=rep(interval2[i], 2), y=c(0, falpha)),
-            aes(x=x,y=y), col="red", linetype="dashed")
+  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.0028), 
+            col = "blue", linewidth = 2) +
+  geom_line(data = tibble(x = interval2[1:2]), aes(x = x, y = 0.0018), 
+            col = "red", linewidth = 2) +
+  geom_line(data = tibble(x = interval2[3:4]), aes(x = x, y = 0.0018), 
+            col = "red", linewidth = 2)
+for (i in seq_along(interval2)) {
+  p <- p + geom_line(
+    data = tibble(x = rep(interval2[i], 2), y = c(0, falpha)),
+    aes(x = x, y = y), col = "red", linetype = "dashed"
+  )
 }
 p +
-  geom_hline(aes(yintercept=falpha), col="red", linetype="dashed") +
-  scale_y_continuous(breaks = c(seq(0, 0.2, by=0.1), falpha),
-                     minor_breaks = NULL,
-                     labels = latex2exp::TeX(c(seq(0, 0.2, by=0.1),
-                                "$f_\\alpha$")),
-                     ) +
-  theme(axis.text=element_text(size=12))
+  geom_hline(aes(yintercept = falpha), col = "red", linetype = "dashed") +
+  scale_y_continuous(
+    breaks = c(seq(0, 0.2, by = 0.1), falpha),
+    minor_breaks = NULL,
+    labels = latex2exp::TeX(c(
+      seq(0, 0.2, by = 0.1),
+      "$f_\\alpha$"
+    )),
+  )
 ```
 
 
@@ -400,32 +402,37 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 
 ```{r}
 #| label: fig-bivariate
-#| echo: false
 #| message: false
 #| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
 library(mvtnorm)
-library(hdrcde)
-# Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9)/10
-mu <- c(0,0)
-Sigma <- matrix(c(1,0.5,0.5,1),2,2)
-grid <- seq(-5.5, 5.5, l=999)
-den <- list(x=grid, y=grid)
+mu <- c(0, 0)
+Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+# Random sample from the distribution
+samp <- rmvnorm(10000, mu, Sigma)
+# Define the density function on a grid
+grid <- seq(-5.5, 5.5, l = 999)
+den <- list(x = grid, y = grid)
 den$z <- dmvnorm(expand_grid(grid, grid), mu, Sigma) |>
   matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
-samp <- rmvnorm(10000, mu, Sigma)
-falpha <- hdr.2d(x = samp[,1], y = samp[,2], den = den, prob = prob)$falpha
-expand_grid(
-    x = seq(-3,3,l=199),
-    y = seq(-3,3,l=199)
+# Find the HDRs with probability 0.1, 0.2, ..., 0.9
+prob <- seq(9) / 10
+hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
+# Plot the contours
+  expand_grid(
+    x = seq(-3, 3, l = 199),
+    y = seq(-3, 3, l = 199)
   ) |>
-  mutate(z = dmvnorm(cbind(x,y), mu, Sigma)) |>
+  mutate(z = dmvnorm(cbind(x, y), mu, Sigma)) |>
   ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(falpha, 100))) +
-  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-       title = latex2exp::TeX("Contours of $f(y_1,y_2)$")) +
-  scale_fill_manual(values = rev(viridisLite::viridis(10)),
-                    labels = rev(paste0(100*rev(prob),"%"))) +
+  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
+  labs(
+    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+    title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
+  ) +
+  scale_fill_manual(
+    values = rev(viridisLite::viridis(10)),
+    labels = rev(paste0(100 * rev(prob), "%"))
+  ) +
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
@@ -433,47 +440,53 @@ Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two biv
 
 ```{r}
 #| label: fig-bivariate-mixture
-#| echo: false
 #| message: false
 #| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
 library(mvtnorm)
-library(hdrcde)
-# Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
 p1 <- 0.5
 p2 <- 0.5
-mu1 <- c(0,0)
-mu2 <- c(3,1)
-Sigma1 <- matrix(c(1,0.5,0.5,1),2,2)
+mu1 <- c(0, 0)
+mu2 <- c(3, 1)
+Sigma1 <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
 Sigma2 <- diag(2)
-n1 <- round(10000*p1)
-n2 <- round(10000*p2)
+n1 <- round(10000 * p1)
+n2 <- round(10000 * p2)
+# Random sample from mixture distribution
 samp <- rbind(rmvnorm(n1, mu1, Sigma1), rmvnorm(n2, mu2, Sigma2))
-minx <- round(min(samp[,1]) - 0.5, 1)
-maxx <- round(max(samp[,1]) + 0.5, 1)
-miny <- round(min(samp[,2]) - 0.5, 1)
-maxy <- round(max(samp[,2]) + 0.5, 1)
-den <- list(x=seq(minx,maxx,l=999), y=seq(miny,maxy,l=999))
+# Define the density function on a grid
+minx <- round(min(samp[, 1]) - 0.5, 1)
+maxx <- round(max(samp[, 1]) + 0.5, 1)
+miny <- round(min(samp[, 2]) - 0.5, 1)
+maxy <- round(max(samp[, 2]) + 0.5, 1)
+den <- list(x = seq(minx, maxx, l = 999), y = seq(miny, maxy, l = 999))
 den$z <- matrix(
-          p1 * dmvnorm(expand_grid(den$x,den$y), mu1, Sigma1) +
-          p2 * dmvnorm(expand_grid(den$x,den$y), mu2, Sigma2),
-      nrow = length(den$x), ncol = length(den$y))
-prob <- seq(9)/10
-falpha <- hdr.2d(x = samp[,1], y = samp[,2], den = den, prob = prob)$falpha
+  p1 * dmvnorm(expand_grid(den$x, den$y), mu1, Sigma1) +
+  p2 * dmvnorm(expand_grid(den$x, den$y), mu2, Sigma2),
+  nrow = length(den$x), ncol = length(den$y)
+)
+# Find the HDRs with probability 0.1, 0.2, ..., 0.9
+prob <- seq(9) / 10
+hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
+# Plot the contours
 mixture_density <- expand_grid(
-    x = seq(minx,maxx, by = 0.05),
-    y = seq(miny,maxy, by = 0.05)
+    x = seq(minx, maxx, by = 0.05),
+    y = seq(miny, maxy, by = 0.05)
   ) |>
   mutate(
-    z = p1 * dmvnorm(cbind(x,y), mu1, Sigma1) +
-        p2 * dmvnorm(cbind(x,y), mu2, Sigma2)
-  ) 
+    z = p1 * dmvnorm(cbind(x, y), mu1, Sigma1) +
+      p2 * dmvnorm(cbind(x, y), mu2, Sigma2)
+  )
 mixture_plot <- mixture_density |>
   ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(falpha,100))) +
-  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-       title = latex2exp::TeX("Contours of $f(y_1,y_2)$")) +
-  scale_fill_manual(values = rev(viridisLite::viridis(10)),
-                    labels = rev(paste0(100*rev(prob),"%")))
+  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
+  labs(
+    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+    title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
+  ) +
+  scale_fill_manual(
+    values = rev(viridisLite::viridis(10)),
+    labels = rev(paste0(100 * rev(prob), "%"))
+  )
 mixture_plot +
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
@@ -496,37 +509,44 @@ The conditional pdf can be thought of as slices of the joint pdf, with the value
 
 ```{r}
 #| label: fig-conditional
-#| echo: false
 #| message: false
 #| depends: fig-bivariate-mixture
 #| fig-cap: Conditional distribution of $Y_2|Y_1$, where $(Y_1,Y_2)$ has the joint distribution plotted in @fig-bivariate-mixture. The left plot shows the joint density with the values of $y_2$ where we will condition, while the right plot shows conditional density functions at different values of $y_2$.
+# Conditioning points
 y2 <- -2:3
-plot1 <- mixture_plot + guides(fill = "none") +
-  scale_y_continuous(breaks = y2, minor_breaks = NULL) +
-  coord_cartesian(xlim = c(-2.6,5.5), ylim = c(-2.6,3.6)) +
-  geom_hline(aes(yintercept=y2), data=tibble(y2=y2), color="#8ab3f6")
-scale_cond_density <- mixture_density |> 
+# Scaling factor for each density
+scale_cond_density <- mixture_density |>
   filter(round(y, 2) %in% round(y2, 2)) |>
-  summarise(scale = sum(z), .by=y) |> 
+  summarise(scale = sum(z), .by = y) |>
   transmute(
-    scale = scale/max(scale),
+    scale = scale / max(scale),
     y2 = factor(y, levels = y2)
   )
-plot2 <- mixture_density |> 
+# Joint density plot
+plot1 <- mixture_plot + 
+  guides(fill = "none") +
+  scale_y_continuous(breaks = y2, minor_breaks = NULL) +
+  coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
+  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2), color = "#8ab3f6")
+# Conditional density plots
+plot2 <- mixture_density |>
   filter(round(y, 2) %in% round(y2, 2)) |>
   mutate(y2 = factor(y, levels = y2)) |>
   left_join(scale_cond_density, by = "y2") |>
   mutate(
-    z = z/scale,
+    z = z / scale,
     z = z / max(z) * 0.9
-  ) |> 
-  ggplot(aes(x = x, y = z+y, group=y2)) +
-  #geom_line() +
-  geom_ribbon(aes(ymin = y, ymax = z+y, xmin=-2, xmax=4), col = "#8ab3f6", fill="#8ab3f6") +
-  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-       title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")) +
+  ) |>
+  ggplot(aes(x = x, y = z + y, group = y2)) +
+  geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4), 
+              col = "#8ab3f6", fill = "#8ab3f6") +
+  labs(
+    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+    title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")
+  ) +
   scale_y_continuous(minor_breaks = NULL, breaks = y2) +
-  coord_cartesian(xlim = c(-2.6,5.5), ylim = c(-2.6,3.6))
+  coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6))
+# Show plots side by side
 plot1 | plot2
 ```
 
@@ -648,7 +668,7 @@ of2021 <- oldfaithful |>
   mutate(eruption = row_number())
 s <- sd(of2021$duration)
 iqr <- IQR(of2021$duration)
-h <- 0.9 * min(s, iqr/1.34) * NROW(of2021)^(-1/5)
+h <- 0.9 * min(s, iqr / 1.34) * NROW(of2021)^(-1 / 5)
 ```
 
 Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
