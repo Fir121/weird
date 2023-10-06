@@ -81,7 +81,7 @@ tibble(
   ggplot(aes(x = y, y = density, col = norm)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("N($\\mu$,$\\sigma^2$)")))
+  guides(col = guide_legend(title = latex2exp::TeX("N($\\mu,\\sigma^2$)")))
 ```
 
 ### $\chi^2$ distribution
@@ -108,7 +108,7 @@ tibble(
   ggplot(aes(x = y, y = density, col = chisq)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("$\\chi^2$$(k)$"))) +
+  guides(col = guide_legend(title = latex2exp::TeX("$\\chi ^2$$(k)$"))) +
   coord_cartesian(ylim=c(0,1)) +
   scale_color_manual(
     values = discrete_colors[1:3],
@@ -170,7 +170,7 @@ tibble(
   ggplot(aes(x = y, y = density, col = gamma)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$,$\\beta$)")))
+  guides(col = guide_legend(title = latex2exp::TeX("Gamma($\\alpha$, $\\beta$)")))
 ```
 
 ### Mixture distributions
@@ -429,46 +429,52 @@ expand_grid(
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
-Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two bivariate Normal distributions with means $(0,0)$ and $(2,2)$, and covariance matrices equal to  $\begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and the identity matrix $\bm{I}_2$ respectively. Then the HDRs for an equal mixture of these two distributions is shown in @fig-bivariate-mixture.
+Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two bivariate Normal distributions with means $(0,0)$ and $(3,1)$, and covariance matrices equal to  $\begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and the identity matrix $\bm{I}_2$ respectively. Then the HDRs for an equal mixture of these two distributions is shown in @fig-bivariate-mixture.
 
 ```{r}
 #| label: fig-bivariate-mixture
 #| echo: false
 #| message: false
-#| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(2,2)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
+#| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
 library(mvtnorm)
 library(hdrcde)
 # Find the contours corresponding to HDRs with probability 0.1, 0.2, ..., 0.9
 p1 <- 0.5
 p2 <- 0.5
 mu1 <- c(0,0)
-mu2 <- c(2,2)
+mu2 <- c(3,1)
 Sigma1 <- matrix(c(1,0.5,0.5,1),2,2)
 Sigma2 <- diag(2)
 n1 <- round(10000*p1)
 n2 <- round(10000*p2)
 samp <- rbind(rmvnorm(n1, mu1, Sigma1), rmvnorm(n2, mu2, Sigma2))
-den <- list(x=seq(-5,7,l=999), y=seq(-5,7,l=999))
+minx <- round(min(samp[,1]) - 0.5, 1)
+maxx <- round(max(samp[,1]) + 0.5, 1)
+miny <- round(min(samp[,2]) - 0.5, 1)
+maxy <- round(max(samp[,2]) + 0.5, 1)
+den <- list(x=seq(minx,maxx,l=999), y=seq(miny,maxy,l=999))
 den$z <- matrix(
           p1 * dmvnorm(expand_grid(den$x,den$y), mu1, Sigma1) +
           p2 * dmvnorm(expand_grid(den$x,den$y), mu2, Sigma2),
       nrow = length(den$x), ncol = length(den$y))
 prob <- seq(9)/10
 falpha <- hdr.2d(x = samp[,1], y = samp[,2], den = den, prob = prob)$falpha
-expand_grid(
-    x = seq(-2.5,4.5,l=99),
-    y = seq(-2.5,4.5,l=99)
+mixture_density <- expand_grid(
+    x = seq(minx,maxx, by = 0.05),
+    y = seq(miny,maxy, by = 0.05)
   ) |>
   mutate(
     z = p1 * dmvnorm(cbind(x,y), mu1, Sigma1) +
         p2 * dmvnorm(cbind(x,y), mu2, Sigma2)
-  ) |>
+  ) 
+mixture_plot <- mixture_density |>
   ggplot(aes(x = x, y = y, z = z)) +
   geom_contour_filled(breaks = rev(c(falpha,100))) +
   labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
        title = latex2exp::TeX("Contours of $f(y_1,y_2)$")) +
   scale_fill_manual(values = rev(viridisLite::viridis(10)),
-                    labels = rev(paste0(100*rev(prob),"%"))) +
+                    labels = rev(paste0(100*rev(prob),"%")))
+mixture_plot +
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
@@ -478,14 +484,51 @@ Here, the 10% and 20% HDRs contain disconnected regions, but for the larger HDRs
 
 A fundamental concept in statistics is a **conditional probability distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
 
-The conditional distribution of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
+The conditional cdf of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
 $$
  F(y\mid x_1,\dots,x_n) = \text{Pr}(Y \le y \mid  X_1 = x_1,\dots,X_n = x_n).
 $$
-The conditional density function is given by
+The conditional pdf is given by
 $$
 f(y \mid  x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
 $$
+The conditional pdf can be thought of as slices of the joint pdf, with the values of $x_1,\dots,x_n$ fixed, rescaled to ensure the conditional pdfs integrate to 1. For example, $f(y_1 | y_2)$ is equal to a scaled slice of the joint pdf $f(y_1,y_2)$ at $y_2$. @fig-conditional shows some examples for the distribution shown at @fig-bivariate-mixture at several values of $y_2$. The left plot shows the joint density, with horizontal lines indicating where conditioning (or slicing) occurs at different values of $y_2$. The right plot shows the resulting conditional density functions.
+
+```{r}
+#| label: fig-conditional
+#| echo: false
+#| message: false
+#| depends: fig-bivariate-mixture
+#| fig-cap: Conditional distribution of $Y_2|Y_1$, where $(Y_1,Y_2)$ has the joint distribution plotted in @fig-bivariate-mixture. The left plot shows the joint density with the values of $y_2$ where we will condition, while the right plot shows conditional density functions at different values of $y_2$.
+y2 <- -2:3
+plot1 <- mixture_plot + guides(fill = "none") +
+  scale_y_continuous(breaks = y2, minor_breaks = NULL) +
+  coord_cartesian(xlim = c(-2.6,5.5), ylim = c(-2.6,3.6)) +
+  geom_hline(aes(yintercept=y2), data=tibble(y2=y2), color="#8ab3f6")
+scale_cond_density <- mixture_density |> 
+  filter(round(y, 2) %in% round(y2, 2)) |>
+  summarise(scale = sum(z), .by=y) |> 
+  transmute(
+    scale = scale/max(scale),
+    y2 = factor(y, levels = y2)
+  )
+plot2 <- mixture_density |> 
+  filter(round(y, 2) %in% round(y2, 2)) |>
+  mutate(y2 = factor(y, levels = y2)) |>
+  left_join(scale_cond_density, by = "y2") |>
+  mutate(
+    z = z/scale,
+    z = z / max(z) * 0.9
+  ) |> 
+  ggplot(aes(x = x, y = z+y, group=y2)) +
+  #geom_line() +
+  geom_ribbon(aes(ymin = y, ymax = z+y, xmin=-2, xmax=4), col = "#8ab3f6", fill="#8ab3f6") +
+  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+       title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")) +
+  scale_y_continuous(minor_breaks = NULL, breaks = y2) +
+  coord_cartesian(xlim = c(-2.6,5.5), ylim = c(-2.6,3.6))
+plot1 | plot2
+```
 
 Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
 
