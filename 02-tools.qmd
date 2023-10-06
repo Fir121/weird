@@ -465,7 +465,8 @@ expand_grid(
   ) |>
   ggplot(aes(x = x, y = y, z = z)) +
   geom_contour_filled(breaks = rev(c(falpha,100))) +
-  labs(x = "x", y = "y", z = "f(x,y)") +
+  labs(x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
+       title = latex2exp::TeX("Contours of $f(y_1,y_2)$")) +
   scale_fill_manual(values = rev(viridisLite::viridis(10)),
                     labels = rev(paste0(100*rev(prob),"%"))) +
   guides(fill = guide_legend(title = "HDR coverage"))
