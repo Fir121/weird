@@ -1,5 +1,11 @@
 # High-dimensional methods {#sec-highdim}
 
+```{r}
+#| include: false
+#| cache: false
+source("before-each-chapter.R")
+```
+
 ## Principal component analysis
 
 ## Multi-dimensional scaling
