@@ -14,7 +14,10 @@ I will also assume that you already know how to use R and are familiar with the 
 
 All R examples in the book assume that you have loaded the `weird` package first:
 
-```{r library, eval=FALSE}
+```{r}
+#| label: library
+#| eval: false
+#| code-fold: false
 # remotes::install_github("robjhyndman/weird-package")
 library(weird)
 ```

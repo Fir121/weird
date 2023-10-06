@@ -41,6 +41,10 @@ number-depth: 2
 include-before-body: google_analytics.html
 bibliography: weird.bib
 biblio-style: authoryear-comp
+fig-width: 8
+fig-height: 5
+fig-align: center
+output-width: 100%
 
 execute:
   freeze: auto

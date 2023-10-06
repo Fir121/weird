@@ -1,8 +1,8 @@
 # Parametric methods {#sec-parametric-methods}
 
 ```{r}
-#| echo: false
 #| include: false
+#| cache: false
 source("before-each-chapter.R")
 ```
 
@@ -19,8 +19,10 @@ We will use four simple univariate examples to illustrate the ideas, two with re
 3. The first variable in the `n01` data containing 1000 draws from a N(0,1) distribution. This contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
 4. The first 19 rows of the second variable in the `n01` data, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution. The code below shows the data for this example.
 
-```{r n01b, fig.asp=0.2, fig.cap="Nineteen observations from a N(0,1) distribution along with one anomaly."}
+```{r}
 #| label: fig-n01b
+#| fig.asp: 0.2
+#| fig.cap: "Nineteen observations from a N(0,1) distribution along with one anomaly."
 n01b <- n01 |>
   select(v2) |>
   head(20)
@@ -38,18 +40,24 @@ The two artificial examples are designed to test different methods when there ar
 
 All of the methods considered in this chapter assume the underlying data follow a normal distribution. We will test the methods under this assumption by considering the probability of each method identifying a spurious anomaly when, in fact, the data do follow a normal distribution. For comparison, we will also test the methods under two variations to the underlying data: (1) when the data follow a $\chi^2_{4}$ distribution which is positively skewed; and (2) when the data follow a $t_2$ distribution which has heavy tails. The densities for the three distributions are shown below.
 
-```{r testdist, echo=FALSE, fig.cap="Three distributions we will use to test various anomaly detection methods."}
+```{r}
 #| label: fig-testdist
+#| fig.cap: "Three distributions we will use to test various anomaly detection methods."
 tibble(
-  x = seq(-5, 10, l = 999),
-  `t(2)` = dt(x, df = 2),
-  `Chi-squared(4)` = dchisq(x, df = 4),
-  `Normal(0,1)` = dnorm(x)
-) |>
+    x = seq(-5, 10, l = 999),
+    t2 = dt(x, df = 2),
+    X4 = dchisq(x, df = 4),
+    N01 = dnorm(x)
+  ) |>
   pivot_longer(-x, names_to = "Distribution", values_to = "pdf") |>
   ggplot(aes(x = x, y = pdf, col = Distribution)) +
   geom_line() +
-  labs(y = "Probability density")
+  labs(y = "Probability density") +
+  scale_color_discrete(
+    breaks = c("t2", "X4", "N01"),
+    labels = c("t(2)", latex2exp::TeX("$\\chi^2(4)$"), "N(0,1)")
+  ) + 
+  theme(legend.text.align = 0)
 ```
 
 ## Z scores
@@ -68,7 +76,9 @@ Some books recommend that observations where the absolute value of $z$ is above 
 
 Let's see what happens when we apply this test to the four examples.
 
-```{r zscore1}
+```{r}
+#| label: zscore1
+#| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
   mutate(z = (Average - mean(Average)) / sd(Average)) |>
@@ -91,7 +101,9 @@ n01b |>
  3. One spurious anomaly has been identified in the 1000 N(0,1) observations.
  4. The anomaly added to the 19 N(0,1) observations has been identified.
 
-```{r check2, include=FALSE}
+```{r}
+#| label: check2
+#| include: false
 n1 <- cricket_batting |>
   filter(Innings > 20) |>
   mutate(z = (Average - mean(Average)) / sd(Average)) |>
@@ -114,7 +126,9 @@ stopifnot(n1 == 1, n2 == 1, n3 == 1, n4 == 1)
 
 If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. We will discuss this in more detail in [Chapter -@sec-quantile-methods].] we obtain the same results in three of the examples, but the Old Faithful example gives even worse results.
 
-```{r check, include=FALSE}
+```{r}
+#| label: check
+#| include: false
 # Check last statement
 n1 <- cricket_batting |>
   filter(Innings > 20) |>
@@ -145,7 +159,9 @@ of_threshold <- oldfaithful |>
   min()
 ```
 
-```{r zscore2}
+```{r}
+#| label: zscore2
+#| code-fold: false
 oldfaithful |>
   mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) |>
   filter(abs(z) > 3)
@@ -163,7 +179,9 @@ $$
 $$ {#eq-spuriousz}
 This probability is accurate for large $n$, but not for small sample sizes. So, instead, we will use simulation to compute the probabilities; these are plotted in @fig-zspurious for several values of $c$ and $n$.
 
-```{r pspurious, echo=FALSE}
+```{r}
+#| label: pspurious
+#| echo: false
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # c is zscore threshold, rep is number of replicates
@@ -186,8 +204,10 @@ n <- c(2:10, round(exp(seq(log(15), log(1e4), l = 40))))
 breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 ```
 
-```{r zspurious, echo=FALSE, dependson="pspurious"}
+```{r}
 #| label: fig-zspurious
+#| echo: false
+#| dependson: pspurious
 #| fig-cap: The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
 if (file.exists("zspuriousdf.rds")) {
   zspuriousdf <- readRDS("zspuriousdf.rds")
@@ -216,9 +236,11 @@ zspuriousdf |>
 
 Let's also compute the probability of spurious anomalies for different data distributions --- the $t_2$ and $\chi^2_4$ distributions shown in @fig-testdist.
 
-```{r zspurious2, echo=FALSE, dependson=c("pspurious","zspurious")}
-#| fig-cap: The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
+```{r}
 #| label: fig-zspurious2
+#| echo: false
+#| dependson: ["pspurious", "zspurious"]
+#| fig-cap: The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
 if (file.exists("zspurious2df.rds")) {
   zspurious2df <- readRDS("zspurious2df.rds")
 } else {
@@ -230,7 +252,7 @@ if (file.exists("zspurious2df.rds")) {
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
     ) |>
     select(-c) |>
-    pivot_longer(-n, values_to = "Probability", names_to = "Distribution")
+    pivot_longer(-n, values_to = "Probability", names_to = "Distribution") 
   saveRDS(zspurious2df, "zspurious2df.rds")
 }
 zspurious2df |>
@@ -240,7 +262,11 @@ zspurious2df |>
   labs(x = "n (sample size)", y = "Probability of at least one spurious anomaly") +
   scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
-  #  guides(col = "none") +
+  scale_color_discrete(
+    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    labels = c("t(2)", latex2exp::TeX("$\\chi^2(4)$"), "N(0,1)")
+  ) + 
+  theme(legend.text.align = 0) +
   theme(axis.text.x = element_text(size = 8))
 ```
 
@@ -256,8 +282,11 @@ Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with ast
 
 @fig-zscorecriteria shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
-```{r zscorecriteria, echo=FALSE, warning=FALSE, fig.cap="Criteria for anomalies based on z-scores.", dependson="pspurious"}
+```{r}
 #| label: fig-zscorecriteria
+#| warning: false
+#| fig.cap: "Criteria for anomalies based on z-scores."
+#| dependson: pspurious
 threshold <- numeric(length(n))
 for (i in seq_along(n)) {
   threshold[i] <- weird:::peirce_threshold(n[i])
@@ -276,7 +305,9 @@ The threshold increases with sample size $n$ to allow for the increasing likelih
 
 The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the four examples.
 
-```{r peirce_examples}
+```{r}
+#| label: peirce_examples
+#| code-fold: false
 cricket_batting |> filter(peirce_anomalies(Average))
 oldfaithful |> filter(peirce_anomalies(duration))
 n01 |>
@@ -298,7 +329,9 @@ Peirce's proposal was largely superseded by an alternative proposed by the astro
 
 The `chauvenet_anomalies()` function can be used to implement this test. For our four examples, it gives identical results to those above for `peirce_anomalies()`.
 
-```{r checkchauvenet, include=FALSE}
+```{r}
+#| label: checkchauvenet
+#| include: false
 n1 <- cricket_batting |>
   filter(chauvenet_anomalies(Average)) |>
   NROW()
@@ -333,8 +366,10 @@ $$
 @fig-zscoretests shows the critical values at $\alpha=0.05$ for these tests, along with the corresponding value from @Chauvenet1863 for comparison.
 
 
-```{r zscoretests, echo=FALSE, dependson="pspurious"}
+```{r}
 #| label: fig-zscoretests
+#| echo: false
+#| dependson: pspurious
 #| fig-cap: Critical values for maximum $z$-score tests with $\alpha=0.05$.
 alpha <- 0.05
 df <- tibble(n = n) |>
@@ -364,8 +399,10 @@ df |>
 
 From these, we can compute the probability of a false positive (detecting an anomaly which is a genuine observation) in a normal distribution, using @eq-spuriousz. This probability should be equal to $\alpha=0.05$.
 
-```{r pzscoretests, echo=FALSE, dependson=c("pspurious","zscoretests")}
+```{r}
 #| label: fig-pzscoretests
+#| echo: false
+#| dependson: ["pspurious", "zscoretests"]
 #| fig-cap: True size of the tests (i.e., the probability of a false positive) for normally distributed data with $\alpha=0.05$.
 if (file.exists("pzscoredf.rds")) {
   pzscoredf <- readRDS("pzscoredf.rds")
@@ -397,8 +434,10 @@ pzscoredf |>
 However, when we allow for different data distributions, Grubbs' test also gives poor results, showing it is very sensitive to the assumed data distribution.
 
 
-```{r pgrubbs, echo=FALSE, dependson=c("pspurious","zscoretests")}
+```{r}
 #| label: fig-pgrubbs
+#| echo: false
+#| dependson: ["pspurious","zscoretests"]
 #| fig-cap: True size of Grubbs' tests (i.e., the probability of a false positive) for different data distributions with $\alpha=0.05$.
 if (file.exists("pgrubbsdf.rds")) {
   pgrubbsdf <- readRDS("pgrubbsdf.rds")
@@ -424,12 +463,20 @@ pgrubbsdf |>
   scale_x_log10(limits = c(3, 2e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   #  guides(col = "none") +
+  theme(axis.text.x = element_text(size = 8)) +
+  scale_color_discrete(
+    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    labels = c("t(2)", latex2exp::TeX("$\\chi^2(4)$"), "N(0,1)")
+  ) + 
+  theme(legend.text.align = 0) +
   theme(axis.text.x = element_text(size = 8))
 ```
 
 We can apply the test using the `grubbs_anomalies()` function.
 
 ```{r}
+#| label: grubbs-anomalies
+#| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
   filter(grubbs_anomalies(Average)) |>
@@ -464,8 +511,11 @@ As with the other tests considered here, the test assumes that the underlying da
 
 Simulation is used to compute the critical values for this test, assuming the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
 
-```{r spuriousdixon, fig.cap = "Probability of a spurious anomaly using Dixon's test.", echo = FALSE, dependson="pspurious"}
+```{r}
 #| label: fig-spuriousdixon
+#| fig.cap: "Probability of a spurious anomaly using Dixon's test."
+#| dependson: "pspurious"
+#| echo: false
 # Function to compute probability of spurious anomaly for sample size n,
 # distribution dist with parameters in ...
 # rep is number of replicates
@@ -502,12 +552,20 @@ dixondf |>
   geom_hline(aes(yintercept = 0.05), col = "gray") +
   geom_line() +
   scale_y_continuous(breaks = c(0.05, seq(0.1, 0.8, by = 0.1)), minor_breaks = NULL) +
-  labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)")
+  labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
+  scale_color_discrete(
+    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    labels = c("t(2)", latex2exp::TeX("$\\chi^2(4)$"), "N(0,1)")
+  ) + 
+  theme(legend.text.align = 0) +
+  theme(axis.text.x = element_text(size = 8))
 ```
 
 We can apply the test using the `dixon_anomalies()` function, which does a two-sided test of both minimum and maximum observations.
 
 ```{r}
+#| label: dixon-anomalies
+#| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
   filter(dixon_anomalies(Average)) |>

@@ -1,8 +1,8 @@
 # Density-based methods {#sec-density-methods}
 
 ```{r}
-#| echo: false
 #| include: false
+#| cache: false
 source("before-each-chapter.R")
 ```
 
@@ -18,8 +18,9 @@ where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 
 Let's illustrate the idea with some simple examples.
 
-```{r hdr, fig.asp=0.2}
+```{r}
 #| label: fig-hdr-faithful
+#| fig.asp: 0.2
 #| warning: false
 #| message: false
 #| fig-cap: HDR boxplot of the Old Faithful durations
@@ -30,7 +31,7 @@ oldfaithful |>
   geom_point(aes(x = 0, y = duration)) +
   geom_hdr_boxplot(aes(y = duration), prob = c(0.5, 0.99)) +
   labs(x = "", y = "Duration (seconds)") +
-  coord_flip() 
+  coord_flip()
 ```
 
 Points outside the 99% region are shown separately and indicate possible outliers.
@@ -87,7 +88,9 @@ The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for
 
 In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ percentile as the threshold.
 
-```{r ofpot}
+```{r}
+#| label: ofpot
+#| code-fold: false
 of_scores <- oldfaithful |>
   mutate(
     score = kde_scores(duration),
@@ -99,7 +102,9 @@ gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
 
 Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
-```{r ofpot2}
+```{r}
+#| label: ofpot2
+#| code-fold: false
 of_scores |>
   mutate(
     pval = evd::pgpd(looscore,
@@ -114,7 +119,9 @@ Low probabilities indicate likely outliers and high probabilities indicate norma
 
 The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
 
-```{r lookout}
+```{r}
+#| label: lookout
+#| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
   mutate(lookout = lookout_prob(Average)) |>

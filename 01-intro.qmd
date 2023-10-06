@@ -1,8 +1,8 @@
 # Introduction {#sec-intro}
 
 ```{r}
-#| echo: false
 #| include: false
+#| cache: false
 source("before-each-chapter.R")
 ```
 
@@ -128,7 +128,9 @@ In this book, we will use data sets of each type when testing different anomaly 
 
 Cricket is a very popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
 
-```{r cricketdata}
+```{r}
+#| label: cricketdata
+#| code-fold: false
 cricket_batting
 ```
 
@@ -136,7 +138,9 @@ cricket_batting
 
 Data on the eruptions of the Old Faithful Geyser in Yellowstone National Park, Wyoming, USA, have been collected for about 150 years. It was named "Old Faithful" due to the relatively predictable timing and length of its eruptions. The `oldfaithful` data set contains data on all `r NROW(oldfaithful)` eruptions recorded between 1 January 2015 and 1 October 2021.
 
-```{r oldfaithfuldata}
+```{r}
+#| label: oldfaithfuldata
+#| code-fold: false
 oldfaithful
 ```
 
@@ -146,7 +150,9 @@ Other than the time stamp, the variables here give the duration of each eruption
 
 The `wine_reviews` data set contains data on `r scales::comma(NROW(wine_reviews))` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
 
-```{r winedata}
+```{r}
+#| label: winedata
+#| code-fold: false
 wine_reviews
 ```
 
@@ -154,7 +160,9 @@ wine_reviews
 
 The `n01` data set contains synthetic data on 10 variables, each generated independently from a normal distribution with mean zero and variance one. So by definition, this data set contains no anomalies. We will add anomalies to the data when testing algorithms, in order to check that the algorithms can identify the artificial anomalies.
 
-```{r n01}
+```{r}
+#| label: n01
+#| code-fold: false
 n01
 ```
 
@@ -166,7 +174,9 @@ Let's start with some examples using only one or two variables. These examples w
 
 ### Example: Don Bradman's batting averages
 
-```{r cricket0, echo=FALSE}
+```{r}
+#| label: cricket0
+#| echo: false
 batting <- cricket_batting |>
   filter(Innings > 20)
 donave <- max(batting$Average)
@@ -174,7 +184,8 @@ donave <- max(batting$Average)
 
 Don Bradman was an Australian cricketer in the first half of the 20th century, and is renowned as the best batter to ever play the game. The most common measure of a batter's ability is their career average --- the total number of runs made divided by the number of times they were dismissed. @fig-cricket1 shows a strip plot of the career averages for all `r NROW(batting)` men and women to have played test cricket and batted more than 20 times.
 
-```{r fig-cricket1}
+```{r}
+#| label: fig-cricket1
 #| fig-asp: 0.2
 #| fig-cap: !expr paste("Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged", scales::number(donave, 0.01), "over his career.")
 cricket_batting |>
@@ -191,7 +202,8 @@ The points are "jittered" vertically to reduce overplotting, and made slightly t
 
 Some anomalies are not so obvious, and occur within the range of the rest of the data. A good example of this is the duration of eruptions of the Old Faithful Geyser. @fig-oldfaithful1 shows the duration of all eruptions in the data set.
 
-```{r fig-oldfaithful1}
+```{r}
+#| label: fig-oldfaithful1
 #| fig-asp: 0.2
 #| fig-cap: "Old Faithful eruption durations since 2015. The large anomaly is an eruption recorded on 7&nbsp;December 2015 which apparently lasted nearly two hours."
 oldfaithful |>
@@ -203,7 +215,8 @@ oldfaithful |>
 
 The big anomaly on the right was an eruption that apparently lasted nearly two hours on 7 December 2015. (I can find no record of this in any news media, so perhaps it is an error in the data.) This makes it difficult to see any detail in the rest of the data, so let's omit it so we can look at the remaining data more clearly.
 
-```{r fig-oldfaithful2}
+```{r}
+#| label: fig-oldfaithful2
 #| fig-asp: 0.2
 #| fig-cap: "Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
 oldfaithful |>
@@ -220,7 +233,8 @@ The two clusters of observations characterise two eruption modes for the Old Fai
 
 The `oldfaithful` data set also contains the time between eruptions. For each row, `waiting` gives the time to the *following* eruption. This is used to predict when the next eruption will happen, based on the duration of the most recent eruption.
 
-```{r fig-oldfaithful3}
+```{r}
+#| label: fig-oldfaithful3
 #| fig-cap: "Old Faithful eruption durations and waiting times since 2015, omitting waiting times and durations of two hours or more."
 oldfaithful |>
   filter(duration < 7200, waiting < 7200) |>
@@ -239,7 +253,8 @@ Similarly, there are two eruptions of 170 seconds, followed by waiting times of 
 
 @fig-shiraz shows a scatterplot of data on `r wine_reviews |> filter(variety %in% c("Shiraz", "Syrah")) |> NROW() |> scales::comma()` Syrah wines (also known as Shiraz). The review points is a measure of the quality of the wine (at least according to one taster's palate). As expected, the price of the wine increases with the quality, although there is considerable variation, and some very expensive wines are rated of relatively low quality, while there are a few exceptional wines at bargain prices.
 
-```{r fig-shiraz}
+```{r}
+#| label: fig-shiraz
 #| fig-cap: "Wine prices and review points for Shiraz and Syrah wines."
 wine_reviews |>
   filter(variety %in% c("Shiraz", "Syrah")) |>
@@ -253,8 +268,9 @@ The jittering in the horizontal direction helps reduce overplotting as `points` 
 
 Here the most interesting observations are the ones that have an unusual price given their points value. For example, the lowest priced wine above 95 points is a 2007 Syrah from the Rulo vineyard in the Columbia Valley, Washington. It is an anomaly given its high points value and low price, although neither the price nor the points value are particularly unusual.
 
-```{r shiraz2}
-#| echo: true
+```{r}
+#| label: shiraz2
+#| code-fold: false
 wine_reviews |>
   filter(
     variety %in% c("Shiraz", "Syrah"),
@@ -276,7 +292,8 @@ When we have many variables, showing the pairwise scatterplots in a matrix is a 
 
 @fig-nn01 show the scatterplot matrix of all 10 variables in the `n01` data set. Some transparency has been used to help reduce the overplotting, but with 1000 observations in each small point cloud, it is hard to see any detail other than around the edges.
 
-```{r fig-nn01}
+```{r}
+#| label: fig-nn01
 #| fig-asp: 1
 #| out-width: "100%"
 #| message: false

@@ -1,8 +1,8 @@
 # Distance-based methods {#sec-distance-methods}
 
 ```{r}
-#| echo: false
 #| include: false
+#| cache: false
 source("before-each-chapter.R")
 ```
 
@@ -16,8 +16,11 @@ Let $N_{i,k}$ be the set of $k$ nearest neighbours within $d_{i,k}$ of $\bm{y}_i
 
 Note that an observation $\bm{y}_j$ may be within $N_{i,k}$ while $\bm{y}_i$ does not fall within $N_{j,k}$, as shown in the diagram below.
 
-```{r njk, fig.cap="A synthetic data set of 11 observations. Nearest neighbourhoods containing five observations each are shown for $\\bm{y}_1$ (in orange) and $\\bm{y}_2$ (in blue). The neighbourhood of $\\bm{y}_1$ contains $\\bm{y}_2$ in its nearest five observations, but $\\bm{y}_2$ does not include $\\bm{y}_1$ in its nearest five observations.", echo=FALSE, warning=FALSE}
+```{r}
 #| label: fig-njk
+#| fig.cap: "A synthetic data set of 11 observations. Nearest neighbourhoods containing five observations each are shown for $\\bm{y}_1$ (in orange) and $\\bm{y}_2$ (in blue). The neighbourhood of $\\bm{y}_1$ contains $\\bm{y}_2$ in its nearest five observations, but $\\bm{y}_2$ does not include $\\bm{y}_1$ in its nearest five observations."
+#| warning: false
+#| echo: false
 set.seed(2)
 df <- tibble(
   x = c(rnorm(5), rnorm(6, 5, 1)),

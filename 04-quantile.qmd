@@ -1,8 +1,8 @@
 # Quantile and depth-based measures {#sec-quantile-methods}
 
 ```{r}
-#| echo: false
 #| include: false
+#| cache: false
 source("before-each-chapter.R")
 ```
 

@@ -134,8 +134,12 @@ blockquote {
   border-left: 0px;
 }
 
-code {
+pre code {
   color: $body-color;
+}
+
+div.sourceCode, div.sourceCode pre.sourceCode {
+    color: $body-color;
 }
 
 .quarto-page-breadcrumbs .breadcrumb-item+.breadcrumb-item, .quarto-page-breadcrumbs .breadcrumb-item {
