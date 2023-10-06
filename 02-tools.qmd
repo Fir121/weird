@@ -271,7 +271,7 @@ For the univariate random variable $Y$, with a smooth, continuous density functi
 $$
   R_\alpha = \{y: f(y) \ge f_\alpha\}
 $$
-where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
+where $P(Y \in R_\alpha) = 1-\alpha$.
 
 A useful property of the HDR is that it is the smallest region containing $1-\alpha$ of the probability mass.
 
