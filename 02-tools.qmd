@@ -279,9 +279,9 @@ tibble(
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.002), 
+  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.002),
             col = "#0072B2", linewidth = 2) +
-  geom_line(data = tibble(x = interval2), aes(x = x, y = 0.001), 
+  geom_line(data = tibble(x = interval2), aes(x = x, y = 0.001),
             col = "#D55E00", linewidth = 2) +
   geom_line(
     data = tibble(x = rep(interval2[1], 2), y = c(0, falpha)),
@@ -314,11 +314,11 @@ p <- as_tibble(den) |>
   ggplot(aes(x = x, y = y)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.0028), 
+  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.0028),
             col = "#0072B2", linewidth = 2) +
-  geom_line(data = tibble(x = interval2[1:2]), aes(x = x, y = 0.0018), 
+  geom_line(data = tibble(x = interval2[1:2]), aes(x = x, y = 0.0018),
             col = "#D55E00", linewidth = 2) +
-  geom_line(data = tibble(x = interval2[3:4]), aes(x = x, y = 0.0018), 
+  geom_line(data = tibble(x = interval2[3:4]), aes(x = x, y = 0.0018),
             col = "#D55E00", linewidth = 2)
 for (i in seq_along(interval2)) {
   p <- p + geom_line(
@@ -516,7 +516,7 @@ scale_cond_density <- mixture_density |>
     y2 = factor(y, levels = y2)
   )
 # Joint density plot
-plot1 <- mixture_plot + 
+plot1 <- mixture_plot +
   guides(fill = "none") +
   scale_y_continuous(breaks = y2, minor_breaks = NULL) +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
@@ -531,7 +531,7 @@ plot2 <- mixture_density |>
     z = z / max(z) * 0.9
   ) |>
   ggplot(aes(x = x, y = z + y, group = y2)) +
-  geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4), 
+  geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4),
               col = "#8ab3f6", fill = "#8ab3f6") +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
@@ -726,13 +726,13 @@ The choice of $h$ is more difficult and will change the shape of the density est
 of2021 |>
   ggplot(aes(x = duration)) +
   geom_rug(sides = "b", linewidth = 1) +
-  geom_density(bw = 5, col = "#E69F00") +
-  geom_density(bw = 15, col = "#56B4E9") +
+  geom_density(bw = 5, col = "#D55E00") +
+  geom_density(bw = 15, col = "#0072B2") +
   geom_density(bw = 40, col = "#009E73") +
   labs(x = "y = Duration (seconds)", y = "Density") +
   xlim(120, 320) +
-  geom_label(x = 260, y = .02, label = "h = 5", col = "#E69F00") +
-  geom_label(x = 275, y = .01, label = "h = 15", col = "#56B4E9") +
+  geom_label(x = 260, y = .02, label = "h = 5", col = "#D55E00") +
+  geom_label(x = 275, y = .01, label = "h = 15", col = "#0072B2") +
   geom_label(x = 320, y = .004, label = "h = 40", col = "#009E73")
 ```
 
@@ -858,7 +858,7 @@ h2 <- MASS::bandwidth.nrd(of2021$waiting)
 
 We will illustrate the idea using a simple bivariate example of 10 observations: the same 10 eruption durations discussed above, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{cc}`r round(h1,0)` & 0 \\ 0 & `r round(h2,0)`\end{array}\right]$.
 
-```{r} 
+```{r}
 #| label: fig-ofdw
 #| dependson: of2021
 #| warning: false
@@ -874,7 +874,7 @@ of2021kde <- of2021 |>
   unnest(k) |>
   mutate(x = x + duration, y = y + waiting)
 ggplot() +
-  geom_contour(data = of2021kde, aes(x = x, y = y, group = eruption, z = z), 
+  geom_contour(data = of2021kde, aes(x = x, y = y, group = eruption, z = z),
                bins = 4, col = "gray") +
   geom_point(data = of2021, mapping = aes(x = duration, y = waiting)) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
