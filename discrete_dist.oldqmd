@@ -1,6 +1,13 @@
 <!-- Some material on discrete distributions previously in ch2.  -->
 <!-- Not sure if we need any of this. -->
 
+```{r}
+#| include: false
+#| cache: false
+source("before-each-chapter.R")
+```
+
+
 ## Univariate probability distributions {#sec-distributions}
 
 We are interested in data obtained from a range of possible sample spaces, but let's start with the two simplest cases: univariate discrete and continuous random variables. A good introduction to such probability distributions is provided by @Forbes2011, with more advanced treatments in @JKunidiscrete, @JKunicontinuous1 and @JKunicontinuous2.
