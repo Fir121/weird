@@ -38,7 +38,7 @@ The two artificial examples are designed to test different methods when there ar
 
 ### Spurious anomalies
 
-All of the methods considered in this chapter assume the underlying data follow a normal distribution. We will test the methods under this assumption by considering the probability of each method identifying a spurious anomaly when, in fact, the data do follow a normal distribution. For comparison, we will also test the methods under two variations to the underlying data: (1) when the data follow a $\chi^2_{4}$ distribution which is positively skewed; and (2) when the data follow a $t_2$ distribution which has heavy tails. The densities for the three distributions are shown below.
+All of the methods considered in this chapter assume the underlying data follow a normal distribution. We will test the methods under this assumption by considering the probability of each method identifying a spurious anomaly when, in fact, the data do follow a normal distribution. For comparison, we will also test the methods under two other data distributions: (1) when the data follow a $\chi^2_{4}$ distribution which is positively skewed; and (2) when the data follow a $t_2$ distribution which has heavy tails. The densities for the three distributions are shown below.
 
 ```{r}
 #| label: fig-testdist
@@ -99,7 +99,7 @@ n01b |>
  1. Don Bradman is correctly identified as the only outlier in the cricket batting averages.
  2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
  3. One spurious anomaly has been identified in the 1000 N(0,1) observations.
- 4. The anomaly added to the 19 N(0,1) observations has been identified.
+ 4. The anomaly added to the 19 N(0,1) observations has been correctly identified.
 
 ```{r}
 #| label: check2
@@ -173,9 +173,9 @@ Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as ano
 
 Even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is $`r round(2*pnorm(-3),4)`$ (assuming a large sample), so we would expect to see 1 in every $1/ `r round(2*pnorm(-3),4)` = `r round(.5/pnorm(-3))`$ regular observations being identified as an anomaly using this approach.
 
-In fact, we can be more accurate than this. If our $n$ observations come from a normal distribution, then the z-scores follow (approximately) a $t_{n-1}$ distribution. (The approximation arises because we replace the mean by its sample estimate.) When we identify anomalies as those points with $|z|>c$, then the probability of finding at least one spurious anomaly is the probability of the maximum being above $c$ or the minimum being below $-c$. Since the distribution is symmetric, these probabilities are the same. Let $M_n$ be the maximum of $n$ z-scores computed from the data; then $P(M_n \le c) = (F_{t,n-1}(c))^n$ where $F_{t,n-1}$ is the cumulative distribution function of a $t$ distribution with $n-1$ degrees of freedom. So the probability of at least one spurious anomaly is
+In fact, we can be more accurate than this. If our $n$ observations come from a normal distribution, then the z-scores follow (approximately) a $t_{n-1}$ distribution. (The approximation arises because we replace the mean and standard deviations by their sample estimate.) When we identify anomalies as those points with $|z|>c$, then the probability of finding at least one spurious anomaly is the probability of the maximum being above $c$ or the minimum being below $-c$. Since the distribution is symmetric, these probabilities are the same. Let $M_n$ be the maximum of $n$ z-scores computed from the data; then $P(M_n \le c) = (F_{t}(c; n-1))^n$ where $F_{t}(y; n-1)$ is the cumulative distribution function of a $t$ distribution with $n-1$ degrees of freedom. So the probability of at least one spurious anomaly is
 $$
-  1 - (F_{t,n-1}(c))^{2n}.
+  1 - (F_{t}(c; n-1))^{2n}.
 $$ {#eq-spuriousz}
 This probability is accurate for large $n$, but not for small sample sizes. So, instead, we will use simulation to compute the probabilities; these are plotted in @fig-zspurious for several values of $c$ and $n$.
 
@@ -285,6 +285,7 @@ Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with ast
 ```{r}
 #| label: fig-zscorecriteria
 #| warning: false
+#| echo: false
 #| fig.cap: "Criteria for anomalies based on z-scores."
 #| dependson: pspurious
 threshold <- numeric(length(n))
@@ -301,7 +302,7 @@ tibble(n = n, c = threshold) |>
   geom_label(aes(x = 1e4, y = 3.55, label = "Chauvenet criterion"), col = "red")
 ```
 
-The threshold increases with sample size $n$ to allow for the increasing likelihood of observations from the extreme tails of the distribution.
+The threshold increases with sample size $n$ to allow for the increasing likelihood of observations falling in the extreme tails of the distribution.
 
 The `peirce_anomalies()` function returns a logical vector indicating which observations are anomalous under this criterion. Let's apply it to the four examples.
 
@@ -358,7 +359,7 @@ Egon Pearson and Chandra Sekar proposed [@Pearson1936] that an observation be co
 $$
 c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}}
 $$
-and $t_{p, m}$ is the $1-p$ quantile of the $t$ distribution with $m$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
+and $t_{p, k}$ is the $1-p$ quantile of the $t$ distribution with $k$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
 $$
 c_\alpha = \frac{(n-1)t_{\alpha/2n, n-2}}{\sqrt{n(n-2 + t^2_{\alpha/2n, n-2})}}.
 $$
@@ -509,7 +510,7 @@ The test is clearly flawed for several reasons. First, if the two largest values
 
 As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
 
-Simulation is used to compute the critical values for this test, assuming the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
+Simulation can be used to compute the critical values for this test, assuming that the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
 
 ```{r}
 #| label: fig-spuriousdixon
