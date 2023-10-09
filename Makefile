@@ -1,15 +1,13 @@
-output = ./_book
-qmd_files := $(wildcard *.qmd)
+qmd_files := $(patsubst %.qmd, _book/%.html, $(wildcard *.qmd))
 rds_files := $(wildcard *.rds)
-html_files := $(wildcard $(output)/*.html)
 
-default: $(html_files)
+default: $(qmd_files)
 
 all:
 	quarto render
 
-$(output)/%.html: %.qmd $(rds_files) weird.bib before-each-chapter.R apa-single-spaced.csl otexts.scss _quarto.yml
-	quarto render --to html $<
+$(qmd_files): _book/%.html: %.qmd $(rds_files) weird.bib before-each-chapter.R apa-single-spaced.csl otexts.scss _quarto.yml
+	quarto render $< --to html
 
 launch:
 	vivaldi _book/index.html
