@@ -85,9 +85,9 @@ tibble(
 
 The $\chi^2$ (or **chi-squared**) distribution takes one parameter, the degrees of freedom $k$. The pdf is given by
 $$
-  f(y;k) = \frac{y^{k/2-1}e^{-y/2}}{2^{k/2}\Gamma(k/2)}.
+  f_k(y) = \frac{y^{k/2-1}e^{-y/2}}{2^{k/2}\Gamma(k/2)}.
 $$
-where $\Gamma(u) = \int_0^\infty x^{u-1}e^{-x}dx$ is the gamma function. For positive integers $u$, $\Gamma(u) = (u-1)!$. The $\chi^2$ distribution arises naturally as the sum of the squares of $k$ independent standard Normal random variables. We refer to a $\chi^2$ random variable with $k$ degrees of freedom as $Y \sim \chi^2(k)$. It has mean $k$ and variance $2k$.
+where $\Gamma(u) = \int_0^\infty x^{u-1}e^{-x}dx$ is the gamma function. For positive integers $u$, $\Gamma(u) = (u-1)!$. The $\chi^2$ distribution arises naturally as the sum of the squares of $k$ independent standard Normal random variables. We refer to a $\chi^2$ random variable with $k$ degrees of freedom as $Y \sim \chi^2_k$. It has mean $k$ and variance $2k$.
 
 Three $\chi^2$ distributions are shown in @fig-chisq.
 
@@ -106,20 +106,20 @@ tibble(
   labs(x = "y", y = "Probability Density Function: f(y)") +
   coord_cartesian(ylim = c(0, 1))  +
   scale_color_discrete(labels = c(
-    latex2exp::TeX("$\\chi^2(1)$"),
-    latex2exp::TeX("$\\chi^2(2)$"),
-    latex2exp::TeX("$\\chi^2(5)$")
+    latex2exp::TeX("$\\chi^{~2}_{~~1}$"),
+    latex2exp::TeX("$\\chi^{~2}_{~~2}$"),
+    latex2exp::TeX("$\\chi^{~2}_{~~5}$")
   ))
 ```
 
 ### t distribution
 
-The **t** distribution was first described by the English statistician and chemist, William Gosset, who worked for the Guinness brewery in Dublin, Ireland, and published under the pseudonym "Student". It arises naturally as the ratio $Z/\sqrt{S/k}$, where $Z\sim N(0,1)$ and $S\sim \chi^2(k)$ are independent, and is commonly used in variations of $t$-tests. It takes one parameter, the degrees of freedom $k$. The pdf is given by
+The **t** distribution was first described by the English statistician and chemist, William Gosset, who worked for the Guinness brewery in Dublin, Ireland, and published under the pseudonym "Student". It arises naturally as the ratio $Z/\sqrt{S/k}$, where $Z\sim N(0,1)$ and $S\sim \chi^2_k$ are independent, and is commonly used in variations of $t$-tests. It takes one parameter, the degrees of freedom $k$. The pdf is given by
 $$
-  f(y;k) = \frac{\Gamma\left(\frac{k+1}{2}\right)}{\sqrt{k\pi}\Gamma\left(\frac{k}{2}\right)}
+  f_k(y) = \frac{\Gamma\left(\frac{k+1}{2}\right)}{\sqrt{k\pi}\Gamma\left(\frac{k}{2}\right)}
   \left(1 + \frac{y^2}{k}\right)^{-\frac{k+1}{2}}.
 $$
-We refer to a t random variable with $k$ degrees of freedom as $Y \sim t(k)$. The t distribution is similar in shape to the standard Normal distribution, but has heavier tails. When $k=1$, the t distribution is known as the "Cauchy" distribution (after the French mathematician Augustin-Louis Cauchy), which has undefined mean and variance. For $k=2$, it has mean 0 and infinite variance. For $k > 2$, it has mean $0$ and variance $k/(k-2)$. When $k\rightarrow\infty$, the t distribution converges to the standard Normal distribution.
+We refer to a t random variable with $k$ degrees of freedom as $Y \sim t_k$. The t distribution is similar in shape to the standard Normal distribution, but has heavier tails. When $k=1$, the t distribution is known as the "Cauchy" distribution (after the French mathematician Augustin-Louis Cauchy), which has undefined mean and variance. For $k=2$, it has mean 0 and infinite variance. For $k > 2$, it has mean $0$ and variance $k/(k-2)$. When $k\rightarrow\infty$, the t distribution converges to the standard Normal distribution.
 
 Three t distributions are shown in @fig-t.
 
@@ -128,14 +128,20 @@ Three t distributions are shown in @fig-t.
 #| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
 tibble(
     y = seq(-7.5, 7.5, l = 501),
-    `t(1)` = dt(y, 1),
-    `t(5)` = dt(y, 5),
-    `t(99)` = dt(y, 99)
+    `t1` = dt(y, 1),
+    `t5` = dt(y, 5),
+    `t99` = dt(y, 99)
   ) |>
   pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
   ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
-  labs(x = "y", y = "Probability Density Function: f(y)")
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  scale_color_discrete(labels = c(
+    latex2exp::TeX("$t_{~1}$"),
+    latex2exp::TeX("$t_{~5}$"),
+    latex2exp::TeX("$t_{~99}$")
+  )) +
+  theme(legend.text.align = 0)
 ```
 
 ### Gamma distribution
@@ -144,7 +150,7 @@ The **gamma** distribution is a generalization of the $\chi^2$ distribution, and
 $$
   f(y; \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
 $$
-We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. The $\chi^2(k)$ distribution is a special case of the gamma distribution, with $\alpha = k/2$ and $\beta = 1/2$. The Exponential distribution is also a special case of the gamma distribution, with $\alpha = 1$. The sum of $k$ independent Exponential random variables with rate $\beta$ has a $\text{Gamma}(k, \beta)$ distribution.
+We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. The $\chi^2_k$ distribution is a special case of the gamma distribution, with $\alpha = k/2$ and $\beta = 1/2$. The Exponential distribution is also a special case of the gamma distribution, with $\alpha = 1$. The sum of $k$ independent Exponential random variables with rate $\beta$ has a $\text{Gamma}(k, \beta)$ distribution.
 
 Three gamma distributions are shown in @fig-gamma.
 
@@ -214,7 +220,7 @@ For example, the sample mean (or average), is simply the sum of the observations
 
 Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent (but not necessarily identically distributed), or to be weakly dependent.
 
-It is because of the CLT that a $\chi^2(k)$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2(k)$ distribution.)
+It is because of the CLT that a $\chi^2_k$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2_k$ distribution.)
 
 Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
 
@@ -224,15 +230,15 @@ Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for larg
 
 The quantiles of a distribution are given by the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. That is, the $p$th quantile is such that $\text{Pr}(Y \le Q(p)) = p$. So it divides the sample space into two regions, with probability $p$ in the lower region and $1-p$ in the upper region.
 
-Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$. 
+Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$.
 
 The "interquartile range" (IQR) is the difference between the upper and lower quartiles. It is a measure of the spread of the distribution, and is often used as a robust alternative to the standard deviation. For a normal distribution, the standard deviation is equal to 1.35 times the IQR.
 
-The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
+The quantile functions for a standard normal distribution, a $t_5$ distribution, and a $\chi^2_5$ distribution are shown in @fig-quantile.
 
 ```{r}
 #| label: fig-quantile
-#| fig-cap: Quantile function for a standard Normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution.
+#| fig-cap: Quantile function for a standard Normal distribution, a $t_5$ distribution, and a $\chi^2_5$ distribution.
 tibble(
     p = seq(0, 1, l = 501),
     qy1 = qnorm(p, 0, 1),
@@ -245,8 +251,8 @@ tibble(
   labs(x = "p", y = "Quantile function: Q(p)") +
   scale_color_discrete(labels = c(
     latex2exp::TeX("N(0,1)"),
-    latex2exp::TeX("t(5)"),
-    latex2exp::TeX("$\\chi^2$$(5)$")
+    latex2exp::TeX("t_{~5}"),
+    latex2exp::TeX("$\\chi^{~2}_{~~5}$")
   )) +
   theme(legend.text.align = 0)
 ```
@@ -263,11 +269,11 @@ where $P(Y \in R_\alpha) = 1-\alpha$.
 
 A useful property of the HDR is that it is the smallest region containing $1-\alpha$ of the probability mass.
 
-For a symmetric unimodal distribution such as the Normal or t distributions, the HDR is an interval centered on the mean (or median), with the ends given by the $\alpha/2$ and $1-\alpha/2$ quantiles. For a skewed unimodal distribution such as the $\chi^2$ or Gamma distributions, the HDR is also an interval, but it is not centered on the mean (or median), and the ends are not given by symmetric quantiles. For example, @fig-hdr shows two 90% regions for a $\chi^2(5)$ distribution. The one shown in blue is based on the 0.05 and 0.95 quantiles, while the orange region is the 90% HDR. Notice that both are intervals, and that the orange interval is smaller than the blue interval. The value of the density at the ends of the HDR is the same, and is given by $f_\alpha$.
+For a symmetric unimodal distribution such as the Normal or t distributions, the HDR is an interval centered on the mean (or median), with the ends given by the $\alpha/2$ and $1-\alpha/2$ quantiles. For a skewed unimodal distribution such as the $\chi^2$ or Gamma distributions, the HDR is also an interval, but it is not centered on the mean (or median), and the ends are not given by symmetric quantiles. For example, @fig-hdr shows two 90% regions for a $\chi^2_5$ distribution. The one shown in blue is based on the 0.05 and 0.95 quantiles, while the orange region is the 90% HDR. Notice that both are intervals, and that the orange interval is smaller than the blue interval. The value of the density at the ends of the HDR is the same, and is given by $f_\alpha$.
 
 ```{r}
 #| label: fig-hdr
-#| fig-cap: Highest density region for a $\chi^2(5)$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The orange bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
+#| fig-cap: Highest density region for a $\chi^2_5$ distribution. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The orange bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 interval1 <- qchisq(p = c(0.05, 0.95), 5)
 den <- list(x = seq(0, 20, l = 501))
 den$y <- dchisq(den$x, 5)
@@ -972,7 +978,7 @@ where $G$ is a non-degenerate cumulative distribution function, then $G$ belongs
 \end{align*}
 for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
 
-These three families of distributions can be further combined into a single family by using the following distribution function known as the Generalized Extreme Value (GEV) distribution,
+These three families of distributions can be further combined into a single family by using the following cdf known as the Generalized Extreme Value (GEV) distribution,
 $$
   G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
 $$ {#eq-EVT4}
