@@ -10,14 +10,13 @@ The early history of anomaly detection method involved statistical tests and ass
 
 We will only consider univariate methods in this chapter. There have been multivariate parametric methods for anomaly detection, but they are much less widely used and are also best avoided.
 
-### Examples
+## Examples
 
-We will use four simple univariate examples to illustrate the ideas, two with real data and two with synthetic data.
+We will test the methods using six examples: two involving real data, and four involving simulated data. 
 
 1. The cricket batting averages from the `cricket_batting` data set. As discussed in @sec-scatterplots, these appear to contain one genuine anomaly, the batter Don Bradman.
 2. Old Faithful eruption durations since 2015, also discussed in @sec-scatterplots. For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
-3. The first variable in the `n01` data containing 1000 draws from a N(0,1) distribution. This contains no genuine anomalies, as all the data come from the same underlying probability distribution. This example is used to check how many false anomalies are identified by different anomaly detection methods.
-4. The first 19 rows of the second variable in the `n01` data, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution. The code below shows the data for this example.
+3. The first 19 rows of the second variable in the `n01` data, along with the value 4. The latter is an anomaly as it is unlikely to arise from the N(0,1) distribution. The plot below shows the data for this example.
 
 ```{r}
 #| label: fig-n01b
@@ -34,11 +33,13 @@ n01b |>
   labs(y = "", x = "Synthetic data")
 ```
 
-The two artificial examples are designed to test different methods when there are large and small data sets.
+The other three simulated examples will use 1000 observations from each of the following distributions:
 
-### Spurious anomalies
+4. a N(0,1) distribution (we will use the `n01` data set);
+5. a t(2) distribution, which has heavy tails;
+6. a $\chi^2_4$ distribution, which is positively skewed.
 
-All of the methods considered in this chapter assume the underlying data follow a normal distribution. We will test the methods under this assumption by considering the probability of each method identifying a spurious anomaly when, in fact, the data do follow a normal distribution. For comparison, we will also test the methods under two other data distributions: (1) when the data follow a $\chi^2_{4}$ distribution which is positively skewed; and (2) when the data follow a $t_2$ distribution which has heavy tails. The densities for the three distributions are shown below.
+The density functions for these three distributions are shown in @fig-testdist.
 
 ```{r}
 #| label: fig-testdist
@@ -60,6 +61,21 @@ tibble(
   theme(legend.text.align = 0)
 ```
 
+Data for the last two examples are generated below.
+
+```{r}
+#| label: fig-testdist-data
+#| code-fold: false
+set.seed(1)
+t2 <- tibble(y = rt(1000, df = 2))
+chisq4 <- tibble(y = rchisq(1000, df = 4))
+```
+
+All of the methods considered in this chapter assume the underlying data follow a normal distribution. In our examples, only #4 is from a normal distribution, so the methods should work well in that case, but perhaps not in the other cases.
+
+Good anomaly detection methods should pick up one anomaly in the cricket batting example, at least two anomalies in the Old Faithful example, and the anomaly in the `n01` example. They should identify no anomalies in the remaining examples.
+
+
 ## Z scores
 
 Many parametric methods are based on $z$-scores which assume the data come from a normal distribution. If our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
@@ -74,7 +90,7 @@ Some books recommend that observations where the absolute value of $z$ is above 
 
 ### Examples
 
-Let's see what happens when we apply this test to the four examples.
+Let's see what happens when we apply this test to the six examples, with 1000 observations drawn from the three distributions.
 
 ```{r}
 #| label: zscore1
@@ -87,19 +103,28 @@ cricket_batting |>
 oldfaithful |>
   mutate(z = (duration - mean(duration)) / sd(duration)) |>
   filter(abs(z) > 3)
+n01b |>
+  mutate(z = (v2 - mean(v2)) / sd(v2)) |>
+  filter(abs(z) > 3)
 n01 |>
   select(v1) |>
   mutate(z = (v1 - mean(v1)) / sd(v1)) |>
   filter(abs(z) > 3)
-n01b |>
-  mutate(z = (v2 - mean(v2)) / sd(v2)) |>
+t2 |> 
+  mutate(z = (y - mean(y)) / sd(y)) |>
+  filter(abs(z) > 3)
+chisq4 |> 
+  mutate(z = (y - mean(y)) / sd(y)) |>
   filter(abs(z) > 3)
 ```
 
  1. Don Bradman is correctly identified as the only outlier in the cricket batting averages.
  2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
- 3. One spurious anomaly has been identified in the 1000 N(0,1) observations.
- 4. The anomaly added to the 19 N(0,1) observations has been correctly identified.
+ 3. The anomaly added to the 19 N(0,1) observations has been correctly identified.
+ 4. One spurious anomaly has been identified in the 1000 N(0,1) observations.
+ 5. Twelve spurious anomalies have been identified in the 1000 t(2) observations.
+ 6. Fifteen spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
+ 
 
 ```{r}
 #| label: check2
@@ -124,7 +149,7 @@ n4 <- n01b |>
 stopifnot(n1 == 1, n2 == 1, n3 == 1, n4 == 1)
 ```
 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.34),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. We will discuss this in more detail in [Chapter -@sec-quantile-methods].] we obtain the same results in three of the examples, but the Old Faithful example gives even worse results.
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.35),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. See @sec-quantiles.] we obtain the same results in three of the examples, but the remaining examples are even worse.
 
 ```{r}
 #| label: check
@@ -148,6 +173,14 @@ n4 <- n01b |>
   mutate(z = (v2 - median(v2)) / IQR(v2) * 1.34) |>
   filter(abs(z) > 3) |>
   NROW()
+n5 <- t2 |>
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) |>
+  filter(abs(z) > 3) |>
+  NROW()
+n6 <- chisq4 |>
+  mutate(z = (y - median(y)) / IQR(y) * 1.34) |>
+  filter(abs(z) > 3) |>
+  NROW()
 stopifnot(n1 == 1L)
 stopifnot(n2 == 243L)
 stopifnot(n3 == 1L)
@@ -167,7 +200,9 @@ oldfaithful |>
   filter(abs(z) > 3)
 ```
 
-Now there are `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
+For the Old Faithful example, there are now `r n2` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
+
+For the $t(2)$ example, there are now `r n5` out of `r NROW(t2)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r n6` out of `r NROW(chisq4)` observations falsely identified as anomalous.
 
 ### Z scores and extreme values
 
@@ -581,7 +616,17 @@ n01b |>
 
 For these examples, the test has worked quite well, identifying the known outlying anomalies, plus the low average of Zimbabwean cricketer (and commentator) "Pommie" Mbangwa. Nevertheless, it is not recommended for the reasons already discussed.
 
-## General comments
+## Summary
+
+We can summarise the results of the various tests used here in the following table.
+
+```{r}
+#| label: tbl-examples
+#| echo: false
+
+```
+
+
 
 As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
 
