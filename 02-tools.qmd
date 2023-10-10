@@ -224,7 +224,9 @@ Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for larg
 
 The quantiles of a distribution are given by the inverse of the cumulative distribution function, $Q(p) = F^{-1}(p)$. That is, the $p$th quantile is such that $\text{Pr}(Y \le Q(p)) = p$. So it divides the sample space into two regions, with probability $p$ in the lower region and $1-p$ in the upper region.
 
-Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$.
+Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$. 
+
+The "interquartile range" (IQR) is the difference between the upper and lower quartiles. It is a measure of the spread of the distribution, and is often used as a robust alternative to the standard deviation. For a normal distribution, the standard deviation is equal to 1.35 times the IQR.
 
 The quantile functions for a standard normal distribution, a $t(5)$ distribution, and a $\chi^2(5)$ distribution are shown in @fig-quantile.
 
