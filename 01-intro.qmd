@@ -78,11 +78,12 @@ Meanwhile, NASA was flagging observations as anomalous when they were below 180 
 
 In fact, NASA had checked the unusually low TOMS values obtained before 1985 by comparing them against other available data. But the other data available to them showed ozone values of about 300 DU, so it was assumed that the satellite sensor was malfunctioning. The British Halley data were not available to them, and only after the publication of @Farman1985 did the NASA scientists realise that the TOMS results were accurate.
 
-In 1986, NASA scientists were able to confirm the British finding, also demonstrating that the ozone hole was widespread across the Antarctic [@stolarski1986nimbus]. 
+In 1986, NASA scientists were able to confirm the British finding, also demonstrating that the ozone hole was widespread across the Antarctic [@stolarski1986nimbus].
 
 This example reveals some lessons about anomaly detection:
 
 * The NASA threshold of 180 was based on daily data, and was designed to identify instrument problems, not genuine systematic changes in ozone levels. The implicit assumption was that ozone levels varied seasonally, but that otherwise the distribution of observations was stable. All anomaly detection involves some implicit assumptions like this, and it is well to be aware of them.
+* Sometimes what we think are anomalies are not really anomalies, but the result of incorrect assumptions.
 * Often smoothing or averaging data will help to reveal issues that are not so obvious from the original data. This reduces the variation in the data, and allows more systematic variation to be uncovered.
 * Always plot the data. In this case, a graph such as @fig-halley would have revealed the problem in the late 1970s, but it seems no-one was producing plots like this.
 

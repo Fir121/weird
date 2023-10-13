@@ -17,7 +17,7 @@ We are interested in data obtained from a range of possible sample spaces, but l
 A discrete random variable can take values on a finite, or countably infinite, space. That is, if we can list the values that the variable can take, then it is a discrete random variable. For example, if $Y$ is a coin toss, it can take values in $\{$Heads, Tails$\}$. If $Y$ is a count variable, it can take values on the non-negative integers $\{0, 1, 2, \dots\}$.
 
 The probability distribution of a discrete random variable $Y$ assigns a probability to each possible value of $Y$. We call this the probability mass function (pmf), given by $p(y) = \text{Pr}(Y=y)$. If there is a natural ordering of the values that $Y$ can take, then we can also define the cumulative probability distribution (cdf), given by
-$$F(y) = \text{Pr}(Y <= y).
+$$F(y) = \text{Pr}(Y \le y).
 $$ {#eq-cdf}
 For discrete random variables, $F(y)$ is a step function with jumps at the possible values of $Y$.  The size of the jump at $y$ is equal to $p(y)$.
 

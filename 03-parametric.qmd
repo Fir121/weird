@@ -10,24 +10,21 @@ The early history of anomaly detection method involved statistical tests and ass
 
 We will only consider univariate methods in this chapter. There have been multivariate parametric methods for anomaly detection, but they are much less widely used and are also best avoided.
 
-## Examples
+## Examples {#sec-examples}
 
 We will test the methods using six examples: two involving real data, and four involving simulated data.
 
 1. The cricket batting averages from the `cricket_batting` data set. As discussed in @sec-scatterplots, these appear to contain one genuine anomaly, the batter Don Bradman.
 2. Old Faithful eruption durations since 2015, also discussed in @sec-scatterplots. For these data, there were two extreme anomalies --- one at nearly 2 hours and one at 1 second --- and several "inliers" in a area of low density between 140 and 180 seconds.
-3. The first 18 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5. The latter two are anomalies as they are unlikely to arise from the N(0,1) distribution. The plot below shows the data for this example.
+3. The first 18 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5. The latter two are anomalies as they are unlikely to arise from the N(0,1) distribution. We save  this data set as `n01b`. The plot below shows the data for this example.
 
 ```{r}
 #| label: fig-n01b
 #| fig.asp: 0.2
-#| fig.cap: "Nineteen observations from a N(0,1) distribution along with one anomaly."
-n01b <- n01 |>
-  select(v2) |>
-  head(20)
-n01b$v2[19:20] <- c(4,4.5)
+#| fig.cap: "Eighteen observations from a N(0,1) distribution along with two anomalies."
+n01b <- tibble(y = c(n01$v2[1:18], 4, 4.5))
 n01b |>
-  ggplot(aes(x = v2, y = 1)) +
+  ggplot(aes(x = y, y = 1)) +
   geom_jitter(width = 0, alpha = 0.5) +
   scale_y_discrete() +
   labs(y = "", x = "Synthetic data")
@@ -35,8 +32,8 @@ n01b |>
 
 The other three simulated examples will use 1000 observations from each of the following distributions:
 
-4. a N(0,1) distribution (we will use the `n01` data set);
-5. a $t_2$ distribution, which has heavy tails;
+4. a N(0,1) distribution (we will use the first variable in the `n01` data set);
+5. a $\text{t}_2$ distribution, which has heavy tails;
 6. a $\chi^2_4$ distribution, which is positively skewed.
 
 The density functions for these three distributions are shown in @fig-testdist.
@@ -85,12 +82,12 @@ Good anomaly detection methods should pick up one anomaly in the cricket batting
 #| depends: ["fig-n01b", "fig-testdist-data"]
 nanomalies <- tibble(
     Example = c(
-      "Ex 1: Cricket",
-      "Ex 2: Old Faithful",
-      "Ex 3: N(0,1) + 2 outliers",
-      "Ex 4: N(0,1)",
-      "Ex 5: t(2)",
-      "Ex 6: Chi-squared(4)"
+      "Cricket batting",
+      "Old Faithful duration",
+      "N(0,1) + 2 outliers",
+      "N(0,1)",
+      "t(2)",
+      "Chi-squared(4)"
     ),
     `N observations` = c(
       NROW(cricket_batting),
@@ -134,7 +131,7 @@ oldfaithful |>
   mutate(z = (duration - mean(duration)) / sd(duration)) |>
   filter(abs(z) > 3)
 n01b |>
-  mutate(z = (v2 - mean(v2)) / sd(v2)) |>
+  mutate(z = (y - mean(y)) / sd(y)) |>
   filter(abs(z) > 3)
 n01 |>
   select(v1) |>
@@ -152,7 +149,7 @@ chisq4 |>
  2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
  3. Neither of the two anomalies added to the 18 N(0,1) observations has been correctly identified.
  4. One spurious anomaly has been identified in the 1000 N(0,1) observations.
- 5. Twelve spurious anomalies have been identified in the 1000 $t_2$ observations.
+ 5. Twelve spurious anomalies have been identified in the 1000 $\text{t}_2$ observations.
  6. Fifteen spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
 
 
@@ -171,7 +168,7 @@ nanomalies <- nanomalies  |>
       filter(abs(z) > 3) |>
       NROW(),
     n01b |>
-      mutate(z = (v2 - mean(v2)) / sd(v2)) |>
+      mutate(z = (y - mean(y)) / sd(y)) |>
       filter(abs(z) > 3) |>
       NROW(),
     n01 |>
@@ -190,7 +187,7 @@ nanomalies <- nanomalies  |>
 stopifnot(nanomalies$Zscore == c(1, 1, 0, 1, 12, 15))
 ```
 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.35),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. See @sec-quantiles.] we obtain the same results in two of the examples, we find one of the two anomalies in Example 3, but the remaining examples are even worse.
+If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.349),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. See @sec-quantiles.] we obtain the same results in two of the examples, we find one of the two anomalies in `n01b`, but the remaining examples are even worse.
 
 ```{r}
 #| label: check
@@ -200,34 +197,34 @@ nanomalies <- nanomalies  |>
   mutate(Zscore_robust = c(
     cricket_batting |>
       filter(Innings > 20) |>
-      mutate(z = (Average - median(Average)) / IQR(Average) * 1.34) |>
+      mutate(z = (Average - median(Average)) / IQR(Average) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
     oldfaithful |>
-      mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) |>
+      mutate(z = (duration - median(duration)) / IQR(duration) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
     n01b |>
-      mutate(z = (v2 - median(v2)) / IQR(v2) * 1.34) |>
+      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
     n01 |>
-      mutate(z = (v1 - median(v1)) / IQR(v1) * 1.34) |>
+      mutate(z = (v1 - median(v1)) / IQR(v1) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
     t2 |>
-      mutate(z = (y - median(y)) / IQR(y) * 1.34) |>
+      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
     chisq4 |>
-      mutate(z = (y - median(y)) / IQR(y) * 1.34) |>
+      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW()
   ))
-stopifnot(nanomalies$Zscore_robust == c(1, 243, 0, 1, 71, 24))
+stopifnot(nanomalies$Zscore_robust == c(1, 243, 0, 2, 71, 24))
 
 of_threshold <- oldfaithful |>
-  mutate(z = (duration - median(duration)) / IQR(duration) * 1.34) |>
+  mutate(z = (duration - median(duration)) / IQR(duration) * 1.349) |>
   filter(abs(z) <= 3) |>
   pull(duration) |>
   min()
@@ -237,19 +234,19 @@ of_threshold <- oldfaithful |>
 #| label: zscore2
 #| code-fold: false
 oldfaithful |>
-  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.34)) |>
+  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.349)) |>
   filter(abs(z) > 3)
 ```
 
 For the Old Faithful example, there are now `r nanomalies$Zscore_robust[2]` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
 
-For the $t_2$ example, there are now `r nanomalies$Zscore_robust[5]` out of `r NROW(t2)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r nanomalies$Zscore_robust[6]` out of `r NROW(chisq4)` observations falsely identified as anomalous.
+For the $\text{t}_2$ example, there are now `r nanomalies$Zscore_robust[5]` out of `r NROW(t2)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r nanomalies$Zscore_robust[6]` out of `r NROW(chisq4)` observations falsely identified as anomalous.
 
 ### Probability of spurious anomalies
 
 Even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is $`r round(2*pnorm(-3),4)`$ (assuming a large sample), so we would expect to see 1 in every $1/ `r round(2*pnorm(-3),4)` = `r round(.5/pnorm(-3))`$ regular observations being identified as an anomaly using this approach.
 
-In fact, we can be more accurate than this. If our $n$ observations come from a normal distribution, then the z-scores follow (approximately) a $t_{n-1}$ distribution. (The approximation arises because we replace the mean and standard deviations by their sample estimate.) When we identify anomalies as those points with $|z|>c$, then the probability of finding at least one spurious anomaly is the probability of the maximum being above $c$ or the minimum being below $-c$. Since the distribution is symmetric, these probabilities are the same. Let $M_n$ be the maximum of $n$ z-scores computed from the data; then $P(M_n \le c) = (F_{t}(c; n-1))^n$ where $F_{t}(y; n-1)$ is the cumulative distribution function of a $t$ distribution with $n-1$ degrees of freedom. So the probability of at least one spurious anomaly is
+In fact, we can be more accurate than this. If our $n$ observations come from a normal distribution, then the z-scores follow (approximately) a $\text{t}_{n-1}$ distribution. (The approximation arises because we replace the mean and standard deviations by their sample estimate.) When we identify anomalies as those points with $|z|>c$, then the probability of finding at least one spurious anomaly is the probability of the maximum being above $c$ or the minimum being below $-c$. Since the distribution is symmetric, these probabilities are the same. Let $M_n$ be the maximum of $n$ z-scores computed from the data; then $P(M_n \le c) = (F_{t}(c; n-1))^n$ where $F_{t}(y; n-1)$ is the cumulative distribution function of a $t$ distribution with $n-1$ degrees of freedom. So the probability of at least one spurious anomaly is
 $$
   1 - (F_{t}(c; n-1))^{2n}.
 $$ {#eq-spuriousz}
@@ -310,7 +307,7 @@ zspuriousdf |>
   theme(axis.text.x = element_text(size = 8))
 ```
 
-Let's also compute the probability of spurious anomalies for different data distributions --- the $t_2$ and $\chi^2_4$ distributions shown in @fig-testdist.
+Let's also compute the probability of spurious anomalies for different data distributions --- the $\text{t}_2$ and $\chi^2_4$ distributions shown in @fig-testdist.
 
 ```{r}
 #| label: fig-zspurious2
@@ -393,7 +390,7 @@ oldfaithful |> filter(peirce_anomalies(duration))
 n01 |>
   select(v1) |>
   filter(peirce_anomalies(v1))
-n01b |> filter(peirce_anomalies(v2))
+n01b |> filter(peirce_anomalies(y))
 t2 |> filter(peirce_anomalies(y))
 chisq4 |> filter(peirce_anomalies(y))
 ```
@@ -405,7 +402,7 @@ nanomalies <- nanomalies  |>
   mutate(Peirce = c(
     cricket_batting |> filter(peirce_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(peirce_anomalies(duration)) |> NROW(),
-    n01b |> filter(peirce_anomalies(v2)) |> NROW(),
+    n01b |> filter(peirce_anomalies(y)) |> NROW(),
     n01 |> filter(peirce_anomalies(v1)) |> NROW(),
     t2 |> filter(peirce_anomalies(y)) |> NROW(),
     chisq4 |> filter(peirce_anomalies(y)) |> NROW()
@@ -418,7 +415,7 @@ stopifnot(nanomalies$Peirce == c(0, 1, 2, 1, 8, 6))
 2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
 3. Both anomalies have been correctly spotted amongst the 18 N(0,1) observations.
 4. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
-5. Eight spurious anomalies have been identified in the 1000 $t_2$ observations.
+5. Eight spurious anomalies have been identified in the 1000 $\text{t}_2$ observations.
 6. Six spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
 
 ### Chauvenet's criterion {-}
@@ -434,7 +431,7 @@ nanomalies <- nanomalies  |>
   mutate(Chauvenet = c(
     cricket_batting |> filter(chauvenet_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(chauvenet_anomalies(duration)) |> NROW(),
-    n01b |> filter(chauvenet_anomalies(v2)) |> NROW(),
+    n01b |> filter(chauvenet_anomalies(y)) |> NROW(),
     n01 |> filter(chauvenet_anomalies(v1)) |> NROW(),
     t2 |> filter(chauvenet_anomalies(y)) |> NROW(),
     chisq4 |> filter(chauvenet_anomalies(y)) |> NROW()
@@ -451,7 +448,7 @@ Egon Pearson and Chandra Sekar proposed [@Pearson1936] that an observation be co
 $$
 c_\alpha = t_{\alpha/n, n-2} \sqrt{\frac{n-1}{n-2+t^2_{\alpha/n, n-2}}}
 $$
-and $t_{p, k}$ is the $1-p$ quantile of the $t$ distribution with $k$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
+and $t_{p, k}$ is the $1-p$ quantile of the t distribution with $k$ degrees of freedom. Later, this was extended by Frank Grubbs [@Grubbs1950] who proposed  using
 $$
 c_\alpha = \frac{(n-1)t_{\alpha/2n, n-2}}{\sqrt{n(n-2 + t^2_{\alpha/2n, n-2})}}.
 $$
@@ -580,7 +577,7 @@ cricket_batting |>
 oldfaithful |>
   filter(grubbs_anomalies(duration))
 n01b |>
-  filter(grubbs_anomalies(v2))
+  filter(grubbs_anomalies(y))
 n01 |>
   filter(grubbs_anomalies(v1))
 t2 |>
@@ -597,7 +594,7 @@ nanomalies <- nanomalies  |>
   mutate(Grubbs = c(
     cricket_batting |> filter(grubbs_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(grubbs_anomalies(duration)) |> NROW(),
-    n01b |> filter(grubbs_anomalies(v2)) |> NROW(),
+    n01b |> filter(grubbs_anomalies(y)) |> NROW(),
     n01 |> filter(grubbs_anomalies(v1)) |> NROW(),
     t2 |> filter(grubbs_anomalies(y)) |> NROW(),
     chisq4 |> filter(grubbs_anomalies(y)) |> NROW()
@@ -606,7 +603,7 @@ nanomalies <- nanomalies  |>
 stopifnot(nanomalies$Grubbs == c(0, 1, 0, 0, 8, 1))
 ```
 
-The clear failure is with the $t_2$ distribution which has no real anomalies. A spurious anomaly is also detected in the $\chi^2_4$ example, and real anomalies are missed in the Old Faithful data and in Example 3.
+The clear failure is with the $\text{t}_2$ distribution which has no real anomalies. A spurious anomaly is also detected in the $\chi^2_4$ example, and real anomalies are missed in the Old Faithful data and in `n01b`.
 
 ## Dixon's Q test
 
@@ -689,7 +686,7 @@ cricket_batting |>
 oldfaithful |>
   filter(dixon_anomalies(duration))
 n01b |>
-  filter(dixon_anomalies(v2))
+  filter(dixon_anomalies(y))
 n01 |>
   filter(dixon_anomalies(v1))
 t2 |>
@@ -708,7 +705,7 @@ nanomalies <- nanomalies  |>
       filter(Innings > 20) |>
       filter(dixon_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(dixon_anomalies(duration)) |> NROW(),
-    n01b |> filter(dixon_anomalies(v2)) |> NROW(),
+    n01b |> filter(dixon_anomalies(y)) |> NROW(),
     n01 |> filter(dixon_anomalies(v1)) |> NROW(),
     t2 |> filter(dixon_anomalies(y)) |> NROW(),
     chisq4 |> filter(dixon_anomalies(y)) |> NROW()
@@ -717,7 +714,7 @@ nanomalies <- nanomalies  |>
 stopifnot(nanomalies$Dixon == c(1, 1, 0, 0, 0, 0))
 ```
 
-For these examples, the test has worked relatively well apart from Example 3, where it is failed to identify either anomaly.
+For these examples, the test has worked relatively well apart from `n01b`, where it is failed to identify either anomaly.
 
 ## Summary
 
@@ -728,9 +725,12 @@ We can summarise the results of the various tests used here in the following tab
 #| echo: false
 #| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies and no spurious anomalies."
 library(kableExtra)
-nanomalies$Example[5] <- "Ex 5: $t_2$"
-nanomalies$Example[6] <- "Ex 6: $\\chi^2_4$"
+nanomalies$Example[5] <- "<span class='math inline'>\\text{t}_2</span>"
+nanomalies$Example[6] <- "<span class='math inline'>\\chi^2_4</span>"
 nanomalies |>
+  mutate(
+    Example = paste0(row_number(), ". ", Example)
+  ) |>
   knitr::kable(escape = FALSE, format = "html") %>%
   add_header_above(c(" " = 3, "Anomaly detection method" = 6)) %>%
   column_spec(4, color = if_else(nanomalies$Zscore != nanomalies$`Expected anomalies`, "red", "black")) %>%
@@ -741,7 +741,7 @@ nanomalies |>
   column_spec(9, color = if_else(nanomalies$Dixon != nanomalies$`Expected anomalies`, "red", "black"))
 ```
 
-None of the tests found the two clear anomalies in the Old Faithful data, and most failed to find either of the artificial anomalies in Example 3. Only the Dixon test worked well for the large simulated data with no anomalies.
+None of the tests found the two clear anomalies in the Old Faithful data, and most failed to find either of the artificial anomalies in `n01b`. Only the Dixon test worked well for the large simulated data with no anomalies.
 
 As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
 
