@@ -6,6 +6,104 @@
 source("before-each-chapter.R")
 ```
 
+## Pairwise distances
+
+Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
+
+Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
+$$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
+This is also known as the $L_2$ distance.
+
+For $d=1$ or $d=2$, this is the physical distance between the points when plotted on a strip plot or a scatterplot (provided there is no jittering used).
+
+The `dist()` function will return a distance matrix containing all pairwise distances computed in this way. Here is an example using only the first five observations of the `old_faithful` data set (omitting the time stamp). Because the distances are symmetric, only the lower triangle of the matrix is computed.
+
+```{r}
+#| label: dist-1
+#| code-fold: false
+oldfaithful |>
+  select(-time) |>
+  head(5) |>
+  dist()
+```
+
+When the variables have very different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
+
+```{r}
+#| label: dist-2
+#| code-fold: false
+oldfaithful |>
+  select(-time) |>
+  scale() |>
+  head(5) |>
+  dist()
+```
+
+The `scale()` function subtracts the mean and divides by the standard deviation for each column of data. Therefore, all variables in the resulting scaled data have mean zero and standard deviation equal to 1.
+
+The `dist()` function will also compute other types of distances which may be more appropriate for some kinds of data. These are specified using the `method` argument and defined below.
+
+Manhattan:
+: Absolute distance between the two vectors:
+$$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
+This is also known as the $L_1$ distance.  It is called the Manhattan distance as it gives the shortest path  between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
+
+Minkowski:
+: This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
+$$\|\bm{y}_i - \bm{y}_j\| = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
+The value of $p$ is specified using the `p` argument. It is named after the German mathematician Hermann Minkowski.
+
+Maximum:
+: Maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$:
+$$\|\bm{y}_i - \bm{y}_j\| = \max_k |y_{ik}-y_{jk}|.$$
+
+Canberra:
+: $$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d \frac{|y_{ik}-y_{jk}|}{|y_{ik}|+|y_{jk}|}.$$
+Terms with zero numerator and denominator are omitted from the sum. This distance was introduced by two Australian scientists, Godfrey Lance and Bill Williams, who named it after their home city of Canberra. It scales the distances between components by the size of the components, so there is an inbuilt scaling which avoids problems with variables on different units. However, if there are components which are close to zero, but not identical to zero, the measure is numerically unstable. So it is better to scale the data explicitly before computing a distance, unless the variables cannot take small values.
+
+Binary:
+: This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
+
+For more information about pairwise distances, see @Borg2005.
+
+## Nearest neighbours
+
+Some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
+
+The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm".
+
+Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `dbscan` package uses kd trees to quickly identify the $k$ nearest observations to each eruption. As noted earlier, we will scale the data before computing any distances.
+
+```{r}
+#| label: knn
+#| code-fold: false
+# Find 5 nearest neighbours to each eruption
+knn <- oldfaithful |>
+  select(duration, waiting) |>
+  scale() |>
+  dbscan::kNN(k = 5)
+# First eruption in the data set
+oldfaithful[1, ]
+# Five closest observations
+oldfaithful[knn$id[1, ], ]
+```
+
+For very large data sets, approximations are available which speed up the computation even more, but are less accurate in finding the $k$ nearest neighbours. The `approx` argument specifies a distance tolerance which makes the process faster for large data sets, although the neighbours returned may not be the exact nearest  neighbours.
+
+```{r}
+#| label: ann
+#| code-fold: false
+# Find 5 approximate nearest neighbours to each eruption
+kann <- oldfaithful |>
+  select(duration, waiting) |>
+  scale() |>
+  dbscan::kNN(k = 5, approx = 2)
+# Five closest observations
+oldfaithful[kann$id[1, ], ]
+```
+
+Here the fifth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
+
 ## Local outlier factors
 
 A popular way of using $k$-nearest neighbours for anomaly detection is via local outlier factors [@lof]. This is similar to the idea discussed in \@ref(kdescores) of finding points with low probability density estimates, in that it is designed to find points in areas with few surrounding observations.

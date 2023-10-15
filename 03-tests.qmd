@@ -1,4 +1,4 @@
-# Parametric methods {#sec-parametric-methods}
+# Statistical tests {#sec-tests}
 
 ```{r}
 #| include: false

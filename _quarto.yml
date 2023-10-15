@@ -10,8 +10,8 @@ book:
   chapters:
     - index.qmd
     - "01-intro.qmd"
-    - "02-tools.qmd"
-    - "03-parametric.qmd"
+    - "02-distributions.qmd"
+    - "03-tests.qmd"
     - "04-quantile.qmd"
     - "05-density.qmd"
     - "06-distance.qmd"

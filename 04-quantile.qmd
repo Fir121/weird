@@ -10,7 +10,68 @@ Once computing had developed to the point where more sophisticated calculations 
 
 In the last chapter, we considered methods based only on one variable at a time. In this chapter (and the next two), we will look at methods that use either one or two variables.
 
-## Anomalies using quantiles
+### Sample quantiles {#sec-sample-quantiles}
+
+When we have data, we can estimate the quantiles of the underlying distribution using the sample quantiles.
+
+Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a quantile. There are a surprising number of ways this can be done, and there is no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is very small, or when you are interested in the tails when $p$ is very small. So we will simply describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{Q}(p)$ and $100(1-p)$% of the intervals lie to the right of $\hat{Q}(p)$.
+
+Equivalently, let $k^+ = (n-1)p+1$ and
+$$
+  \hat{Q}(p) = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
+$$
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder.
+
+A few special cases give some well-known summary statistics.
+
+  * When $p=0$, then $k=1$ and $\gamma = 0$, so $\hat{Q}(0)$ is the minimum.
+  * When $p=1$, then $k=n$ and $\gamma = 0$, so $\hat{Q}(1)$ is the maximum.
+  * When $p=0.5$ and $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
+  * When $p=0.5$ and $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
+
+The sample quantiles $\hat{Q}(0.25)$ and $\hat{Q}(0.75)$ are known as the **quartiles**, and the difference between them is the **IQR** or "interquartile range". The latter is often used as an alternative to the standard deviation for estimating the spread of the data as it is unaffected by any anomalies in the data. When used in this way, the IQR is usually divided by 1.349 to make it an estimate of the standard deviation assuming a normal distribution. The scaling factor will be different for other distributions.
+
+### Example: Test cricket batting averages {-}
+
+Using this idea, we can calculate some of the sample quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings.
+
+```{r battingsubset, echo=FALSE}
+batave <- cricket_batting |> filter(Innings > 20)
+quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0, 1, by = 0.25), 0.99)))
+n <- NROW(batave)
+kplus <- (n - 1) * c(seq(0, 1, by = 0.25), 0.99) + 1
+k <- trunc(kplus)
+gamma <- kplus - k
+```
+
+There are $n=`r n`$ observations with a minimum of $\hat{Q}(0) = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{Q}(1) = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is
+$$\hat{Q}(0.5) = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$
+The sample quartiles are given by
+$$\hat{Q}(0.25) = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
+and
+$$\hat{Q}(0.75) = `r 1- gamma[4]` y_{(`r k[4]`)} + `r gamma[4]` y_{(`r k[4]+1`)} = `r quartiles[4]`.$$
+The 0.99 sample quantile is given by
+$$\hat{Q}(0.99) = `r 1- gamma[6]` y_{(`r k[6]`)} + `r gamma[6]` y_{(`r k[6]+1`)} = `r quartiles[6]`.
+$$
+
+* So 50% of all batters have an average higher than `r quartiles[3]`, while 50% of all batters have a lower average than `r quartiles[3]`.
+* Also, 50% of all batters have an average between `r quartiles[2]` and `r quartiles[4]`, with 25% lower than `r quartiles[2]` and 25% higher than `r quartiles[4]`.
+* Only 1% of batters have an average above `r quartiles[6]`.
+
+These values are easily computed using the `quantile()` function.
+
+```{r}
+#| label: battingquantiles
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  pull(Average) |>
+  quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1))
+```
+
+### Anomalies using quantiles
 
 One of the simplest approaches that is sometimes used to find anomalies in univariate data is to identify the points that are above or below a specified quantile value. For example, we might identify anomalies as points above the 0.999 quantile or below the 0.001 quantile. More generally, an anomaly could be defined as points above $\hat{Q}(1-p)$ or below $\hat{Q}(p)$.
 
@@ -370,7 +431,7 @@ n01 |>
 ```{r lvplots3, echo=FALSE, fig.asp=0.2, fig.cap="Letter value plot of 19 N(0,1) observations with an anomaly at 4."}
 #| label: fig-lvplots3
 n01b |>
-  ggplot(aes(x = 1, y = v2)) +
+  ggplot(aes(x = 1, y = y)) +
   geom_lv(aes(fill = ..LV..)) +
   scale_x_discrete() +
   coord_flip() +
