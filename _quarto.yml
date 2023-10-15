@@ -57,7 +57,8 @@ format:
     theme:
       - cosmo
       - otexts.scss
-    fontsize: 16px
-    mainfont: "Merriweather, Georgia, serif"
+    fontsize: 18px
+    linestretch: 1.5
+    mainfont: "Noto Serif, Georgia, serif"
     code-link: true
     code-fold: true
