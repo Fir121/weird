@@ -25,7 +25,7 @@ book:
     - "14-cybersecurity.qmd"
     - "99-refs.qmd"
   page-footer:
-    left: "Published by OTexts using <a href='https://quarto.org'>Quarto</a>. © <a href='https://robjhyndman.com'>Rob J Hyndman</a>"
+    left: "Published by OTexts using [Quarto](https://quarto.org). {{< fa copyright >}} [Rob J Hyndman](https://robjhyndman.com)"
     border: false
     background: light
   sidebar:
@@ -62,3 +62,4 @@ format:
     mainfont: "Noto Serif, Georgia, serif"
     code-link: true
     code-fold: true
+    embed-resources: false
