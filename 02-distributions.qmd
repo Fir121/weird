@@ -10,14 +10,14 @@ In this book, we take a probabilistic perspective of anomaly detection. That is,
 
 We are interested in data obtained from a range of possible sample spaces in this book, but for now we will assume that all data are real numbers, and come from continuous probability distributions. Later we will consider other types of data, including discrete data, data that are functions, images, video, networks, text, or even probability distributions as data objects. But for the first half of the book, we will only deal with numerical data.
 
-References will be provided at the end of each section for those who want to learn more about the topics covered here.
+References will be provided at the end of most sections for those who want to learn more about the topics covered here.
 
 ## Univariate probability distributions {#sec-univariate}
 
 Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$ (the real numbers), with its cumulative probability distribution (cdf) given by
 $$F(y) = \text{Pr}(Y \le y).
 $$ {#eq-cdf}
-This function is monotonically increasing in $y$, and takes values between 0 and 1. Because we are assuming that $Y$ is a continuous random variable, $F(y)$ is a continuous function of $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
+This function is monotonically increasing in $y$, and takes values between 0 and 1. Because $Y$ is a continuous random variable, $F(y)$ is a continuous function of $y$. The probability density function (pdf) is defined as the derivative of the cdf, so $f(y) = F'(y)$, assuming the derivative exists at $y$. The pdf is non-negative, and integrates to 1.
 
 The probability that $Y$ lies in the interval $[a,b]$ is given by $\text{Pr}(a \leq Y \leq b) = \int_a^b f(y)dy$.
 
@@ -207,30 +207,34 @@ tibble(
 
 This is an example of a multimodal density function, with modes at $-2$ and $2$. The mixture distribution is not Normal, even though both component distributions are Normal. The mixture distribution is also not symmetric, even though both component distributions are symmetric.
 
+### Further reading
+
 A good introduction to other probability distributions on real sample spaces is provided by @Forbes2011, with more advanced treatments in @JKunicontinuous1 and @JKunicontinuous2.
 
 ## Central limit theorem {#sec-clt}
 
-The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed. That is, if $X_1,\dots,X_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
+The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed. That is, if $Y_1,\dots,Y_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
 $$
-  \frac{\sum_{i=1}^n X_i - n\mu}{\sigma\sqrt{n}} \longrightarrow \text{N}(0,1).
+  \frac{\sum_{i=1}^n Y_i - n\mu}{\sigma\sqrt{n}} \longrightarrow \text{N}(0,1).
 $$
 
-This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $X_1,\dots,X_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
+This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $Y_1,\dots,Y_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
-For example, the sample mean (or average), is simply the sum of the observations divided by the sample size. So by the CLT, for a large sample size, the sample mean will have a Normal distribution. That is, for a large sample size, if the observations come from a distribution with mean $\mu$ and variance $\sigma^2$, then the sample mean will have distribution $\text{N}(\mu, \sigma^2/n)$, regardless of the underlying distribution of the observations.
+For example, the sample mean (or average), is simply the sum of the observations divided by the sample size. So by the CLT, for a large sample size, the sample mean will have a Normal distribution. That is, if the observations come from a distribution with mean $\mu$ and variance $\sigma^2$, then the sample mean will have distribution $\text{N}(\mu, \sigma^2/n)$ when $n$ is large, regardless of the underlying distribution of the observations.
 
-Variations on the theorem allow the variables $X_1,\dots,X_n$ to be independent but not necessarily identically distributed, or to be weakly dependent.
+Variations on the theorem allow the variables $Y_1,\dots,Y_n$ to be independent but not necessarily identically distributed, or to be weakly dependent.
 
 It is because of the CLT that a $\chi^2_k$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2_k$ distribution.)
 
 Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
 
+### Further reading
+
 @Wasserman2004 provides some further details and examples of the CLT.
 
 ## Quantiles {#sec-quantiles}
 
-A quantile for a continuous univariate distribution is a point that divides the sample space into two regions, based on the probability of observations falling below or above the quantile value. If $Q(p)$ denotes the quantile corresponding to probability $p$, then $P(Y \le Q(p)) = p$ and $P(Y > Q(p)) = 1-p$.
+A quantile of a continuous univariate distribution is a point that divides the sample space into two regions, based on the probability of observations falling below or above the quantile value. If $Q(p)$ denotes the quantile corresponding to probability $p$, then $P(Y \le Q(p)) = p$ and $P(Y > Q(p)) = 1-p$.
 
 ```{r}
 #| label: fig-quantile
@@ -259,7 +263,7 @@ The quantiles of a continuous distribution are given by the inverse of the cumul
 
 Some quantiles are given special names. The $p=0.5$ quantile is called the **median**. The $p=0.25$ and $p=0.75$ quantiles are called the **lower** and **upper quartiles** respectively. The **deciles** are defined when $p=0.1,0.2,\dots,0.9$, while the **percentiles** are defined with $p=0.01,0.02,\dots,0.99$.
 
-The "interquartile range" (IQR) is the difference between the upper and lower quartiles. It is a measure of the spread of the distribution, and is often used as a robust alternative to the standard deviation. For a normal distribution, the standard deviation is equal to 1.35 times the IQR.
+The "interquartile range" (IQR) is the difference between the upper and lower quartiles. It is a measure of the spread of the distribution, and is often used as a robust alternative to the standard deviation. For a normal distribution, the standard deviation is equal to 1.349 times the IQR.
 
 The quantile functions for a standard normal distribution, a $\text{t}_5$ distribution, and a $\chi^2_5$ distribution are shown in @fig-quantile2.
 
@@ -284,6 +288,64 @@ tibble(
   theme(legend.text.align = 0)
 ```
 
+## Sample quantiles {#sec-sample-quantiles}
+
+The **sample quantiles** of a data set are estimates of the quantiles of the underlying distribution. Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a quantile $Q(p)$. There are a surprising number of ways this can be done, and there is no accepted standard approach. The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is very small, or when you are interested in the tails when $p$ is close to 0 or 1. We will describe the default approach used by `quantile()` (which is *not* the one recommended by Hyndman & Fan!).
+
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between the points $(p_k, y_{(k)})$ where $p_k = (k-1)/(n-1)$. These points divide the range of the data into $n-1$ intervals, and exactly $100p$% of the intervals lie to the left of $\hat{Q}(p)$ and $100(1-p)$% of the intervals lie to the right of $\hat{Q}(p)$.
+
+Equivalently, if $k^+= (n-1)p+1$, then
+$$
+  \hat{Q}(p) = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
+$$
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder.
+
+A few special cases give some well-known summary statistics.
+
+  * When $p=0$, then $k=1$ and $\gamma = 0$, so $\hat{Q}(0)$ is the minimum.
+  * When $p=1$, then $k=n$ and $\gamma = 0$, so $\hat{Q}(1)$ is the maximum.
+  * When $p=0.5$ and $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
+  * When $p=0.5$ and $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
+
+The sample quartiles are $\hat{Q}(0.25)$ and $\hat{Q}(0.75)$, and the difference between them is the sample **IQR** (interquartile range). The latter is often used as an alternative to the standard deviation for estimating the spread of the data as it is unaffected by any anomalies in the data. When used in this way, the IQR is usually divided by 1.349 to make it an estimate of the standard deviation assuming a normal distribution. The scaling factor will be different for other distributions.
+
+### Example: Test cricket batting averages {-}
+
+Using this idea, we can calculate some of the sample quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings.
+
+```{r battingsubset, echo=FALSE}
+batave <- cricket_batting |> filter(Innings > 20)
+quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0, 1, by = 0.25), 0.99)))
+n <- NROW(batave)
+kplus <- (n - 1) * c(seq(0, 1, by = 0.25), 0.99) + 1
+k <- trunc(kplus)
+gamma <- kplus - k
+```
+
+There are $n=`r n`$ observations with a minimum of $\hat{Q}(0) = y_{(1)} = `r quartiles[1]`$ and a maximum of $\hat{Q}(1) = y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is
+$$\hat{Q}(0.5) = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$
+The sample quartiles are given by
+$$\hat{Q}(0.25) = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
+and
+$$\hat{Q}(0.75) = `r 1- gamma[4]` y_{(`r k[4]`)} + `r gamma[4]` y_{(`r k[4]+1`)} = `r quartiles[4]`.$$
+The 0.99 sample quantile is given by
+$$\hat{Q}(0.99) = `r 1- gamma[6]` y_{(`r k[6]`)} + `r gamma[6]` y_{(`r k[6]+1`)} = `r quartiles[6]`.
+$$
+
+* So 50% of all batters have an average higher than `r quartiles[3]`, while 50% of all batters have a lower average than `r quartiles[3]`.
+* Also, 50% of all batters have an average between `r quartiles[2]` and `r quartiles[4]`, with 25% lower than `r quartiles[2]` and 25% higher than `r quartiles[4]`.
+* Only 1% of batters have an average above `r quartiles[6]`.
+
+These values are easily computed using the `quantile()` function.
+
+```{r}
+#| label: battingquantiles
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  pull(Average) |>
+  quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1))
+```
 
 ## Highest density regions {#sec-hdr}
 
@@ -374,15 +436,17 @@ p +
   )
 ```
 
+### Further reading
+
 For further discussion of HDRs, see @HDR96.
 
 ## Multivariate probability distributions {#sec-multivariate}
 
 While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
 
-Suppose $\bm{Y} = [Y_1,\dots,Y_n]'$ is a random variable taking values in $\mathbb{R}^d$, the $d$-dimensional real numbers. Then the joint distribution of $\bm{y}$ is defined by the joint cdf
+Suppose $\bm{Y} = [Y_1,\dots,Y_n]'$ is a random variable taking values in $\mathbb{R}^d$, the $d$-dimensional real numbers. Then the joint distribution of $\bm{Y}$ is defined by the joint cdf
 $$
-F(\bm{y}) = \text{Pr}(\bm{Y} = \bm{y}),
+F(\bm{y}) = \text{Pr}(\bm{Y} \le \bm{y}),
 $$
 while the joint density function is given by
 $$
@@ -628,11 +692,20 @@ The three types of limits correspond to different forms of the tail behaviour of
   * When $F$ has exponential tails, such as with a normal distribution or a Gamma distribution, then $G$ is a Gumbel distribution.
   * When $F$ has heavy tails including polynomial decay, then $G$ is a Fréchet distribution. One example is when $F$ itself is a Fréchet distribution with $F(y)= e^{-1/y}$, $y>0$.
 
-To illustrate, suppose $F$ is a standard normal distribution N(0,1) and we have $n=1000$ observations. Then the distribution of the maximum can be obtained via simulation. We will fit an extreme value distribution to the resulting maximums obtained.
+To illustrate, suppose $F$ is a standard normal distribution N(0,1) and we have $n=1000$ observations, $Y_1,\dots,Y_n$. Then we know that the distribution of the maximum is given by
+$$
+  P\left\{ \max \{Y_1, \dots, Y_n\} \leq z \right\} = \left[ \Phi(z) \right]^n,
+$$
+so the density of the maximum is given by
+$$
+  f(z) = n \left[ \Phi(z) \right]^{n-1} \phi(z).
+$$ {#eq-maxn01}
+
+According to the FTG theorem, the distribution of the maximum can be approximated by a Gumbel distribution. We can find the parameters of the Gumbel distribution by estimating them from simulated maximums. We simulate 10000 maximums (each from 1000 N(0,1) draws), and fit a Gumbel distribution to the resulting data. The resulting Gumbel distribution is shown in @fig-evdexample (in blue), along with the true distribution of the maximum given by @eq-maxn01 (in black). The approximation is so good, that it is hard to distinguish the two distributions.
 
 ```{r}
 #| label: "fig-evdexample"
-#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 10000 such maximums and shown the estimated GEV distribution."
+#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 10000 such maximums and shown the estimated GEV distribution (in blue), along with the true distribution (in black)."
 m <- 10000 # Number of simulations
 n <- 1000 # Number of observations in each data set
 maximums <- numeric(m)
@@ -640,11 +713,15 @@ for (i in seq(m)) {
   maximums[i] <- max(rnorm(n))
 }
 gev <- evd::fgev(maximums)$estimate
-truedensity <- tibble(y = seq(2, 6, l = 100)) |>
-  mutate(fy = evd::dgev(y, loc = gev["loc"], scale = gev["scale"], shape = gev["shape"]))
-tibble(maximum = maximums) |>
-  ggplot(aes(x = maximums)) +
-  geom_line(data = truedensity, aes(x = y, y = fy), col = "#D55E00")
+max_density <- tibble(y = seq(2, 6, l = 100)) |>
+  mutate(
+    fy = n * pnorm(y)^(n-1) * dnorm(y),
+    estfy = evd::dgev(y, loc = gev["loc"], scale = gev["scale"], shape = gev["shape"])
+  )
+max_density |>
+  ggplot(aes(x = y, y = fy)) +
+  geom_line() +
+  geom_line(aes(y = estfy), col = "#0072B2")
 ```
 
 ### The Generalized Pareto Distribution {-}
@@ -669,15 +746,19 @@ Continuing the previous example, we now look at the probability distribution of 
 df <- tibble(y = rnorm(1e6)) |>
   filter(y > 3)
 gpd <- evd::fpot(df$y, 3)$estimate
-truedensity <- truedensity |>
+max_density <- max_density |>
   mutate(
     hy = evd::dgpd(y, loc = 3, scale = gev["scale"], shape = gev["shape"]),
     hy2 = evd::dgpd(y, loc = 3, scale = gpd["scale"], shape = gpd["shape"])
   )
 df |>
   ggplot(aes(x = y)) +
-  geom_line(data = truedensity, aes(x = y, y = hy), col = "#D55E00") +
-  geom_line(data = truedensity, aes(x = y, y = hy2), col = "#0072B2")
+  geom_line(data = max_density, aes(x = y, y = hy), col = "#D55E00") +
+  geom_line(data = max_density, aes(x = y, y = hy2), col = "#0072B2")
 ```
 
 The orange estimate is slightly better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances).
+
+### Further reading
+
+A good introduction to extreme value theory is @coles2001introduction.

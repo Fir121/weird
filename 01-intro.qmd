@@ -89,9 +89,11 @@ This example reveals some lessons about anomaly detection:
 
 ## Approaches to anomaly detection
 
+We will take a probabilistic perspective of anomaly detection, where we aim to estimate the probability that an observation is identified as an anomaly. Consequently, we will need to introduce (or revise) some material on probability distributions and related tools in @sec-distributions.
+
 ### Z-scores and statistical tests
 
-The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in [Chapter -@sec-tests].
+The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying probability distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in [Chapter -@sec-tests].
 
 ### Quantile and depth-based methods
 
@@ -109,7 +111,7 @@ Anomaly detection has a long history in the statistics literature, including all
 
 Recently, computer scientists have turned their attention to the problem of anomaly detection, especially as data sets have grown in size and complexity. Anomaly detection arises in cyber security systems (where intrusions are identified as anomalies), in credit-card fraud (where unusual buying patterns are anomalous) and in remote sensing (where unusual changes in land use are anomalies). Machine-learning approaches have been developed to address these problems, mostly using distanced-based methods, although some important contributions to the density-based methods have also appeared in the machine learning literature.
 
-In this book, I make no attempt to distinguish methods as "statistical" or "machine-learning". The distinction is largely about the training of the researchers, or the journals in which they publish, and has little to do with the methods themselves. In any case, the two communities have been slowly moving closer together, with computer scientists taking a more probabilistic perspective than previously, and statisticians taking a more computational and algorithmic approach than their forbears. Now there is now considerable interaction and overlap between these communities, and continuing to label methods as "statistical" or "machine-learning" is unhelpful.
+In this book, I make no attempt to distinguish methods as "statistical" or "machine-learning". The distinction is largely about the training of the researchers, or the journals in which they publish, and has little to do with the methods themselves. In any case, the two communities have been slowly moving closer together, with computer scientists taking a more probabilistic perspective than previously, and statisticians taking a more computational and algorithmic approach than their forebears. Now there is now considerable interaction and overlap between these communities, and continuing to label methods as "statistical" or "machine-learning" is unhelpful.
 
 ### Supervised vs unsupervised approaches {-}
 
