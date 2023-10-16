@@ -45,6 +45,7 @@ fig-width: 8
 fig-height: 5
 fig-align: center
 output-width: 100%
+highlight-style: tango
 
 execute:
   freeze: auto
@@ -60,6 +61,6 @@ format:
     fontsize: 18px
     linestretch: 1.5
     mainfont: "Noto Serif, Georgia, serif"
-    code-link: true
+    code-link: false
     code-fold: true
     embed-resources: false
