@@ -26,7 +26,7 @@ of2021 <- oldfaithful |>
   mutate(eruption = row_number())
 s <- sd(of2021$duration)
 iqr <- IQR(of2021$duration)
-h <- 0.9 * min(s, iqr / 1.34) * NROW(of2021)^(-1 / 5)
+h <- 0.9 * min(s, iqr / 1.349) * NROW(of2021)^(-1 / 5)
 ```
 
 Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
@@ -93,7 +93,7 @@ of2021 |>
 
 When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ uses Silverman's "rule-of-thumb" [@Silverman1986,p48]:
 $$
-  h = 0.9 \min(s, \text{IQR}/1.34) n^{-1/5},
+  h = 0.9 \min(s, \text{IQR}/1.349) n^{-1/5},
 $$  {#eq-ruleofthumb}
 where $s$ is the sample standard deviation and $\text{IQR} = \hat{Q}(0.75) - \hat{Q}(0.25)$. This tends to work reasonably well for most data sets. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used.
 
@@ -120,7 +120,7 @@ of <- oldfaithful |>
   filter(duration < 7000)
 s <- sd(of$duration)
 iqr <- IQR(of$duration)
-h <- 0.9 * min(s, iqr / 1.34) * NROW(of)^(-1 / 5)
+h <- 0.9 * min(s, iqr / 1.349) * NROW(of)^(-1 / 5)
 ```
 
 As this is a much bigger data set (with `r NROW(of)` observations), the selected bandwidth is smaller and is now $h = `r round(h, 2)`$. Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
@@ -159,7 +159,7 @@ However, this value of $h$ depends on the underlying density $f$ which we don't 
 $$
   h = \sigma\left(\frac{4}{3n}\right)^{1/5} = 1.06\sigma n^{-1/5},
 $$ {#eq-nrr}
-where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.34)$, giving his rule-of-thumb @eq-ruleofthumb.
+where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.349)$, giving his rule-of-thumb @eq-ruleofthumb.
 
 Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data.  To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
 
