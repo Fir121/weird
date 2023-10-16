@@ -158,8 +158,6 @@ div.sidebar.sidebar-navigation.rollup.quarto-sidebar-toggle-contents, nav.sideba
   line-height: 1.2;
   margin-top: 0.3em;
   margin-bottom: 0em;
-  text-wrap:nowrap;
-  text-overflow: ellipsis !important;
 }
 
 .sidebar {
@@ -209,6 +207,23 @@ div.sidebar.sidebar-navigation.rollup.quarto-sidebar-toggle-contents, nav.sideba
 
 .sidebar-navigation,.sidebar-item a  {
   color: lighten($theme-gray, 50%) !important;
+}
+
+#quarto-sidebar .menu-text {
+  display: flex;
+}
+#quarto-sidebar .chapter-number {
+  display: block;
+  width: 1em;
+  text-align: right;
+}
+#quarto-sidebar .chapter-title {
+  color: inherit !important;
+  background-color: inherit !important;
+  display: block;
+  padding-left: 3px;
+  text-indent: -3px;
+  width: 100%;
 }
 
 .sidebar-item .chapter-number {
