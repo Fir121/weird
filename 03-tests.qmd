@@ -33,7 +33,7 @@ n01b |>
 The other three simulated examples will use 1000 observations from each of the following distributions:
 
 4. a N(0,1) distribution (we will use the first variable in the `n01` data set);
-5. a $\text{t}_2$ distribution, which has heavy tails;
+5. a $\text{t}_3$ distribution, which has heavy tails (but finite variance);
 6. a $\chi^2_4$ distribution, which is positively skewed.
 
 The density functions for these three distributions are shown in @fig-testdist.
@@ -43,7 +43,7 @@ The density functions for these three distributions are shown in @fig-testdist.
 #| fig.cap: "Three distributions we will use to test various anomaly detection methods."
 tibble(
     x = seq(-5, 10, l = 999),
-    t2 = dt(x, df = 2),
+    t3 = dt(x, df = 3),
     X4 = dchisq(x, df = 4),
     N01 = dnorm(x)
   ) |>
@@ -52,9 +52,9 @@ tibble(
   geom_line() +
   labs(y = "Probability density") +
   scale_color_discrete(
-    breaks = c("t2", "X4", "N01"),
+    breaks = c("t3", "X4", "N01"),
     labels = c(
-      latex2exp::TeX("$t_{~2}$"),
+      latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
     )) +
@@ -67,7 +67,7 @@ Data for the last two examples are generated below.
 #| label: fig-testdist-data
 #| code-fold: false
 set.seed(1)
-t2 <- tibble(y = rt(1000, df = 2))
+t3 <- tibble(y = rt(1000, df = 3))
 chisq4 <- tibble(y = rchisq(1000, df = 4))
 ```
 
@@ -86,7 +86,7 @@ nanomalies <- tibble(
       "Old Faithful duration",
       "N(0,1) + 2 outliers",
       "N(0,1)",
-      "t(2)",
+      "t(3)",
       "Chi-squared(4)"
     ),
     `N observations` = c(
@@ -94,7 +94,7 @@ nanomalies <- tibble(
       NROW(oldfaithful),
       NROW(n01b),
       NROW(n01),
-      NROW(t2),
+      NROW(t3),
       NROW(chisq4)
     ),
     `Expected anomalies` = c(
@@ -137,7 +137,7 @@ n01 |>
   select(v1) |>
   mutate(z = (v1 - mean(v1)) / sd(v1)) |>
   filter(abs(z) > 3)
-t2 |>
+t3 |>
   mutate(z = (y - mean(y)) / sd(y)) |>
   filter(abs(z) > 3)
 chisq4 |>
@@ -149,7 +149,7 @@ chisq4 |>
  2. Only the extreme 2-hour duration is identified. We already know there was an additional strange 1-second eruption, plus several unusual eruptions between 140 and 180 seconds in length.
  3. Neither of the two anomalies added to the 18 N(0,1) observations has been correctly identified.
  4. One spurious anomaly has been identified in the 1000 N(0,1) observations.
- 5. Twelve spurious anomalies have been identified in the 1000 $\text{t}_2$ observations.
+ 5. Eighteen spurious anomalies have been identified in the 1000 $\text{t}_3$ observations.
  6. Fifteen spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
 
 
@@ -175,7 +175,7 @@ nanomalies <- nanomalies  |>
       mutate(z = (v1 - mean(v1)) / sd(v1)) |>
       filter(abs(z) > 3) |>
       NROW(),
-    t2 |>
+    t3 |>
       mutate(z = (y - mean(y)) / sd(y)) |>
       filter(abs(z) > 3) |>
       NROW(),
@@ -184,7 +184,7 @@ nanomalies <- nanomalies  |>
       filter(abs(z) > 3) |>
       NROW()
   ))
-stopifnot(nanomalies$Zscore == c(1, 1, 0, 1, 12, 15))
+stopifnot(nanomalies$Zscore == c(1, 1, 0, 1, 18, 15))
 ```
 
 If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.349),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. See @sec-quantiles.] we obtain the same results in two of the examples, we find one of the two anomalies in `n01b`, but the remaining examples are even worse.
@@ -212,7 +212,7 @@ nanomalies <- nanomalies  |>
       mutate(z = (v1 - median(v1)) / IQR(v1) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
-    t2 |>
+    t3 |>
       mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
       filter(abs(z) > 3) |>
       NROW(),
@@ -221,7 +221,7 @@ nanomalies <- nanomalies  |>
       filter(abs(z) > 3) |>
       NROW()
   ))
-stopifnot(nanomalies$Zscore_robust == c(1, 243, 0, 2, 71, 24))
+stopifnot(nanomalies$Zscore_robust == c(1, 243, 0, 2, 39, 23))
 
 of_threshold <- oldfaithful |>
   mutate(z = (duration - median(duration)) / IQR(duration) * 1.349) |>
@@ -240,7 +240,7 @@ oldfaithful |>
 
 For the Old Faithful example, there are now `r nanomalies$Zscore_robust[2]` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
 
-For the $\text{t}_2$ example, there are now `r nanomalies$Zscore_robust[5]` out of `r NROW(t2)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r nanomalies$Zscore_robust[6]` out of `r NROW(chisq4)` observations falsely identified as anomalous.
+For the $\text{t}_3$ example, there are now `r nanomalies$Zscore_robust[5]` out of `r NROW(t3)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r nanomalies$Zscore_robust[6]` out of `r NROW(chisq4)` observations falsely identified as anomalous.
 
 ### Probability of spurious anomalies
 
@@ -307,7 +307,7 @@ zspuriousdf |>
   theme(axis.text.x = element_text(size = 8))
 ```
 
-Let's also compute the probability of spurious anomalies for different data distributions --- the $\text{t}_2$ and $\chi^2_4$ distributions shown in @fig-testdist.
+Let's also compute the probability of spurious anomalies for different data distributions --- the $\text{t}_3$ and $\chi^2_4$ distributions shown in @fig-testdist.
 
 ```{r}
 #| label: fig-zspurious2
@@ -321,7 +321,7 @@ if (file.exists("zspurious2df.rds")) {
     mutate(
       ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
       Normal = pspurious(n, rnorm, c = c),
-      `t(2)` = pspurious(n, rt, df = 2, c = c),
+      `t(3)` = pspurious(n, rt, df = 3, c = c),
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
     ) |>
     select(-c) |>
@@ -336,9 +336,9 @@ zspurious2df |>
   scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   scale_color_discrete(
-    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    breaks = c("t(3)", "Chi-squared(4)", "Normal"),
     labels = c(
-      latex2exp::TeX("$t_{~2}$"),
+      latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
   )) +
@@ -391,7 +391,7 @@ n01 |>
   select(v1) |>
   filter(peirce_anomalies(v1))
 n01b |> filter(peirce_anomalies(y))
-t2 |> filter(peirce_anomalies(y))
+t3 |> filter(peirce_anomalies(y))
 chisq4 |> filter(peirce_anomalies(y))
 ```
 
@@ -404,25 +404,25 @@ nanomalies <- nanomalies  |>
     oldfaithful |> filter(peirce_anomalies(duration)) |> NROW(),
     n01b |> filter(peirce_anomalies(y)) |> NROW(),
     n01 |> filter(peirce_anomalies(v1)) |> NROW(),
-    t2 |> filter(peirce_anomalies(y)) |> NROW(),
+    t3 |> filter(peirce_anomalies(y)) |> NROW(),
     chisq4 |> filter(peirce_anomalies(y)) |> NROW()
   ))
 
-stopifnot(nanomalies$Peirce == c(0, 1, 2, 1, 8, 6))
+stopifnot(nanomalies$Peirce == c(0, 1, 2, 1, 10, 6))
 ```
 
 1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
 2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
 3. Both anomalies have been correctly spotted amongst the 18 N(0,1) observations.
 4. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
-5. Eight spurious anomalies have been identified in the 1000 $\text{t}_2$ observations.
+5. Ten spurious anomalies have been identified in the 1000 $\text{t}_3$ observations.
 6. Six spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
 
 ### Chauvenet's criterion {-}
 
 Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Chauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in @fig-zscorecriteria. A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
 
-The `chauvenet_anomalies()` function can be used to implement this test. For our six examples, it gives similar results to those above for `peirce_anomalies()` (with one additional spurious anomaly for the $\chi^2_4$ example.)
+The `chauvenet_anomalies()` function can be used to implement this test. For our six examples, it gives similar results to those above for `peirce_anomalies()` (with two additional spurious anomalies for the $t_2$ example, and one additional spurious anomaly for the $\chi^2_4$ example.)
 
 ```{r}
 #| label: checkchauvenet
@@ -433,11 +433,11 @@ nanomalies <- nanomalies  |>
     oldfaithful |> filter(chauvenet_anomalies(duration)) |> NROW(),
     n01b |> filter(chauvenet_anomalies(y)) |> NROW(),
     n01 |> filter(chauvenet_anomalies(v1)) |> NROW(),
-    t2 |> filter(chauvenet_anomalies(y)) |> NROW(),
+    t3 |> filter(chauvenet_anomalies(y)) |> NROW(),
     chisq4 |> filter(chauvenet_anomalies(y)) |> NROW()
   ))
 
-stopifnot(nanomalies$Chauvenet == c(0, 1, 2, 1, 8, 7))
+stopifnot(nanomalies$Chauvenet == c(0, 1, 2, 1, 12, 7))
 ```
 
 ## Grubbs' test
@@ -466,12 +466,12 @@ df <- tibble(n = n) |>
   filter(n >= 3) |>
   mutate(
     t1 = qt(1 - alpha / n, n - 2),
-    t2 = qt(1 - alpha / (2 * n), n - 2),
+    t3 = qt(1 - alpha / (2 * n), n - 2),
     pearson = t1 * sqrt((n - 1) / (n - 2 + t1^2)),
     chauvenet = qnorm(1 - 0.25 / n),
-    grubbs = (n - 1) / sqrt(n) * sqrt(t2^2 / (n - 2 + t2^2)),
+    grubbs = (n - 1) / sqrt(n) * sqrt(t3^2 / (n - 2 + t3^2)),
   ) |>
-  select(-t1, -t2) |>
+  select(-t1, -t3) |>
   pivot_longer(pearson:grubbs, values_to = "c", names_to = "test")
 df |>
   ggplot(aes(x = n, y = c, col = test)) +
@@ -537,7 +537,7 @@ if (file.exists("pgrubbsdf.rds")) {
     mutate(
       Normal = pmax,
       ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
-      `t(2)` = pspurious(n, rt, df = 2, c = c),
+      `t(3)` = pspurious(n, rt, df = 3, c = c),
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
     ) |>
     select(-c, -test, -pmax) |>
@@ -557,7 +557,7 @@ pgrubbsdf |>
   scale_color_discrete(
     breaks = c("t(2)", "Chi-squared(4)", "Normal"),
     labels = c(
-      latex2exp::TeX("$t_{~2}$"),
+      latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
   )) +
@@ -580,7 +580,7 @@ n01b |>
   filter(grubbs_anomalies(y))
 n01 |>
   filter(grubbs_anomalies(v1))
-t2 |>
+t3 |>
   filter(grubbs_anomalies(y))
 chisq4 |>
   filter(grubbs_anomalies(y))
@@ -596,14 +596,14 @@ nanomalies <- nanomalies  |>
     oldfaithful |> filter(grubbs_anomalies(duration)) |> NROW(),
     n01b |> filter(grubbs_anomalies(y)) |> NROW(),
     n01 |> filter(grubbs_anomalies(v1)) |> NROW(),
-    t2 |> filter(grubbs_anomalies(y)) |> NROW(),
+    t3 |> filter(grubbs_anomalies(y)) |> NROW(),
     chisq4 |> filter(grubbs_anomalies(y)) |> NROW()
   ))
 
-stopifnot(nanomalies$Grubbs == c(0, 1, 0, 0, 8, 1))
+stopifnot(nanomalies$Grubbs == c(0, 1, 0, 0, 6, 1))
 ```
 
-The clear failure is with the $\text{t}_2$ distribution which has no real anomalies. A spurious anomaly is also detected in the $\chi^2_4$ example, and real anomalies are missed in the Old Faithful data and in `n01b`.
+The clear failure is with the $\text{t}_3$ distribution which has no real anomalies. A spurious anomaly is also detected in the $\chi^2_4$ example, and real anomalies are missed in the Old Faithful data and in `n01b`.
 
 ## Dixon's Q test
 
@@ -651,7 +651,7 @@ if (file.exists("dixondf.rds")) {
   dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
     mutate(
       Normal = pspuriousdixon(n, rnorm),
-      `t(2)` = pspuriousdixon(n, rt, df = 2),
+      `t(3)` = pspuriousdixon(n, rt, df = 3),
       `Chi-squared(4)` = pspuriousdixon(n, rchisq, df = 4)
     )
   saveRDS(dixondf, "dixondf.rds")
@@ -664,9 +664,9 @@ dixondf |>
   scale_y_continuous(breaks = c(0.05, seq(0.1, 0.8, by = 0.1)), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   scale_color_discrete(
-    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    breaks = c("t(3)", "Chi-squared(4)", "Normal"),
     labels = c(
-      latex2exp::TeX("$t_{~2}$"),
+      latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
   )) +
@@ -689,7 +689,7 @@ n01b |>
   filter(dixon_anomalies(y))
 n01 |>
   filter(dixon_anomalies(v1))
-t2 |>
+t3 |>
   filter(dixon_anomalies(y))
 chisq4 |>
   filter(dixon_anomalies(y))
@@ -707,14 +707,14 @@ nanomalies <- nanomalies  |>
     oldfaithful |> filter(dixon_anomalies(duration)) |> NROW(),
     n01b |> filter(dixon_anomalies(y)) |> NROW(),
     n01 |> filter(dixon_anomalies(v1)) |> NROW(),
-    t2 |> filter(dixon_anomalies(y)) |> NROW(),
+    t3 |> filter(dixon_anomalies(y)) |> NROW(),
     chisq4 |> filter(dixon_anomalies(y)) |> NROW()
   ))
 
-stopifnot(nanomalies$Dixon == c(1, 1, 0, 0, 0, 0))
+stopifnot(nanomalies$Dixon == c(1, 1, 0, 0, 1, 0))
 ```
 
-For these examples, the test has worked relatively well apart from `n01b`, where it is failed to identify either anomaly.
+For these examples, the test has worked relatively well apart from `n01b`, where it is failed to identify either anomaly, and `t3` where it has identified a spurious anomaly.
 
 ## Summary
 
@@ -725,7 +725,7 @@ We can summarise the results of the various tests used here in the following tab
 #| echo: false
 #| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies and no spurious anomalies."
 library(kableExtra)
-nanomalies$Example[5] <- "<span class='math inline'>\\text{t}_2</span>"
+nanomalies$Example[5] <- "<span class='math inline'>\\text{t}_3</span>"
 nanomalies$Example[6] <- "<span class='math inline'>\\chi^2_4</span>"
 nanomalies |>
   mutate(
