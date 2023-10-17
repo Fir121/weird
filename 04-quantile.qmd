@@ -10,21 +10,156 @@ Once computing had developed to the point where more sophisticated calculations 
 
 In the last chapter, we considered methods based only on one variable at a time. In this chapter (and the next two), we will look at methods that use either one or two variables.
 
+## Sample quantiles {#sec-sample-quantiles}
+
+The **sample quantiles** of a data set are estimates of the quantiles of the underlying distribution. Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a quantile $Q(p)$. There are a surprising number of ways this can be done, and there is no accepted standard approach.
+
+### The `quantile()` function
+
+The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is very small, or when you are interested in the tails when $p$ is close to 0 or 1. For anomaly detection, we are usually interested in the tails, so we will need to use a method that works well for extreme values of $p$.
+
+Let's compare two of the possible variations available in `quantile()`: `type=7` which is the default method, and `type=8` which was the recommendation of @HF96 due to it having smaller bias.
+
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between consecutive order statistics. That is, if $k^+= p(n+a) +b$, then
+$$
+  \hat{Q}(p) = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
+$$
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder. Most of the different methods for estimating quantiles differ only in the values of $a$ and $b$.
+
+* When the default `type=7` is used, $a = -1$ and $b=1$, so $k^+ = p(n-1) + 1$.
+* When `type=8` is used, $a= b = 1/3$, so $k^+ = p(n+1/3) + 1/3$.
+
+In either case, when $p=0.5$, we obtain the sample median:
+
+  * If $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
+  * If $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
+
+For large $n$, the sample quantile should provide a good estimate of the true quantile. That is, $\hat{Q}(p) \approx Q(p)$.  We can study the bias of the estimator by simulating from a N(0,1) distribution, and comparing the sample quantile to the true quantile. We repeat this 10,000 times, and average the results, in order to get a good estimate of the bias. The results are shown in @fig-quantile-bias.
+
+```{r}
+#| label: fig-quantile-bias
+#| fig-cap: Bias of the sample quantile for a N(0,1) distribution. The orange line shows the bias of the default `type=7` quantile method, while the blue line shows the bias of the preferred `type = 8` quantile method.
+avequantile <- function(n, p, m) {
+  Q7 <- Q8 <- numeric(length(p))
+  for (i in seq(m)) {
+    random_sample <- rnorm(n)
+    Q7 <- Q7 + quantile(random_sample, prob = p, type = 7)/m
+    Q8 <- Q8 + quantile(random_sample, prob = p, type = 8)/m
+  }
+  tibble(n = n, p = p, Q7 = Q7, Q8 = Q8)
+}
+qbias <- tibble(n = c(100, 1000))  |>
+  purrr::pmap_dfr(~ avequantile(n = .x,
+    p = seq(0.002,0.998,by=0.001), m = 10000)) |>
+  pivot_longer(Q7:Q8, names_to = "type", values_to = "Q")  |>
+  mutate(
+    type = paste("type = ", parse_number(type)),
+    Qtrue = qnorm(p),
+    bias = Q - qnorm(p)
+  )
+qbias |>
+  ggplot(aes(x=p, group = type)) +
+  geom_line(aes(y=bias, col=type, linetype = "n = 100"),
+    data = qbias |> filter(n == 100)) +
+  geom_line(aes(y=bias, col=type, linetype = "n = 1000"),
+    data = qbias |> filter(n == 1000)) +
+  labs(
+    x = "Probability p",
+    y = "Bias of sample quantile",
+  ) +
+  guides(
+    linetype = guide_legend(title = "Sample size"),
+    col = guide_legend(title = "Quantile method")
+  )
+```
+
+Clearly, the `type=8` sample quantile gives much better results than the default `type=7` method, especially when $p$ is close to 0 or 1. Consequently, we will always use `type=8` when computing sample quantiles in the remainder of this book.
+
+### Example: Test cricket batting averages {-}
+
+We can calculate some of the sample quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings.
+
+```{r battingsubset, echo=FALSE}
+batave <- cricket_batting |> filter(Innings > 20)
+quartiles <- sprintf("%2.2f", quantile(batave$Average, c(seq(0, 1, by = 0.25), 0.99), type = 8))
+n <- NROW(batave)
+p <- c(seq(0, 1, by=0.25), 0.99)
+kplus <- (n + 1/3) * p + 1/3
+k <- trunc(kplus)
+gamma <- kplus - k
+```
+
+There are $n=`r n`$ observations with a minimum of $y_{(1)} = `r quartiles[1]`$ and a maximum of $y_{(`r n`)} = `r quartiles[5]`$. Because there is an even number of observations, the sample median is the average of the middle two observations in the ordered data, which is
+$$\hat{Q}(0.5) = 0.5 (y_{(`r k[3]`)} + y_{(`r k[3]+1`)}) = `r quartiles[3]`.$$
+The sample quartiles are given by
+$$\hat{Q}(0.25) = `r 1- gamma[2]` y_{(`r k[2]`)} + `r gamma[2]` y_{(`r k[2]+1`)} = `r quartiles[2]`$$
+and
+$$\hat{Q}(0.75) = `r 1- gamma[4]` y_{(`r k[4]`)} + `r gamma[4]` y_{(`r k[4]+1`)} = `r quartiles[4]`.$$
+The 0.99 sample quantile is given by
+$$\hat{Q}(0.99) = `r 1- gamma[6]` y_{(`r k[6]`)} + `r gamma[6]` y_{(`r k[6]+1`)} = `r quartiles[6]`.
+$$
+
+* So 50% of all batters have an average higher than `r quartiles[3]`, while 50% of all batters have a lower average than `r quartiles[3]`.
+* Also, 50% of all batters have an average between `r quartiles[2]` and `r quartiles[4]`, with 25% lower than `r quartiles[2]` and 25% higher than `r quartiles[4]`.
+* Only 1% of batters have an average above `r quartiles[6]`.
+
+These values are easily computed using the `quantile()` function with argument `type = 8`.
+
+```{r}
+#| label: battingquantiles
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  pull(Average) |>
+  quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1), type = 8)
+```
+
+```{r}
+#| label: fig-cricket-quantiles
+#| fig-asp: 0.2
+#| warning: false
+#| message: false
+#| fig-cap: "Some sample quantiles of career batting averages for all men and women to have played test cricket and batted more than 20 times."
+batave <- cricket_batting |>
+  filter(Innings > 20)
+p <- c(0.25, 0.5, 0.75, 0.99)
+Qs <- quantile(batave$Average, prob = p, type = 8)
+batave |>
+  ggplot(aes(x = Average, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  geom_vline(xintercept = Qs, col = "#D55E00") +
+  scale_y_discrete() +
+  scale_x_continuous(
+    breaks = c(0, Qs, 100),
+    labels = c("0", sprintf("%2.2f", Qs), "100"),
+  ) +
+  scale_x_continuous(
+    breaks = c(0, Qs, 100),
+    labels = c("0", sprintf("%2.2f", Qs), "100"),
+    sec.axis = dup_axis(
+      name = "",
+      breaks = Qs,
+      labels = latex2exp::TeX(sprintf("\\hat{Q}(%2.2f)", p))
+    )
+  ) +
+  labs(y = "", x = "Career batting average")
+```
+
+
 ### Anomalies using quantiles
 
 One of the simplest approaches that is sometimes used to find anomalies in univariate data is to identify the points that are above or below a specified quantile value. For example, we might identify anomalies as points above the 0.999 quantile or below the 0.001 quantile. More generally, an anomaly could be defined as points above $\hat{Q}(1-p)$ or below $\hat{Q}(p)$.
 
-We can apply this idea to Test cricket batting averages using $p=1/1000$, considering only those batters who have played at least 20 innings.
+We can apply this idea to the cricket batting data using $p=1/1000$, again considering only those batters who have played at least 20 innings.
 
 ```{r}
 #| label: battingquantileanomalies
 #| code-fold: false
-batave <- cricket_batting |>
-  filter(Innings > 20)
-batave |>
+cricket_batting |>
+  filter(Innings > 20) |>
   filter(
-    Average < quantile(Average, prob = 0.001) |
-    Average > quantile(Average, prob = 0.999)
+    Average < quantile(Average, prob = 0.001, type = 8) |
+    Average > quantile(Average, prob = 0.999, type = 8)
   )  |>
   select(Player, Country, Start, End, Innings, Average)  |>
   arrange(Average)
@@ -37,15 +172,14 @@ n <- NROW(batave)
 k <- trunc((n - 1) * c(0.001, 0.999) + 1)
 ```
 
-This has identified two players with very low averages, and two players with high averages. Remember, our earlier analysis suggested that only Don Bradman was really an anomaly. What has happened here, is that we were guaranteed to find two anomalies at each end of the distribution, because of the way sample quantiles are estimated. From @sec-quantiles, $\hat{Q}(p)$ lies between $y_{(k)}$ and $y_{(k+1)}$, where $k$ is the integer part of $(n-1)p + 1$. When $p$ is just greater than $1/(n-1)$, then $k=2$, and $\hat{Q}(p)$ is between $y_{(2)}$ and $y_{(3)}$. So there must be two observations less than $\hat{Q}(p)$. Similarly, in the other tail of the distribution. In this example, $n= `r n`$, so $p=1/1000$ is just greater than $1/(n-1)$, leading to the four "anomalies".
+This has identified the players with the lowest and highest averages. Remember, our earlier analysis suggested that only Don Bradman was really an anomaly. What has happened here, is that we were guaranteed to find one anomaly at each end of the distribution, because of the way sample quantiles are estimated. When $p$ is close to $1/n$, then $k=1$, and $\hat{Q}(p)$ is between $y_{(1)}$ and $y_{(2)}$. So there must be exactly one observation less than $\hat{Q}(p)$. Similarly, in the other tail of the distribution. In this example, $n= `r n`$, so $p=1/1000$ is close to $1/n$, leading to the two identified "anomalies".
 
-In general, when $np$ is large, this approach will find approximately $A = 2np$ anomalies, regardless of how many there really are. The exact relationship between $A$ and $n$ is shown in @fig-spurious, for different values of $p$. The sample quantiles are biased estimates when $np$ is small, and then the number of identified anomalies is greater than $2np$.
+In general, when $n$ is large, there will be $A = 2np$ observations less than $\hat{Q}(p)$ or greater than $\hat{Q}(1-p)$, regardless of how many anomalies there really are. The exact relationship between $A$ and $n$ is shown in @fig-spurious, for different values of $p$.
 
 ```{r}
 #| label: fig-spurious
-#| echo: false
 #| warning: false
-#| fig.cap: Number of anomalies identified when looking for observations below $\hat{Q}(p)$ or above $\hat{Q}(1-p)$. The solid line shows the number of anomalies found using the default settings for the `quantile()` function. The dashed line shows the line $A=2np$.
+#| fig.cap: Number of anomalies identified when looking for observations below $\hat{Q}(p)$ or above $\hat{Q}(1-p)$. The solid line shows the number of anomalies found using the `quantile()` function with `type=8`. The dashed line shows the line $A=2np$.
 expand_grid(
     invp = 10^(2:6),
     n = 10^(seq(1, 6.7, l=501))
@@ -53,22 +187,25 @@ expand_grid(
   mutate(
     p = 1/invp,
     pgroup = paste0("1/",format(invp, scientific = FALSE, trim = TRUE)),
-    k = trunc((n - 1) * p + 1),
+    k = trunc((n + 1/3) * p + 1/3),
     spurious = 2*k,
     true_spurious = 2*p*n
   ) |>
   ggplot(aes(x=n, y=spurious, col=pgroup)) +
   geom_line() +
-  geom_line(aes(x=n,y=true_spurious, col=pgroup), linetype="dashed") +
+  geom_line(aes(x=n, y=true_spurious, col=pgroup), linetype="dashed") +
   scale_x_log10(
     breaks = 10^(0:6),
-    labels = format(10^(0:6), scientific = FALSE, trim = TRUE)
+    labels = format(10^(0:6), scientific = FALSE, trim = TRUE),
+    minor_breaks = NULL,
   ) +
   scale_y_log10(
-    breaks = c(0,2,4,10^(0:6)),
-    labels = format(c(0,2,4,10^(0:6)), scientific = FALSE, trim = TRUE),
-    limits = c(1, 10^6.1)
+    breaks = c(0,2,4,10^(0:5)),
+    labels = format(c(0,2,4,10^(0:5)), scientific = FALSE, trim = TRUE),
+    limits = c(.1, 10^5.1),
+    minor_breaks = NULL
   ) +
+  coord_cartesian(ylim = c(0.34, 10^5.1), xlim=c(18,2.7e6)) +
   labs(
     x = "Sample size (n)",
     y = "Number of identified anomalies (A)"
@@ -76,15 +213,25 @@ expand_grid(
   guides(colour = guide_legend(title = "Quantile (p)"))
 ```
 
-Clearly, this approach is flawed. Further, it doesn't allow us to find points that are inliers but otherwise unusual.
+Clearly, this approach is flawed:
 
-## Data depth
+1. There will always be about $2np$ observations identified as anomalies, regardless of how many anomalies there really are. The other sample quantile variations give worse results.
+2. It doesn't allow us to find points that are inliers but otherwise unusual.
 
-For univariate data, the **depth** of an observation is a measure of how deeply buried it is when all observations are ordered. That is, how far would you need to count from either the smallest or largest observation until you encountered the observation of interest. So the minimum and maximum both have depth 1, while the median has the largest depth of $(n+1)/2$.
 
-The other sample quantiles as defined in @sec-quantiles do not correspond exactly to specific depths, but @Tukey1977-xd introduced variations for some quantiles that are based on depths. He called these "letter values".
+### Sample quantile distribution
 
-### Letter values
+With a large sample size $n$, the sample quantile $\hat{Q}(p)$ has an approximate Normal distribution,
+$$
+\hat{Q}(p) \approx \text{N}\left(Q(p), \frac{p(1-p)}{n f^2(Q(p))}\right)
+$$ {#eq-sample-quantile-distribution}
+where $f(y)$ is the density of the underlying distribution [@van2000asymptotic, p308]. This is an asymptotic result, that assumes $np$ is large, and holds for both `type=7` and `type=8` sample quantiles.
+
+## Univariate data depth
+
+For univariate data, the **depth** of an observation is a measure of how deeply buried it is when all observations are ordered. That is, how far would you need to count from either the smallest or largest observation until you encountered the observation of interest. So the minimum and maximum both have depth 1, while the sample median has the largest depth of $(n+1)/2$.
+
+The other sample quantiles as defined in @sec-sample-quantiles do not correspond exactly to specific depths, but @Tukey1977-xd introduced variations for some quantiles that are based on depths. He called these **letter values**. @hoaglin1983letter showed that  $\hat{Q}(p)$ gives approximately the same result as the corresponding letter value when using `type=8`.
 
 Closely related to quartiles are the "**fourths**" (or "hinges"). These are alternative (simpler) estimates of the quartiles given by
 $$
@@ -116,11 +263,12 @@ Because each depth is roughly half the previous depth, the lower letter values p
 #| label: battinglv
 #| echo: false
 #| dependson: battingquantileanomalies
+batave <- cricket_batting |> filter(Innings > 20)
 lv <- lvplot::lvtable(batave$Average, k = 4)
 d <- lv[4:7, "depth"]
 ```
 
-Again using the batting averages as an example, the depths of the first four letter values are given by
+Using the batting averages from @sec-sample-quantiles as an example, the depths of the first four letter values are given by
 $$
   d_1 = `r d[1]`,\quad
   d_2 = `r d[2]`,\quad
@@ -137,13 +285,13 @@ so that the corresponding letter values are given by
  L_F &= (y_{(`r trunc(d[4])`)} + y_{(`r trunc(d[4]+1)`)})/2 = `r sprintf("%2.2f", lv[1,"LV"])` \qquad
  &U_F &= (y_{(`r trunc(n-d[4]+1)`)} + y_{(`r trunc(n-d[4]+1) + 1`)})/2 = `r sprintf("%2.2f", lv[7,"LV"])`
 \end{align*}
-In this example, the fourths are identical to the quartiles, but that is not always the case.
+Note that the fourths are almost identical to the sample quartiles calculated earlier.
 
 ## Boxplots
 
 Boxplots were invented by John Tukey as a quick summary of medium sized data sets. They are widely used to identify anomalies, which are shown as separate points in the plot.
 
-@fig-cricketbox shows a boxplot of the cricket batting average data, previously shown in @fig-cricket1.
+@fig-cricketbox shows a boxplot of the cricket batting average data.
 
 ```{r donave, echo=FALSE}
 batting <- cricket_batting |>
@@ -153,17 +301,18 @@ donave <- max(batting$Average)
 
 ```{r cricketbox, fig.asp=0.2}
 #| label: fig-cricketbox
+#| code-fold: false
 #| depends: cricket_batting
 #| fig-cap: !expr paste("Career batting averages for all men and women to have played test cricket and batted more than 20 times. The anomaly is Don Bradman, who averaged", scales::number(donave, 0.01), "over his career.")
 cricket_batting |>
   filter(Innings > 20) |>
-  ggplot(aes(x = Average, y = 1)) +
+  ggplot(aes(x = Average)) +
   geom_boxplot() +
   scale_y_discrete() +
   labs(y = "", x = "Career batting average")
 ```
 
-The middle line in the box shows the median, and the ends of the box are the fourths ($L_F$ and $U_F$). Half of all observations lie within the box. The width of the box is an estimate of the "interquartile range", here defined as IQR $= U_F - L_F$. Any points more than 1.5*IQR outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
+The middle line in the box shows the median, and the ends of the box are the fourths ($L_F$ and $U_F$). Half of all observations lie within the box. The width of the box is an estimate of the "interquartile range", here defined as IQR $= U_F - L_F$. Any points more than 1.5 IQR outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
 
 Originally, Tukey proposed two levels of outliers --- those more than 1.5 IQR beyond the box were labelled "outside" values, while those more than 3 IQR beyond the box were labelled "far out" values. Most software implementations of boxplots do not distinguish between these groups.
 
@@ -182,34 +331,40 @@ whisker1 <- q1 - 1.5 * iqr
 whisker2 <- q3 + 1.5 * iqr
 ```
 
-To better understand the first problem, imagine the data comprised $n$ observations from a standard normal distribution N(0,1). @fig-normalboxplot shows an example with 10000 points.
+To better understand the first problem, imagine if the data comprised $n$ observations from a standard normal distribution N(0,1). @fig-normalboxplot shows an example with 10000 points.
 
-```{r normalboxplot, fig.asp=0.2, fig.cap="Boxplot of 10000 draws from a standard normal distribution."}
+```{r}
 #| label: fig-normalboxplot
+#| code-fold: false
+#| fig.asp: 0.2
+#| fig.cap: "Boxplot of 10000 draws from a standard normal distribution."
 tibble(x = rnorm(10000)) |>
-  ggplot(aes(x = x, y = 1)) +
+  ggplot(aes(x = x)) +
   geom_boxplot() +
   scale_y_discrete() +
   labs(y = "")
 ```
 
-Many anomalies are shown, but since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, $Q(0.25) = `r sprintf("%.2f", q1)`$, $Q(0.75) = `r sprintf("%.2f", q3)`$, $\text{IQR} = `r sprintf("%.2f", iqr)`$, and so any observations less than $`r sprintf("%.2f", q1)` - 1.5\times `r sprintf("%.2f", iqr)` = `r sprintf("%.2f", whisker1)`$ or greater than $`r sprintf("%.2f", q3)` + 1.5\times `r sprintf("%.2f", iqr)` = `r sprintf("%.2f", whisker2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r sprintf("%.2f", whisker2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with $10000$ observations, we would have $`r round(10000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
+Many anomalies are shown, but since all observations come from a simple distribution, none of them are actually anomalies. For this distribution, $Q(0.25) = `r sprintf("%.3f", q1)`$, $Q(0.75) = `r sprintf("%.3f", q3)`$, $\text{IQR} = `r sprintf("%.3f", iqr)`$, and so any observations less than $`r sprintf("%.3f", q1)` - 1.5\times `r sprintf("%.3f", iqr)` = `r sprintf("%.3f", whisker1)`$ or greater than $`r sprintf("%.3f", q3)` + 1.5\times `r sprintf("%.3f", iqr)` = `r sprintf("%.3f", whisker2)`$ would be identified as "anomalous" by a boxplot and plotted as separate points. The probability of a standard normal observation being at least $`r sprintf("%.3f", whisker2)`$ in absolute value is $`r sprintf("%.5f", 1-pnorm(whisker2))`$. So with $10000$ observations, we would have about $`r round(10000*(1-pnorm(whisker2)))`$ anomalies identified, none of which would be a genuine anomaly.
 
 The second problem is demonstrated using the Old Faithful eruption duration data, shown in @fig-oldfaithful1. As before, we will omit the largest value so we can see the details in the remaining data.
 
-```{r oldfaithful2a, fig.asp=0.2, fig.cap="Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."}
+```{r}
 #| label: fig-oldfaithful2a
+#| code-fold: false
+#| fig.asp: 0.2
+#| fig.cap: "Boxplot of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
 oldfaithful |>
   filter(duration < 6000) |>
-  ggplot(aes(x = duration, y = 1)) +
+  ggplot(aes(x = duration)) +
   geom_boxplot() +
-  labs(y = "", x = "Duration (seconds)") +
-  scale_y_discrete()
+  scale_y_discrete() +
+  labs(y = "", x = "Duration (seconds)")
 ```
 
 Quite a few anomalies are shown, including the one-second eruption we identified earlier. But the remaining "anomalies" are not particularly unusual observations. All the points below 180 seconds are identified as anomalies, even though we know that observations in the region between 100 and 140 are not unusual for this geyser. Because the boxplot does not allow for more than one mode, all the points in the second smaller cluster are identified as anomalies. The points around 300 seconds are also not really anomalies --- these are just values in the upper tail of the distribution for eruptions.
 
-## Modified IQR method
+## Modified IQR boxplots
 
 ```{r modifiediqr, echo=FALSE}
 q1 <- qnorm(0.25)
@@ -219,12 +374,14 @@ tukey1 <- 2 * (1 - pnorm(q3 + 1.5 * iqr))
 tukey2 <- 2 * (1 - pnorm(q3 + 3 * iqr))
 ```
 
-Under Tukey's boxplot approach to identifying outliers, a **regular outlier** is more than 1.5IQR beyond the quartiles, while an **extreme outlier** is more than 3IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for very large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find at least one spurious anomaly in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
+Under Tukey's boxplot approach to identifying outliers, a **regular outlier** is more than 1.5 IQR beyond the quartiles, while an **extreme outlier** is more than 3 IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for very large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find at least one spurious anomaly in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
 
 @Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of spurious anomalies. @fig-probanomaly shows the probability of identifying at least one spurious anomaly in a normal distribution, using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
 
-```{r probanomaly, echo=FALSE, fig.cap="Probability of at least one spurious anomaly identified in a normal distribution, based on the boxplot approach of Tukey, and the modified IQR approach of @Barbato2011."}
+```{r}
 #| label: fig-probanomaly
+#| echo: false
+#| fig.cap: "Probability of at least one spurious anomaly identified in a normal distribution, based on the boxplot approach of Tukey, and the modified IQR approach of @Barbato2011."
 tibble(n = exp(seq(log(3), log(1e6), l = 100))) |>
   mutate(
     Tukey1 = 2 * (1 - pnorm(q3 + 1.5 * iqr)),
@@ -275,17 +432,16 @@ n01b <- tibble(y = c(n01$v2[1:18], 4, 4.5))
 n01b |> filter(barbato_anomaly(y))
 n01 |> filter(barbato_anomaly(v1))
 set.seed(1)
-t1 <- tibble(y = rt(1000, df = 2))
-t1 |> filter(barbato_anomaly(y))
+t3 <- tibble(y = rt(1000, df = 3))
+t3 |> filter(barbato_anomaly(y))
 chisq4 <- tibble(y = rchisq(1000, df = 4))
 chisq4 |> filter(barbato_anomaly(y))
 ```
 
 * It misses the anomalies in the cricket batting data, and in the `n01b` data set.
 * Only the extreme outlier in the duration data is identified as an anomaly.
-* Eight spurious anomalies are found in the `t2` data set.
 
-In summary, while the modified IQR approach is an improvement on the original boxplot approach for normally distributed data, it is not particularly good at handling other distributions, or in finding genuine anomalies in data.
+In summary, while the modified IQR approach is an improvement on the original boxplot approach, it is not particularly good at finding genuine anomalies in data.
 
 ```{r}
 #| label: checkbarbato
@@ -298,19 +454,22 @@ n1 <- cricket_batting |>
 n2 <- oldfaithful |> filter(barbato_anomaly(duration)) |> NROW()
 n3 <- n01b |> filter(barbato_anomaly(y)) |> NROW()
 n4 <- n01 |> filter(barbato_anomaly(v1)) |> NROW()
-n5 <- t1 |> filter(barbato_anomaly(y)) |> NROW()
+n5 <- t3 |> filter(barbato_anomaly(y)) |> NROW()
 n6 <- chisq4 |> filter(barbato_anomaly(y)) |> NROW()
-stopifnot(identical(c(n1,n2,n3,n4,n5,n6), c(0L,1L,0L,0L,8L,0L)))
+stopifnot(identical(c(n1,n2,n3,n4,n5,n6), c(0L,1L,0L,0L,0L,0L)))
 ```
 
 ## Letter value plots
 
-The problem that boxplots have with large data sets was addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend to successive letter values until the quantiles corresponding to the letter values can no longer be estimated sufficiently accurately from the available data.
+The problem that boxplots have with large data sets was also addressed by @Hofmann2017-hz who introduced "letter-value" plots, a variation of boxplots that replace the whiskers with a variable number of letter values. In these plots, each pair of letter values marks the boundaries of a box. The box bounded by the fourths is the same as the box of a boxplot; the additional boxes extend to successive letter values until the quantiles corresponding to the letter values can no longer be estimated sufficiently accurately from the available data.
 
 These can be produced using the `lvplot` package.
 
-```{r cricketboxlv, fig.asp=0.2, fig.cap="Letter value plot of career batting averages for all men and women who played test cricket and batter more than 20 times."}
+```{r}
 #| label: fig-cricketboxlv
+#| code-fold: false
+#| fig.asp: 0.2
+#| fig.cap: "Letter value plot of career batting averages for all men and women who played test cricket and batter more than 20 times."
 library(lvplot)
 cricket_batting |>
   filter(Innings > 20) |>
@@ -328,7 +487,7 @@ lv <- cricket_batting |>
   stat_lv(mapping = aes(y = Average))
 ```
 
-Here the median is given by M, the fourths by F, and so on. So the middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on.
+Here the median is given by M, the fourths by F, and so on. The middle box (F) is bounded by the fourths and contains all but 2/4 the data; the next box (E) is bounded by the eighths and contains all but 2/8 of the data; then D is bounded by the sixteenths and contains all but 2/16 of the data; and so on.
 
 In this example, the most extreme box (labelled Z) is bounded by the points that fall within the 1/256 letter values. So it contains all but 2/256 of the data, and shows $2 / 256 \times `r NROW(filter(cricket_batting, Innings > 20))` = `r round(2/256*NROW(filter(cricket_batting, Innings > 20)))`$ points as anomalies.
 
@@ -379,7 +538,7 @@ n01b |>
 
 In this last example, because there are only 20 observations, there is not enough data to estimate the quantiles beyond the fourths. So only the middle box is shown.
 
-## Multivariate depth statistics
+## Multivariate data depth
 
 For multivariate data, there is no unique natural ordering of observations by size, so the concept of depth has to be thought about differently. It is still a measure of how centrally a point is located in a data set, but we need to think about what "central" means when there are multiple variables.
 

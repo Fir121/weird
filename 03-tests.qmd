@@ -187,61 +187,6 @@ nanomalies <- nanomalies  |>
 stopifnot(nanomalies$Zscore == c(1, 1, 0, 1, 18, 15))
 ```
 
-If we replace the mean and standard deviation by more robust estimates (the median and IQR/1.349),^[The IQR is the Interquartile Range --- the difference between the 75th percentile and the 25th percentile of the data. See @sec-quantiles.] we obtain the same results in two of the examples, we find one of the two anomalies in `n01b`, but the remaining examples are even worse.
-
-```{r}
-#| label: check
-#| include: false
-# Check last statement
-nanomalies <- nanomalies  |>
-  mutate(Zscore_robust = c(
-    cricket_batting |>
-      filter(Innings > 20) |>
-      mutate(z = (Average - median(Average)) / IQR(Average) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW(),
-    oldfaithful |>
-      mutate(z = (duration - median(duration)) / IQR(duration) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW(),
-    n01b |>
-      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW(),
-    n01 |>
-      mutate(z = (v1 - median(v1)) / IQR(v1) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW(),
-    t3 |>
-      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW(),
-    chisq4 |>
-      mutate(z = (y - median(y)) / IQR(y) * 1.349) |>
-      filter(abs(z) > 3) |>
-      NROW()
-  ))
-stopifnot(nanomalies$Zscore_robust == c(1, 243, 0, 2, 39, 23))
-
-of_threshold <- oldfaithful |>
-  mutate(z = (duration - median(duration)) / IQR(duration) * 1.349) |>
-  filter(abs(z) <= 3) |>
-  pull(duration) |>
-  min()
-```
-
-```{r}
-#| label: zscore2
-#| code-fold: false
-oldfaithful |>
-  mutate(z = (duration - median(duration)) / (IQR(duration) / 1.349)) |>
-  filter(abs(z) > 3)
-```
-
-For the Old Faithful example, there are now `r nanomalies$Zscore_robust[2]` out of `r NROW(oldfaithful)` observations identified as anomalous, including all of those below `r of_threshold` seconds.
-
-For the $\text{t}_3$ example, there are now `r nanomalies$Zscore_robust[5]` out of `r NROW(t3)` observations falsely identified as anomalous, while for the $\chi^2_4$ example, there are now `r nanomalies$Zscore_robust[6]` out of `r NROW(chisq4)` observations falsely identified as anomalous.
-
 ### Probability of spurious anomalies
 
 Even if the data did come from a normal distribution, the probability of an observation being more than 3 standard deviations from the mean is $`r round(2*pnorm(-3),4)`$ (assuming a large sample), so we would expect to see 1 in every $1/ `r round(2*pnorm(-3),4)` = `r round(.5/pnorm(-3))`$ regular observations being identified as an anomaly using this approach.
@@ -723,7 +668,7 @@ We can summarise the results of the various tests used here in the following tab
 ```{r}
 #| label: tbl-nanomalies
 #| echo: false
-#| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies and no spurious anomalies."
+#| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies and only known anomalies."
 library(kableExtra)
 nanomalies$Example[5] <- "<span class='math inline'>\\text{t}_3</span>"
 nanomalies$Example[6] <- "<span class='math inline'>\\chi^2_4</span>"
@@ -732,16 +677,15 @@ nanomalies |>
     Example = paste0(row_number(), ". ", Example)
   ) |>
   knitr::kable(escape = FALSE, format = "html") %>%
-  add_header_above(c(" " = 3, "Anomaly detection method" = 6)) %>%
+  add_header_above(c(" " = 3, "Anomaly detection method" = 5)) %>%
   column_spec(4, color = if_else(nanomalies$Zscore != nanomalies$`Expected anomalies`, "red", "black")) %>%
-  column_spec(5, color = if_else(nanomalies$Zscore_robust != nanomalies$`Expected anomalies`, "red", "black")) %>%
-  column_spec(6, color = if_else(nanomalies$Peirce != nanomalies$`Expected anomalies`, "red", "black")) %>%
-  column_spec(7, color = if_else(nanomalies$Chauvenet != nanomalies$`Expected anomalies`, "red", "black")) %>%
-  column_spec(8, color = if_else(nanomalies$Grubbs != nanomalies$`Expected anomalies`, "red", "black")) %>%
-  column_spec(9, color = if_else(nanomalies$Dixon != nanomalies$`Expected anomalies`, "red", "black"))
+  column_spec(5, color = if_else(nanomalies$Peirce != nanomalies$`Expected anomalies`, "red", "black")) %>%
+  column_spec(6, color = if_else(nanomalies$Chauvenet != nanomalies$`Expected anomalies`, "red", "black")) %>%
+  column_spec(7, color = if_else(nanomalies$Grubbs != nanomalies$`Expected anomalies`, "red", "black")) %>%
+  column_spec(8, color = if_else(nanomalies$Dixon != nanomalies$`Expected anomalies`, "red", "black"))
 ```
 
-None of the tests found the two clear anomalies in the Old Faithful data, and most failed to find either of the artificial anomalies in `n01b`. Only the Dixon test worked well for the large simulated data with no anomalies.
+None of the tests found the two clear anomalies in the Old Faithful data, and most failed to find either of the artificial anomalies in `n01b`. All tests found at least one spurious anomaly in the large simulated data sets with no real anomalies.
 
 As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
 
