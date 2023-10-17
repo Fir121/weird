@@ -20,6 +20,7 @@ $h4-font-size: 1.1rem !default;
 $h5-font-size: 0.9rem !default;
 
 $code-block-bg: $theme-gray;
+$code-color: $body-color;
 
 
 /*-- scss:rules --*/
@@ -135,7 +136,10 @@ blockquote {
 }
 
 pre code {
-  color: $body-color;
+  color: $body-color !important;
+  background-color: $code-block-bg;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
 }
 
 div.sourceCode, div.sourceCode pre.sourceCode {
