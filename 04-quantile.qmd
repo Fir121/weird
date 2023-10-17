@@ -20,16 +20,16 @@ The R function `quantile()` includes nine variations, based on @HF96. Which vari
 
 Let's compare two of the possible variations available in `quantile()`: `type=7` which is the default method, and `type=8` which was the recommendation of @HF96 due to it having smaller bias.
 
-Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between consecutive order statistics. That is, if $k^+= p(n+a) +b$, then
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between consecutive order statistics. That is, if $k^+= p(n+1-2a) +a$, then
 $$
   \hat{Q}(p) = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
 $$
-where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder. Most of the different methods for estimating quantiles differ only in the values of $a$ and $b$.
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder. Most of the different methods for estimating quantiles differ only in the values of $a$.
 
-* When the default `type=7` is used, $a = -1$ and $b=1$, so $k^+ = p(n-1) + 1$.
-* When `type=8` is used, $a= b = 1/3$, so $k^+ = p(n+1/3) + 1/3$.
+* When the default `type=7` is used, $a = 1$, so $k^+ = p(n-1) + 1$.
+* When `type=8` is used, $a= 1/3$, so $k^+ = p(n+1/3) + 1/3$.
 
-In either case, when $p=0.5$, we obtain the sample median:
+For any value of $a$, if $p=0.5$ then $k^+ = (n+1)/2$, and we obtain the sample median:
 
   * If $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
   * If $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
