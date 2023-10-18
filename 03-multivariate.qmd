@@ -154,7 +154,7 @@ Here, the 10% and 20% HDRs contain disconnected regions, but for the larger HDRs
 
 ## Multivariate quantiles
 
-Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
+Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-boxplots.
 
 ## Multivarate kernel density estimation
 
