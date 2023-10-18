@@ -14,7 +14,7 @@ Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are inde
 $$
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
 $$ {#eq-kde}
-where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. For example, the "Gaussian" kernel is $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$, equal to the Normal density function with mean zero and standard deviation $h$. (When we use the Normal density function as a kernel, we will call it a "Gaussian" kernel, to distinguish it from the Normal distribution.) Another popular kernel is the quadratic Epanechnikov kernel given by
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. For example, the "Gaussian" kernel is $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$, equal to the Normal density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by
 $K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
 
 ```{r}
@@ -159,7 +159,7 @@ However, this value of $h$ depends on the underlying density $f$ which we don't 
 $$
   h = \sigma\left(\frac{4}{3n}\right)^{1/5} = 1.06\sigma n^{-1/5},
 $$ {#eq-nrr}
-where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.349)$, giving his rule-of-thumb @eq-ruleofthumb.
+where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.349)$, giving his rule-of-thumb (@eq-ruleofthumb).
 
 Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data.  To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
 
@@ -189,7 +189,7 @@ Here we have doubled the default bandwidth obtained using @eq-ruleofthumb.
 
 ### Boundaries
 
-When a Gaussian kernel is used, a kernel density estimate assumes that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. For example, if all data must be positive, then $f(u)=0$ for $u<0$.
+When a Gaussian kernel is used, we are implicitly assuming that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. For example, if all data must be positive, then $f(u)=0$ for $u<0$.
 
 There are modified estimators which deal with this situation, but we won't concern ourselves with them here as this situation will not come up very often in the context of anomaly detection.
 
@@ -296,6 +296,7 @@ oldfaithful |>
 ### Further reading
 
 There is a rich literature on kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
+
 ## Highest density regions
 
 For data sets of dimension one or two, it is often helpful to visualize the density using highest density regions.
