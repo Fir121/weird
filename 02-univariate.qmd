@@ -10,8 +10,6 @@ In this book, we take a probabilistic perspective of anomaly detection. That is,
 
 We are interested in data obtained from a range of possible sample spaces in this book, but for now we will assume that all data are real numbers, and come from continuous probability distributions. Later we will consider other types of data, including discrete data, data that are functions, images, video, networks, text, or even probability distributions as data objects. But for the first half of the book, we will only deal with numerical data.
 
-References will be provided at the end of most sections for those who want to learn more about the topics covered here.
-
 ## Common distributions {#sec-common}
 
 Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$ (the real numbers), with its cumulative probability distribution (cdf) given by
@@ -228,8 +226,6 @@ It is because of the CLT that a $\chi^2_k$ distribution is approximately Normal 
 
 Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
 
-### Further reading
-
 @Wasserman2004 provides some further details and examples of the CLT.
 
 ## Quantiles {#sec-quantiles}
@@ -404,7 +400,7 @@ With a large sample size $n$, the sample quantile $\hat{Q}(p)$ has an approximat
 $$
 \hat{Q}(p) \approx \text{N}\left(Q(p), \frac{p(1-p)}{n f^2(Q(p))}\right)
 $$ {#eq-sample-quantile-distribution}
-where $f(y)$ is the density of the underlying distribution [@van2000asymptotic, p308]. This is an asymptotic result, that assumes $np$ is large, and holds for both `type = 7` and `type = 8` sample quantiles.
+where $f(y)$ is the density of the underlying distribution [@van2000asymptotic, p308]. This is an asymptotic result, that assumes $np$ is large, and holds for all types of sample quantiles.
 
 
 ## Highest density regions {#sec-hdr}
@@ -495,10 +491,6 @@ p +
     )),
   )
 ```
-
-### Further reading
-
-For further discussion of HDRs, see @HDR96.
 
 ## Univariate kernel density estimation {#sec-kde}
 
@@ -795,7 +787,3 @@ df |>
 ```
 
 The orange estimate is slightly better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances).
-
-### Further reading
-
-A good introduction to extreme value theory is @coles2001introduction.

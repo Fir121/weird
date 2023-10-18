@@ -334,7 +334,7 @@ n01b |>
 
 In this last example, because there are only 20 observations, there is not enough data to estimate the quantiles beyond the fourths. So only the middle box is shown.
 
-## Multivariate data depth
+## Multivariate data depth {#sec-depth}
 
 For multivariate data, there is no unique natural ordering of observations by size, so the concept of depth has to be thought about differently. It is still a measure of how centrally a point is located in a data set, but we need to think about what "central" means when there are multiple variables.
 
