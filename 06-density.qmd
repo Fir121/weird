@@ -1,0 +1,118 @@
+# Density-based methods {#sec-density-methods}
+
+```{r}
+#| include: false
+#| cache: false
+source("before-each-chapter.R")
+```
+
+
+## KDE scores {#kdescores}
+
+A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is @eq-mkde
+$$
+  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
+$$
+and we define the "**kde score**" at each observation as
+$$
+  s_i = -\log(f_i).
+$$
+These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $|\bm{y}_i-\bm{y}_j|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
+$$
+  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}).
+$$
+For univariate data, when $d=1$, this simplifies to
+$$
+  -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
+$$
+
+For the Old Faithful eruption duration data, we obtain the following kde scores.
+
+```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
+#| label: fig-ofscores
+of_scores <- oldfaithful |>
+  mutate(score = kde_scores(duration))
+of_scores |> arrange(desc(score))
+of_scores |>
+  filter(duration < 7000) |>
+  ggplot(aes(x = duration, y = score)) +
+  geom_point()
+```
+
+The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. The lowest kde scores correspond to the mode of the estimated density.
+
+For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
+
+## Lookout algorithm
+
+A variation on the idea of kde scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation".
+
+Recall that the kernel density estimate at each observation is (@eq-mkde)
+$$
+  f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
+$$
+and we define the "**kde score**" at each observation as $s_i = -\log(f_i)$. These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large.
+
+We also define the "leave-one-out" kernel density estimate --- the estimate of $f(\bm{y}_i)$ obtained using all data other than $\bm{y}_i$. Note that the contribution of the $i$th point to the kernel density estimate at that point is $K_H(\bm{0})/n$, so the leave-one-out kernel density estimate is simply $f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1)$.
+
+The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these kde scores to find the probability of each observation being an anomaly.
+
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ percentile as the threshold.
+
+```{r}
+#| label: ofpot
+#| code-fold: false
+of_scores <- oldfaithful |>
+  mutate(
+    score = kde_scores(duration),
+    looscore = kde_scores(duration, loo = TRUE),
+  )
+threshold <- quantile(of_scores$score, prob = 0.90)
+gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
+```
+
+Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
+
+```{r}
+#| label: ofpot2
+#| code-fold: false
+of_scores |>
+  mutate(
+    pval = evd::pgpd(looscore,
+      loc = threshold,
+      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
+    )
+  ) |>
+  arrange(pval)
+```
+
+Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers, with several other values around 90--93 seconds, 155 seconds and 304--305 seconds as likely outliers as well. These latter observations are in the regions of low density that we have previous noted.
+
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
+
+```{r}
+#| label: lookout
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(lookout = lookout_prob(Average)) |>
+  filter(lookout < 0.05) |>
+  select(Player, Average, lookout)
+oldfaithful |>
+  mutate(lookout = lookout_prob(duration)) |>
+  filter(lookout < 0.05)
+n01 |>
+  mutate(lookout = lookout_prob(v1)) |>
+  filter(lookout < 0.05)
+n01b <- n01 |>
+  select(v2) |>
+  head(20)
+n01b$v2[20] <- 4
+n01b |>
+  mutate(lookout = lookout_prob(v2)) |>
+  filter(lookout < 0.05)
+```
+
+The algorithm has found 6 of the 1000 N(0,1) observations to be possible anomalies, as well as the one true anomaly in the fourth example.
+
+The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach. This idea will be discussed in Chapter ??

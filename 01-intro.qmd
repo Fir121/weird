@@ -89,21 +89,21 @@ This example reveals some lessons about anomaly detection:
 
 ## Approaches to anomaly detection
 
-We will take a probabilistic perspective of anomaly detection, where we aim to estimate the probability that an observation is identified as an anomaly. Consequently, we will need to introduce (or revise) some material on probability distributions and related tools in @sec-distributions.
+We will take a probabilistic perspective of anomaly detection, where we aim to estimate the probability that an observation is identified as an anomaly. Consequently, we will need to introduce (or revise) some material on probability distributions and related tools in @sec-univariate and @sec-multivariate.
 
 ### Z-scores and statistical tests
 
-The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying probability distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in [Chapter -@sec-tests].
+The early days of anomaly detection involved methods based on statistical tests. Typically, the data were assumed to come from some underlying probability distribution, and then observations were declared outliers if they appeared to be inconsistent with this assumption. By far the most popular of these methods are based on the normal distribution and use z-scores. Even today, such methods are extremely widely used. These are discussed in @sec-tests.
 
-### Quantile and depth-based methods
+### Boxplot methods
 
-The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated approaches to be considered. Most of these were based on sample quantiles of the data, or used the concept of data depth. These methods led to some popular and useful data visualization tools, with anomaly detection a neat side effect. Such methods are discussed in [Chapter -@sec-quantile-methods].
+The second half of the 20th century witnessed the advent of computing, which allowed more sophisticated exploratory data analysis to be developed, including boxplots. Most readers will be familiar with boxplots, which are a simple and effective way to visualise the distribution of a variable, and are often also used for anomaly detection. Such methods are discussed in @sec-boxplots.
 
 ### Distance and density-based methods {-}
 
 Modern tools for anomaly detection can be roughly divided into two groups: those based on densities and those based on distances. Distance-based tools compute the pairwise distances between observations and identify anomalies as those points that are far from other points. Density-based tools compute the probability density at each observation and identify anomalies as those points with very low density. The two ideas are closely related because density estimates are usually based on distances to other observations, and so often a density estimate at a point is a transformation of the distances between that point and all other observations.
 
-Density-based methods are discussed in [Chapter -@sec-density-methods], while distance-based methods are the subject of [Chapter -@sec-distance-methods].
+Density-based methods are discussed in @sec-density-methods, while distance-based methods are the subject of @sec-distance-methods.
 
 ### Statistical vs machine learning approaches {-}
 

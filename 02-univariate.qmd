@@ -1,4 +1,4 @@
-# Probability distributions {#sec-distributions}
+# Univariate probability distributions {#sec-univariate}
 
 ```{r}
 #| include: false
@@ -6,13 +6,13 @@
 source("before-each-chapter.R")
 ```
 
-In this book, we take a probabilistic perspective of anomaly detection. That is, we are interested in the probability that any observation is anomalous. So before we discuss any anomaly detection methods, we first need to discuss probability distributions. Some of this material (especially @sec-univariate) should be familiar to most readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters.
+In this book, we take a probabilistic perspective of anomaly detection. That is, we are interested in the probability that any observation is anomalous. So before we discuss any anomaly detection methods, we first need to discuss probability distributions. Some of this material (especially @sec-common) should be familiar to most readers, but is covered here as a refresher, and to introduce some notation that will be used in later chapters.
 
 We are interested in data obtained from a range of possible sample spaces in this book, but for now we will assume that all data are real numbers, and come from continuous probability distributions. Later we will consider other types of data, including discrete data, data that are functions, images, video, networks, text, or even probability distributions as data objects. But for the first half of the book, we will only deal with numerical data.
 
 References will be provided at the end of most sections for those who want to learn more about the topics covered here.
 
-## Univariate probability distributions {#sec-univariate}
+## Common distributions {#sec-common}
 
 Let $Y$ denote a continuous random variable taking values in $\mathbb{R}$ (the real numbers), with its cumulative probability distribution (cdf) given by
 $$F(y) = \text{Pr}(Y \le y).
@@ -288,6 +288,124 @@ tibble(
   theme(legend.text.align = 0)
 ```
 
+## Sample quantiles {#sec-sample-quantiles}
+
+The **sample quantiles** of a data set are estimates of the quantiles of the underlying distribution. Suppose we have data on a single variable, $\{y_1,\dots,y_n\}$, and we want to estimate a quantile $Q(p)$. There are a surprising number of ways this can be done, and there is no accepted standard approach.
+
+### The `quantile()` function
+
+The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is very small, or when you are interested in the tails when $p$ is close to 0 or 1. However, for anomaly detection, we are usually interested in the tails, so we will need to use a method that works well for extreme values of $p$.
+
+Let's compare two of the possible variations available in `quantile()`: `type = 7` which is the default method, and `type = 8` which was the recommendation of @HF96 due to it having smaller bias.
+
+Let $y_{(k)}$ denote the $k$th largest observation, $k=1,\dots,n$. These ordered values are known as "**order statistics**". Then the sample quantile $\hat{Q}(p)$ is given by linear interpolation between consecutive order statistics. That is, if $k^+= p(n+1-2a) +a$ for some constant $a$, then
+$$
+  \hat{Q}(p) = (1-\gamma) y_{(k)} + \gamma y_{(k+1)},
+$$
+where $k = \lfloor k^+ \rfloor$ is the integer part of $k^+$ and $\gamma = k^+ - k$ is the remainder. Most of the different methods for estimating quantiles differ only in the value of $a$.
+
+* When the default `type = 7` is used, $a = 1$, so $k^+ = p(n-1) + 1$.
+* When `type = 8` is used, $a= 1/3$, so $k^+ = p(n+1/3) + 1/3$.
+
+For any value of $a$, if $p=0.5$ then $k^+ = (n+1)/2$, and we obtain the sample median:
+
+  * When $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
+  * When $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
+
+For large $n$, the sample quantile should provide a good estimate of the true quantile, so that $\hat{Q}(p) \approx Q(p)$.  We can study the bias of the estimator by simulating from a known distribution, and comparing the sample quantiles to the true quantiles. In @fig-quantile-bias, we do this for samples drawn from a N(0,1) distribution. The estimated bias is based on repeating the exercise 10,000 times and averaging the results.
+
+```{r}
+#| label: fig-quantile-bias
+#| fig-cap: Bias of the sample quantile for a N(0,1) distribution. The orange line shows the bias of the default `type = 7` quantile method, while the blue line shows the bias of the preferred `type = 8` quantile method.
+avequantile <- function(n, p, m) {
+  Q7 <- Q8 <- numeric(length(p))
+  for (i in seq(m)) {
+    random_sample <- rnorm(n)
+    Q7 <- Q7 + quantile(random_sample, prob = p, type = 7)/m
+    Q8 <- Q8 + quantile(random_sample, prob = p, type = 8)/m
+  }
+  tibble(n = n, p = p, Q7 = Q7, Q8 = Q8)
+}
+qbias <- tibble(n = c(100, 1000))  |>
+  purrr::pmap_dfr(~ avequantile(n = .x,
+    p = seq(0.002,0.998,by=0.001), m = 10000)) |>
+  pivot_longer(Q7:Q8, names_to = "type", values_to = "Q")  |>
+  mutate(
+    type = paste("type = ", parse_number(type)),
+    Qtrue = qnorm(p),
+    bias = Q - qnorm(p)
+  )
+qbias |>
+  ggplot(aes(x=p, group = type)) +
+  geom_line(aes(y=bias, col=type, linetype = "n = 100"),
+    data = qbias |> filter(n == 100)) +
+  geom_line(aes(y=bias, col=type, linetype = "n = 1000"),
+    data = qbias |> filter(n == 1000)) +
+  labs(
+    x = "Probability p",
+    y = "Bias of sample quantile",
+  ) +
+  guides(
+    linetype = guide_legend(title = "Sample size"),
+    col = guide_legend(title = "Quantile method")
+  )
+```
+
+Clearly, the `type = 8` sample quantile gives much better results than the default `type = 7` method, especially when $p$ is close to 0 or 1. Consequently, we will always use `type = 8` when computing sample quantiles in the remainder of this book.
+
+### Example: Test cricket batting averages {-}
+
+We can calculate some of the sample quantiles for Test cricket batting averages, considering only those batters who have played at least 20 innings. These values are easily computed using the `quantile()` function with argument `type = 8`.
+
+```{r}
+#| label: battingquantiles
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  pull(Average) |>
+  quantile(prob = c(0, 0.25, 0.50, 0.75, 0.99, 1), type = 8)
+```
+
+```{r}
+#| label: fig-cricket-quantiles
+#| fig-asp: 0.2
+#| warning: false
+#| message: false
+#| fig-cap: "Some sample quantiles of career batting averages for all men and women to have played test cricket and batted more than 20 times."
+batave <- cricket_batting |>
+  filter(Innings > 20)
+p <- c(0.25, 0.5, 0.75, 0.99)
+Qs <- quantile(batave$Average, prob = p, type = 8)
+batave |>
+  ggplot(aes(x = Average, y = 1)) +
+  geom_jitter(width = 0, alpha = 0.5) +
+  geom_vline(xintercept = Qs, col = "#D55E00") +
+  scale_y_discrete() +
+  scale_x_continuous(
+    breaks = c(0, Qs, 100),
+    labels = c("0", sprintf("%2.2f", Qs), "100"),
+  ) +
+  scale_x_continuous(
+    breaks = c(0, Qs, 100),
+    labels = c("0", sprintf("%2.2f", Qs), "100"),
+    sec.axis = dup_axis(
+      name = "",
+      breaks = Qs,
+      labels = latex2exp::TeX(sprintf("\\hat{Q}(%2.2f)", p))
+    )
+  ) +
+  labs(y = "", x = "Career batting average")
+```
+
+
+### Sample quantile distribution
+
+With a large sample size $n$, the sample quantile $\hat{Q}(p)$ has an approximate Normal distribution,
+$$
+\hat{Q}(p) \approx \text{N}\left(Q(p), \frac{p(1-p)}{n f^2(Q(p))}\right)
+$$ {#eq-sample-quantile-distribution}
+where $f(y)$ is the density of the underlying distribution [@van2000asymptotic, p308]. This is an asymptotic result, that assumes $np$ is large, and holds for both `type = 7` and `type = 8` sample quantiles.
+
 
 ## Highest density regions {#sec-hdr}
 
@@ -296,7 +414,7 @@ A **highest density region** is defined as the region of the sample space where 
 For the univariate random variable $Y$, with a smooth, continuous density function $f$, the $100(1-\alpha)$% HDR is the set
 $$
   R_\alpha = \{y: f(y) \ge f_\alpha\}
-$$
+$$ {#eq-hdr}
 where $P(Y \in R_\alpha) = 1-\alpha$.
 
 A useful property of the HDR is that it is the smallest region containing $1-\alpha$ of the probability mass.
@@ -382,215 +500,192 @@ p +
 
 For further discussion of HDRs, see @HDR96.
 
-## Multivariate probability distributions {#sec-multivariate}
+## Univariate kernel density estimation {#sec-kde}
 
-While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
+Unlike the examples discussed in @sec-common, we will not normally know what distribution our data come from, and they will almost never be from a standard parametric distribution such as a Normal, t, $\chi^2$ or Gamma distribution. Instead, we will need to estimate the probability density function from the data. Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
-Suppose $\bm{Y} = [Y_1,\dots,Y_n]'$ is a random variable taking values in $\mathbb{R}^d$, the $d$-dimensional real numbers. Then the joint distribution of $\bm{Y}$ is defined by the joint cdf
+Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are independent draws from a probability distribution, and we want to estimate the underlying probability density function. The kernel estimate [see @WJ1995] is given by
 $$
-F(\bm{y}) = \text{Pr}(\bm{Y} \le \bm{y}),
-$$
-while the joint density function is given by
-$$
-f(\bm{y}) = \frac{\partial^n F(\bm{y})}{\partial y_1 \dots \partial y_d}.
-$$
-
-The marginal cdfs are defined by $F_i(y) = \text{Pr}(Y_i \le y)$, with corresponding marginal pdfs given by $f_i(y) = F_i'(y)$, $i=1,\dots,d$.
-
-If the variables are independent, then the joint pdf is the product of the marginal pdfs, $f(\bm{y}) = \prod_{i=1}^d f_i(y_i)$.
-
-The expected value of $\bm{y}$ is given by
-$$
-\text{E}(\bm{Y}) = \int_{\mathbb{R}^d} \bm{y} f(\bm{y})d\bm{y},
-$$
-and the covariance matrix is given by
-$$
-\text{Var}(\bm{Y}) = \text{E}[(\bm{Y}-\text{E}(\bm{Y}))(\bm{Y}-\text{E}(\bm{Y}))'].
-$$
-The covariance matrix is a $d\times d$ matrix, with $(i,j)$th element given by $\text{Cov}(Y_i,Y_j) = \text{E}[(Y_i-\text{E}(Y_i))(Y_j-\text{E}(Y_j))]$. The diagonal elements are the variances of the individual variables, while the off-diagonal elements are the covariances between the variables.
-
-### Multivariate Normal distribution
-
-If random variable $\bm{Y}$ has a multivariate Normal distribution, we write $\bm{Y} \sim \text{N}(\bm{\mu}, \bm{\Sigma})$, where $\bm{\mu}$ is the mean and $\bm{\Sigma}$ is the covariance matrix.
-
-The multivariate Normal distribution has pdf given by
-$$
-f(\bm{y}; \bm{\mu}, \bm{\Sigma}) = (2\pi)^{-d/2}|\bm{\Sigma}|^{-1/2} \exp\left\{-\frac{1}{2}(\bm{y}-\bm{\mu})'\bm{\Sigma}^{-1}(\bm{y}-\bm{\mu})\right\}.
-$$
-The notation $|\bm{\Sigma}|$ denotes the determinant of the matrix $\bm{\Sigma}$.
-
-Multivariate Normal distributions have the interesting property that the marginal distributions are also Normal.
-
-### Highest density regions
-
-As with univariate distributions, a **highest density region** for a multivariate distribution is defined as the region of the sample space where the density is higher than a given threshold. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
-$$
-  R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
-$$
-where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
-
-HDRs are equivalent to level sets of the density function, and so can be plotted as contours for bivariate density functions. For example, the bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ is shown in @fig-bivariate as a series of HDR contours, each containing an additional 10% of the probability mass.
+  \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
+$$ {#eq-kde}
+where $K_h$ is a "kernel" function and $h$ is a bandwidth to be determined. We will use kernel functions that are themselves probability density functions with mean 0 and standard deviation $h$. Thus, a kernel density estimate is a mixture distribution with $n$ components, each of which is a kernel function centred at one of the observations. For example, the "Gaussian" kernel is $K_h(u) = \exp(-u^2/h^2)/(h\sqrt{2\pi})$, equal to the Normal density function with mean zero and standard deviation $h$. Another popular kernel is the quadratic Epanechnikov kernel given by
+$K_h(u) = [1-u^2/(5h^2)]_+ / (h4\sqrt{5}/3)$, where $x_+ = \max(x,0)$.
 
 ```{r}
-#| label: fig-bivariate
-#| message: false
-#| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-library(mvtnorm)
-mu <- c(0, 0)
-Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-# Random sample from the distribution
-samp <- rmvnorm(10000, mu, Sigma)
-# Define the density function on a grid
-grid <- seq(-5.5, 5.5, l = 999)
-den <- list(x = grid, y = grid)
-den$z <- dmvnorm(expand_grid(grid, grid), mu, Sigma) |>
-  matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
-# Find the HDRs with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9) / 10
-hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
-# Plot the contours
-  expand_grid(
-    x = seq(-3, 3, l = 199),
-    y = seq(-3, 3, l = 199)
-  ) |>
-  mutate(z = dmvnorm(cbind(x, y), mu, Sigma)) |>
-  ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
-  labs(
-    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-    title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
-  ) +
-  scale_fill_manual(
-    values = rev(viridisLite::viridis(10)),
-    labels = rev(paste0(100 * rev(prob), "%"))
-  ) +
-  guides(fill = guide_legend(title = "HDR coverage"))
+#| label: of2021
+#| include: false
+of2021 <- oldfaithful |>
+  filter(as.Date(time) > "2021-01-01") |>
+  head(10) |>
+  mutate(eruption = row_number())
+s <- sd(of2021$duration)
+iqr <- IQR(of2021$duration)
+h <- 0.9 * min(s, iqr / 1.349) * NROW(of2021)^(-1 / 5)
 ```
 
-Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two bivariate Normal distributions with means $(0,0)$ and $(3,1)$, and covariance matrices equal to  $\begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and the identity matrix $\bm{I}_2$ respectively. Then the HDRs for an equal mixture of these two distributions is shown in @fig-bivariate-mixture.
+Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
+
+Let's suppose $K_h$ is a Gaussian kernel and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
 
 ```{r}
-#| label: fig-bivariate-mixture
-#| message: false
-#| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-library(mvtnorm)
-p1 <- 0.5
-p2 <- 0.5
-mu1 <- c(0, 0)
-mu2 <- c(3, 1)
-Sigma1 <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-Sigma2 <- diag(2)
-n1 <- round(10000 * p1)
-n2 <- round(10000 * p2)
-# Random sample from mixture distribution
-samp <- rbind(rmvnorm(n1, mu1, Sigma1), rmvnorm(n2, mu2, Sigma2))
-# Define the density function on a grid
-minx <- round(min(samp[, 1]) - 0.5, 1)
-maxx <- round(max(samp[, 1]) + 0.5, 1)
-miny <- round(min(samp[, 2]) - 0.5, 1)
-maxy <- round(max(samp[, 2]) + 0.5, 1)
-den <- list(x = seq(minx, maxx, l = 999), y = seq(miny, maxy, l = 999))
-den$z <- matrix(
-  p1 * dmvnorm(expand_grid(den$x, den$y), mu1, Sigma1) +
-  p2 * dmvnorm(expand_grid(den$x, den$y), mu2, Sigma2),
-  nrow = length(den$x), ncol = length(den$y)
-)
-# Find the HDRs with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9) / 10
-hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
-# Plot the contours
-mixture_density <- expand_grid(
-    x = seq(minx, maxx, by = 0.05),
-    y = seq(miny, maxy, by = 0.05)
-  ) |>
-  mutate(
-    z = p1 * dmvnorm(cbind(x, y), mu1, Sigma1) +
-      p2 * dmvnorm(cbind(x, y), mu2, Sigma2)
-  )
-mixture_plot <- mixture_density |>
-  ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
-  labs(
-    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-    title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
+#| label: fig-kde1
+#| fig.asp: 0.2
+#| depends: of2021
+#| fig-cap: Kernel functions centered over the observations.
+k <- tibble(x = seq(-3 * h, 3 * h, l = 1000)) |>
+  mutate(y = dnorm(x, 0, h) / 10)
+of2021kde <- of2021 |>
+  mutate(k = list(k)) |>
+  unnest(k) |>
+  mutate(x = x + duration)
+ggplot() +
+  geom_line(data = of2021kde, aes(x = x, y = y, group = eruption), col = "gray") +
+  geom_rug(
+    data = of2021, mapping = aes(x = duration, y = 0),
+    linewidth = 1, length = unit(0.06, "npc"), sides = "b"
   ) +
-  scale_fill_manual(
-    values = rev(viridisLite::viridis(10)),
-    labels = rev(paste0(100 * rev(prob), "%"))
-  )
-mixture_plot +
-  guides(fill = guide_legend(title = "HDR coverage"))
+  labs(x = "y = Duration (seconds)", y = latex2exp::TeX("$K_h(y - y_i)/n$"))
 ```
 
-Here, the 10% and 20% HDRs contain disconnected regions, but for the larger HDRs, there is just one region for each.
+The vertical ticks show the location of the ten observations, while the grey lines show $\frac{1}{n}K_h(y - y_i)$ for $i=1,\dots,n$.
 
-### Multivariate quantiles
-
-Unlike the univariate case, there is no unique definition of a multivariate quantile. There are many different definitions, and each has its own advantages and disadvantages. In this book, we are mostly concerned with sample multivariate quantiles, and we will defer a more detailed discussion of multivariate quantiles to @sec-quantile-methods.
-
-### Further reading
-
-A good reference on multivariate probability distributions is @JKmulticontinuous1.
-
-## Conditional probability distributions
-
-A fundamental concept in statistics is a **conditional probability distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
-
-The conditional cdf of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
-$$
- F(y\mid x_1,\dots,x_n) = \text{Pr}(Y \le y \mid  X_1 = x_1,\dots,X_n = x_n).
-$$
-The conditional pdf is given by
-$$
-f(y \mid  x_1, \dots, x_n) = \frac{f(y,x_1,\dots,x_n)}{f(x_1,\dots,x_n)}.
-$$
-The conditional pdf can be thought of as slices of the joint pdf, with the values of $x_1,\dots,x_n$ fixed, rescaled to ensure the conditional pdfs integrate to 1. For example, $f(y_1 | y_2)$ is equal to a scaled slice of the joint pdf $f(y_1,y_2)$ at $y_2$. @fig-conditional shows some examples for the distribution shown at @fig-bivariate-mixture at several values of $y_2$. The left plot shows the joint density, with horizontal lines indicating where conditioning (or slicing) occurs at different values of $y_2$. The right plot shows the resulting conditional density functions.
+These functions are then added together, as in @eq-kde, to give the density estimate.
 
 ```{r}
-#| label: fig-conditional
-#| message: false
-#| depends: fig-bivariate-mixture
-#| fig-cap: Conditional distribution of $Y_2|Y_1$, where $(Y_1,Y_2)$ has the joint distribution plotted in @fig-bivariate-mixture. The left plot shows the joint density with the values of $y_2$ where we will condition, while the right plot shows conditional density functions at different values of $y_2$.
-# Conditioning points
-y2 <- -2:3
-# Scaling factor for each density
-scale_cond_density <- mixture_density |>
-  filter(round(y, 2) %in% round(y2, 2)) |>
-  summarise(scale = sum(z), .by = y) |>
-  transmute(
-    scale = scale / max(scale),
-    y2 = factor(y, levels = y2)
-  )
-# Joint density plot
-plot1 <- mixture_plot +
-  guides(fill = "none") +
-  scale_y_continuous(breaks = y2, minor_breaks = NULL) +
-  coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
-  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2), color = "#8ab3f6")
-# Conditional density plots
-plot2 <- mixture_density |>
-  filter(round(y, 2) %in% round(y2, 2)) |>
-  mutate(y2 = factor(y, levels = y2)) |>
-  left_join(scale_cond_density, by = "y2") |>
-  mutate(
-    z = z / scale,
-    z = z / max(z) * 0.9
-  ) |>
-  ggplot(aes(x = x, y = z + y, group = y2)) +
-  geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4),
-              col = "#8ab3f6", fill = "#8ab3f6") +
-  labs(
-    x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
-    title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")
-  ) +
-  scale_y_continuous(minor_breaks = NULL, breaks = y2) +
-  coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6))
-# Show plots side by side
-plot1 | plot2
+#| label: fig-kde2
+#| fig.asp: 0.5
+#| dependson: kde1
+#| fig-cap: Density estimate formed by summing the kernel functions centered on the observations.
+ggplot() +
+  geom_line(data = of2021kde, aes(x = x, y = y, group = eruption), col = "gray") +
+  geom_rug(data = of2021, mapping = aes(x = duration, y = 0), sides = "b", linewidth = 1) +
+  geom_density(data = of2021, mapping = aes(x = duration), bw = h) +
+  labs(x = "y = Duration (seconds)", y = "Density")
 ```
 
-Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
+We made two choices when producing this estimate: the value of $h$ and the type of kernel $K_h$. If either was replaced with a different choice, the estimate would be different. For large data sets, it does not make much difference which kernel function is used.
 
+The choice of $h$ is more difficult and will change the shape of the density estimate substantially. Here are three versions of the density estimate with bandwidths given by $h=5$, $h=15$ and $h=40$.
+
+```{r}
+#| label: fig-kde3
+#| fig.asp: 0.5
+#| dependson: of2021
+#| fig-cap: Kernel density estimates based on different bandwidth values $h$.
+of2021 |>
+  ggplot(aes(x = duration)) +
+  geom_rug(sides = "b", linewidth = 1) +
+  geom_density(bw = 5, col = "#D55E00") +
+  geom_density(bw = 15, col = "#0072B2") +
+  geom_density(bw = 40, col = "#009E73") +
+  labs(x = "y = Duration (seconds)", y = "Density") +
+  xlim(120, 320) +
+  geom_label(x = 260, y = .02, label = "h = 5", col = "#D55E00") +
+  geom_label(x = 275, y = .01, label = "h = 15", col = "#0072B2") +
+  geom_label(x = 320, y = .004, label = "h = 40", col = "#009E73")
+```
+
+When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ uses Silverman's "rule-of-thumb" [@Silverman1986,p48]:
+$$
+  h = 0.9 \min(s, \text{IQR}/1.349) n^{-1/5},
+$$  {#eq-ruleofthumb}
+where $s$ is the sample standard deviation and $\text{IQR} = \hat{Q}(0.75) - \hat{Q}(0.25)$. This tends to work relatively well for most data sets. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used.
+
+This example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
+
+We will use the `geom_density()` function, which uses the Gaussian kernel and Silverman's rule-of-thumb by default, although other choices are available.
+
+```{r}
+#| label: fig-oldfaithful4
+#| fig.asp: 0.45
+#| fig.cap: "Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
+oldfaithful |>
+  filter(duration < 7000) |>
+  ggplot(aes(x = duration)) +
+  geom_density() +
+  geom_rug() +
+  labs(x = "Duration (seconds)")
+```
+
+```{r}
+#| label: ofbw2
+#| include: false
+of <- oldfaithful |>
+  filter(duration < 7000)
+s <- sd(of$duration)
+iqr <- IQR(of$duration)
+h <- 0.9 * min(s, iqr / 1.349) * NROW(of)^(-1 / 5)
+```
+
+As this is a much bigger data set (with `r NROW(of)` observations), the selected bandwidth is smaller and is now $h = `r round(h, 2)`$. Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
+
+### Statistical properties {-}
+
+The statistical properties of the kernel density estimator @eq-kde have been extensively studied, and are described in several books including @WJ1995 and @Scott2015.
+
+An important asymptotic result is that the mean square error (MSE) of $\hat{f}(y)$ is
+$$
+  \text{E}\left[(\hat{f}(y) - f(y))^2\right] \approx
+  \frac{1}{4}h^4[f''(y)]^2 + \frac{f(y)R(K)}{nh} ,
+$$ {#eq-mse}
+where $R(K) = \int K^2(u)du$ is the "roughness" of the kernel function. An estimator is "consistent" if the MSE goes to zero as the sample size $n$ goes to infinity. So @eq-kde gives a consistent estimator of the underlying density $f$ when both terms in @eq-mse go to zero. That is,
+$$
+  \lim_{n\rightarrow\infty} h = 0
+  \qquad\text{and}\qquad
+  \lim_{n\rightarrow\infty} nh = \infty,
+$$ {#eq-asymptotickde}
+and so $h$ should decrease slowly as $n$ increases. Note that these conditions hold for @eq-ruleofthumb.
+
+If we integrate the MSE given by @eq-mse over $y$ (assuming $f$ is sufficiently smooth for the integral to exist), we obtain the mean integrated squared error (MISE) given by
+$$
+  \text{E}\int \left[(\hat{f}(y) - f(y))^2\right] dy \approx
+  \frac{1}{4}h^4R(f'') + \frac{R(K)}{nh} ,
+$$ {#eq-mise}
+where $R(f'') = \int [f''(y)]^2 dy$ is the roughness of the second derivative of the underlying density.
+
+The optimal overall bandwidth is obtained by minimizing the MISE. This can be calculated by differentiating @eq-mise with respect to $h$ and setting the derivative to zero, yielding
+$$
+  h = \left(\frac{R(K)}{R(f'')n}\right)^{1/5}.
+$$ {#eq-opth}
+So the optimal $h$ is proportional to $n^{-1/5}$, which clearly satisfies the conditions @eq-asymptotickde.
+
+However, this value of $h$ depends on the underlying density $f$ which we don't know. For a Normal density $g$ with variance $\sigma^2$, $R(g) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(g'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, and assume the underlying density has the same roughness as a Normal density, we obtain the "normal reference rule":
+$$
+  h = \sigma\left(\frac{4}{3n}\right)^{1/5} = 1.06\sigma n^{-1/5},
+$$ {#eq-nrr}
+where $\sigma$ is the standard deviation of the underlying density. This is often too large as a Normal distribution is relatively smooth (and so has a relatively low $R(f'')$ value). Silverman proposed replacing 1.06 by 0.9 and $\sigma$ by a robust estimate given by $\min(s, IQR/1.349)$, giving his rule-of-thumb (@eq-ruleofthumb).
+
+Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data.  To use this bandwidth, just set `bw = "SJ"` in `geom_density()`.
+
+Bandwidths obtained in this way are designed to give a good overall estimate of the underlying density, but may not be optimal for any particular point of the density. Our goal is to find anomalies in the data, rather than find a good representation for the rest of the data, and so we are interested in the regions of low density.
+
+If we optimized MSE @eq-mse rather than MISE @eq-mise, we would obtain
+$$
+h = \left(\frac{f(y)R(K)}{n[f''(y)]^2}\right)^{1/5}.
+$$
+This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which occurs in the extreme tails of a distribution. Often the usual bandwidth selection methods result in bandwidths that are too small and can cause the kernel density estimates of observations in the tails to be confused with anomalies. So bandwidths for anomaly detection tend to be a little larger than bandwidths for other purposes.
+
+We can adjust the bandwidth using the argument `adjust` as follows.
+
+```{r}
+#| label: fig-oldfaithful5
+#| fig.asp: 0.45
+#| fig.cap: "Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
+oldfaithful |>
+  filter(duration < 7000) |>
+  ggplot(aes(x = duration)) +
+  geom_density(adjust = 2) +
+  geom_rug() +
+  labs(x = "Duration (seconds)")
+```
+
+Here we have doubled the default bandwidth obtained using @eq-ruleofthumb.
+
+### Boundaries
+
+When a Gaussian kernel is used, we are implicitly assuming that the underlying density $f$ is smooth and non-zero on the whole real line. This will cause problems when the true density is actually zero for some regions of the sample space. For example, if all data must be positive, then $f(u)=0$ for $u<0$.
+
+There are modified estimators which deal with this situation, but we won't concern ourselves with them here as this situation will not come up very often in the context of anomaly detection.
 
 ## Extreme value theory {#sec-evt}
 
