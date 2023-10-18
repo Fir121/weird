@@ -42,7 +42,7 @@ The density functions for these three distributions are shown in @fig-testdist.
 #| label: fig-testdist
 #| fig.cap: "Three distributions we will use to test various anomaly detection methods."
 tibble(
-    x = seq(-5, 10, l = 999),
+    x = seq(-6, 11, l = 999),
     t3 = dt(x, df = 3),
     X4 = dchisq(x, df = 4),
     N01 = dnorm(x)
@@ -58,7 +58,8 @@ tibble(
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
     )) +
-  theme(legend.text.align = 0)
+  theme(legend.text.align = 0) +
+  coord_cartesian(xlim = c(-5, 10))
 ```
 
 Data for the last two examples are generated below.
@@ -218,7 +219,7 @@ pspurious <- function(n, dist, c = 3, rep = 1e5, ...) {
     return(pv)
   }
 }
-n <- c(2:10, round(exp(seq(log(15), log(1e4), l = 40))))
+n <- c(2:10, round(exp(seq(log(15), log(3e4), l = 99))))
 breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 ```
 
@@ -231,10 +232,7 @@ if (file.exists("zspuriousdf.rds")) {
   zspuriousdf <- readRDS("zspuriousdf.rds")
 } else {
   zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
-    mutate(
-      # pmax = 1-pt(c, n-1)^(2*n)
-      pmax = pspurious(n, rnorm, c = c)
-    )
+    mutate(pmax = pspurious(n, rnorm, c = c))
   saveRDS(zspuriousdf, "zspuriousdf.rds")
 }
 labels <- zspuriousdf |>
@@ -249,7 +247,8 @@ zspuriousdf |>
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   geom_label(aes(x = n * 0.9, y = 0.78, label = label, hjust = "right"), data = labels) +
   guides(col = "none") +
-  theme(axis.text.x = element_text(size = 8))
+  theme(axis.text.x = element_text(size = 8)) +
+  coord_cartesian(xlim = c(6, 7500))
 ```
 
 Let's also compute the probability of spurious anomalies for different data distributions --- the $\text{t}_3$ and $\chi^2_4$ distributions shown in @fig-testdist.
@@ -288,7 +287,8 @@ zspurious2df |>
       "N(0,1)"
   )) +
   theme(legend.text.align = 0) +
-  theme(axis.text.x = element_text(size = 8))
+  theme(axis.text.x = element_text(size = 8)) +
+  coord_cartesian(xlim = c(6, 7500))
 ```
 
 Notice how the departures from normality, either via skewness (for the $\chi^2$ distribution) or with heavier tails (for the $t$ distribution), lead to much greater probabilities for spurious anomalies. Any tests for anomaly detection that assume an underlying data distribution will be sensitive to the shape of that distribution.
@@ -299,7 +299,7 @@ Even if we were prepared to believe that the data come from a normal distributio
 
 ### Peirce's criterion {-}
 
-Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. In @Peirce1852 he proposed the first known test based on what are now called $z$-scores. His criteria was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies.
+Benjamin Peirce was a Harvard mathematician in the mid 1800s who worked with astronomical data which were prone to anomalous observations. He proposed the first known test based on what are now called $z$-scores [@Peirce1852]. His criterion was that any observations with $|z| > c$ should be "rejected", where $c$ is a complicated function depending on the sample size $n$ and the number of suspected anomalies.
 
 @fig-zscorecriteria shows the value of $c$ as a function of sample size, when there is only one suspected anomaly.
 
@@ -319,8 +319,9 @@ tibble(n = n, c = threshold) |>
   geom_line(aes(y = qnorm(1 - 0.25 / n)), col = "red") +
   scale_x_log10(limits = c(3, 20000), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(x = "n (sample size)", y = "c (threshold)") +
-  geom_label(aes(x = 1500, y = 4.1, label = "Peirce criterion")) +
-  geom_label(aes(x = 1e4, y = 3.55, label = "Chauvenet criterion"), col = "red")
+  geom_label(aes(x = 1500, y = 3.95, label = "Peirce criterion")) +
+  geom_label(aes(x = 2600, y = 3.4, label = "Chauvenet criterion"), col = "red") +
+  coord_cartesian(xlim = c(3, 1.2e4), expand = FALSE)
 ```
 
 The threshold increases with sample size $n$ to allow for the increasing likelihood of observations falling in the extreme tails of the distribution.
@@ -359,13 +360,13 @@ stopifnot(nanomalies$Peirce == c(0, 1, 2, 1, 10, 6))
 1. When applied to the test cricket batting averages, it doesn't even find the obvious anomaly of Don Bradman.
 2. When applied to the Old Faithful eruption durations, it finds only the most extreme duration.
 3. Both anomalies have been correctly spotted amongst the 18 N(0,1) observations.
-4. Again, one spurious anomaly is identified in the 1000 N(0,1) observations.
+4. One spurious anomaly is identified in the 1000 N(0,1) observations.
 5. Ten spurious anomalies have been identified in the 1000 $\text{t}_3$ observations.
 6. Six spurious anomalies have been identified in the 1000 $\chi^2_4$ observations.
 
 ### Chauvenet's criterion {-}
 
-Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Chauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in @fig-zscorecriteria. A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-Gaussian data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
+Peirce's proposal was largely superseded by an alternative proposed by the astrophysicist William Chauvenet, which was much simpler to describe. He suggested [@Chauvenet1863] replacing the threshold $c$ by the $1-0.25/n$ quantile from the standard normal distribution. This threshold is also shown in @fig-zscorecriteria. A consequence of this choice is that Chauvenet's criterion will reject, on average, half an observation of genuine data from a normal distribution regardless of the value of $n$. However, for non-normal data, there is no such guarantee that genuine observations will not be detected as anomalies. Despite its flaws, the method is still widely used in some disciplines, especially engineering.
 
 The `chauvenet_anomalies()` function can be used to implement this test. For our six examples, it gives similar results to those above for `peirce_anomalies()` (with two additional spurious anomalies for the $t_2$ example, and one additional spurious anomaly for the $\chi^2_4$ example.)
 
@@ -408,7 +409,7 @@ $$
 #| fig-cap: Critical values for maximum $z$-score tests with $\alpha=0.05$.
 alpha <- 0.05
 df <- tibble(n = n) |>
-  filter(n >= 3) |>
+  filter(n >= 3, n <= 10130) |>
   mutate(
     t1 = qt(1 - alpha / n, n - 2),
     t3 = qt(1 - alpha / (2 * n), n - 2),
@@ -421,7 +422,7 @@ df <- tibble(n = n) |>
 df |>
   ggplot(aes(x = n, y = c, col = test)) +
   geom_line() +
-  scale_x_log10(limits = c(3, 9e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
+  scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(x = "n (sample size)", y = latex2exp::TeX("$c_{\\alpha}$ (threshold)")) +
   guides(col = "none") +
   geom_label(aes(x = x, y = y, col = col, label = label, hjust = "left"),
@@ -429,7 +430,8 @@ df |>
       x = rep(1.1e4, 3), y = c(4.35, 4.6, 4.0), col = c("pearson", "grubbs", "chauvenet"),
       label = c("Pearson-Sekar test", "Grubbs test", "Chauvenet criterion")
     )
-  )
+  ) +
+  coord_cartesian(xlim = c(4, 60000))
 ```
 
 From these, we can compute the probability of a spurious anomaly in a normal distribution, using @eq-spuriousz. This probability should be equal to $\alpha=0.05$.
@@ -452,7 +454,7 @@ pzscoredf |>
   geom_line() +
   labs(x = "n (sample size)", y = "Probability of at least one spurious anomaly") +
   scale_y_continuous(breaks = c(0.05, seq(0.1, 0.8, by = 0.1)), minor_breaks = NULL) +
-  scale_x_log10(limits = c(3, 9e4), breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
+  scale_x_log10(breaks = breaks, labels = sprintf("%d", breaks), minor_breaks = NULL) +
   labs(y = "Probability of at least one spurious anomaly", x = "Sample size (n)") +
   guides(col = "none") +
   theme(axis.text.x = element_text(size = 8)) +
@@ -461,7 +463,8 @@ pzscoredf |>
       x = rep(1.1e4, 3), y = c(0.10, 0.05, 0.40), test = c("pearson", "grubbs", "chauvenet"),
       label = c("Pearson-Sekar test", "Grubbs test", "Chauvenet criterion")
     )
-  )
+  ) +
+  coord_cartesian(xlim = c(4, 60000))
 ```
 
 @fig-pzscoretests shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in very small samples.
@@ -500,14 +503,15 @@ pgrubbsdf |>
   #  guides(col = "none") +
   theme(axis.text.x = element_text(size = 8)) +
   scale_color_discrete(
-    breaks = c("t(2)", "Chi-squared(4)", "Normal"),
+    breaks = c("t(3)", "Chi-squared(4)", "Normal"),
     labels = c(
       latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
   )) +
   theme(legend.text.align = 0) +
-  theme(axis.text.x = element_text(size = 8))
+  theme(axis.text.x = element_text(size = 8)) +
+  coord_cartesian(xlim = c(4, 7500))
 ```
 
 We can apply the test using the `grubbs_anomalies()` function to our six examples.
@@ -560,7 +564,7 @@ the ratio of the difference between the two largest values to the range of the d
 
 The corresponding test for the minimum to be an anomaly uses $y_{(2)}-y_{(1)}$ in the numerator instead, the difference between the second smallest and minimum observations. Both minimum and maximum values can be tested simultaneously using the two-sided test, where the numerator is the maximum of $y_{(n)} - y_{(n-1)}$ and $y_{(2)}-y_{(1)}$.
 
-The test is clearly flawed for several reasons. First, if the two largest values are both anomalies of similar size, then $Q$ may take a small value and these anomalies will be missed. Also, if both maximum and minimum values are anomalies, the denominator will be larger than expected, thereby reducing the size of $Q$.
+The test is clearly flawed for several reasons. First, if the two largest values are both anomalies of similar size, then $Q$ will be small and these anomalies will be missed. Also, if both maximum and minimum values are anomalies, the denominator will be larger than expected, thereby reducing the size of $Q$.
 
 As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
 
@@ -616,7 +620,8 @@ dixondf |>
       "N(0,1)"
   )) +
   theme(legend.text.align = 0) +
-  theme(axis.text.x = element_text(size = 8))
+  theme(axis.text.x = element_text(size = 8)) +
+  coord_cartesian(xlim = c(4, 96))
 ```
 
 We can apply the test using the `dixon_anomalies()` function, which does a two-sided test of both minimum and maximum observations.
