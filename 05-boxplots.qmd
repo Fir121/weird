@@ -554,6 +554,8 @@ hdr_df <- hdr_df |>
   ) |> 
   select(-names) |> 
   filter(!is.na(ends)) |> 
+  bind_rows(tibble(prob = c(0,0), type = c("lower", "upper"),
+                   ends = rep(hdr$mode,2))) |> 
   arrange(prob, ends) |>   
   mutate(n = 1+trunc((row_number()/2.01))) |> 
   pivot_wider(id_cols = c("n","prob"), names_from = type, values_from = ends) 
