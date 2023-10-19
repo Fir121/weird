@@ -265,13 +265,13 @@ oldfaithful |>
   labs(x = "Duration (seconds)")
 ```
 
-### Further reading
-
-There is a rich literature on kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
+There is a rich literature on multivariate kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
 
 ## Conditional probability distributions
 
-A fundamental concept in statistics is a **conditional probability distribution**; that is, the distribution of a random variable conditional on the values of other random variables. Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
+A fundamental concept in statistics is a **conditional probability distribution**; that is, the distribution of a random variable conditional on the values of other (possibly random) variables.
+
+Almost all statistical modelling involves the estimation of conditional distributions. For example, a regression is a model for the conditional distribution of a response variable given the values of a set of predictor variables. In its simplest form, we assume the conditional distribution is normal, with constant variance, and mean equal to a linear function of the predictor values. Generalized linear models allow for non-normal conditional distributions, while generalized additive models allow for non-linear relationships between the response and the predictors.
 
 The conditional cdf of $Y$ given $X_1,\dots,X_n$ is defined by the conditional cdf
 $$
@@ -327,5 +327,3 @@ plot1 | plot2
 ```
 
 Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
-
-### Kernel conditional density estimation

@@ -1,1 +1,8 @@
 # Time series data {#sec-noneuclidean}
+
+
+* Historical anomalies vs current anomaly
+* AO vs IO
+* tsoutliers package and tsoutliers() function
+* smooth() function
+*
