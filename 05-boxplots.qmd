@@ -517,21 +517,18 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 #| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015, with the 50% and 99% highest density regions shown in blue."
 of <- oldfaithful |>
   filter(duration < 7000)
-den <- density(of$duration)
-hdr <- hdrcde::hdr(prob = c(50,99), den = den)
-den_df <- tibble(x = den$x, y = den$y)
+hdr <- hdr_table(of$duration, prob = c(0.5, 0.99))
 of |>
   ggplot(aes(x = duration)) +
   geom_density() +
-  geom_line(data = tibble(x = hdr$hdr[1,1:2]), aes(x = x, y = 0),
+  geom_line(data = tibble(x = c(hdr$lower[1],hdr$upper[1])), aes(x = x, y = 0),
             col = "#0072B2", linewidth = 2, alpha = 0.5) +
-  geom_line(data = tibble(x = hdr$hdr[1,3:4]), aes(x = x, y = 0),
+  geom_line(data = tibble(x = c(hdr$lower[2],hdr$upper[2])), aes(x = x, y = 0),
             col = "#0072B2", linewidth = 2, alpha=0.5) +
-  geom_line(data = tibble(x = hdr$hdr[2,1:2]), aes(x = x, y = 0.00025),
+  geom_line(data = tibble(x = c(hdr$lower[3],hdr$upper[3])), aes(x = x, y = 0.0003),
             col = "#0072B2", linewidth = 2) +
   geom_rug() +
   labs(x = "Duration (seconds)")
-
 ```
 
 These HDRs can then be used to form an "HDR boxplot" [@HDR96]
@@ -543,46 +540,22 @@ These HDRs can then be used to form an "HDR boxplot" [@HDR96]
 #| message: false
 #| fig-cap: HDR boxplot of the Old Faithful durations
 #| dependson: fig-hdr-faithful
-hdr_df <- as_tibble(hdr$hdr, .name_repair = "unique", rownames = "prob")
-nint <- (ncol(hdr_df)-1)/2
-colnames(hdr_df) <- c("prob",paste0(c("L","U"), rep(seq(nint), each=nint)))
-hdr_df <- hdr_df |>
-  pivot_longer(-prob, names_to = "names", values_to = "ends") |> 
-  mutate(
-    type = if_else(grepl("L", names), "lower", "upper"),
-    prob = readr::parse_number(prob)
-  ) |> 
-  select(-names) |> 
-  filter(!is.na(ends)) |> 
-  bind_rows(tibble(prob = c(0,0), type = c("lower", "upper"),
-                   ends = rep(hdr$mode,2))) |> 
-  arrange(prob, ends) |>   
-  mutate(n = 1+trunc((row_number()/2.01))) |> 
-  pivot_wider(id_cols = c("n","prob"), names_from = type, values_from = ends) 
-  
-
 oldfaithful |>
   filter(duration < 7000) |>
-  ggplot(aes(x = duration, y = 0)) +
-  geom_jitter(width=0) +
-  geom_ribbon(
-    data = hdr_df,
-    mapping = aes(x = )
-    
-  )
-for(i in seq_len(NROW(hdr_df)/2)) {
-  p <- p + geom_ribbon(aes(
-    x = ends[c(1,)
-  ))
-  
-  
-  (aes(x = hdr_df$ends[2*(i-1)+1],
-                            xend = hdr_df$ends[2*i], 
-                            y = -0.2, yend = 0.2, col=hdr_df$prob[i]))
-}
-p   +
-  labs(y = "", x = "Duration (seconds)") +
-  ylim(-5,5)
+  ggplot() +
+  geom_jitter(aes(x = duration, y = 0), width=0, height=0.9) +
+  geom_rect(
+    data = hdr,
+    aes(xmin = lower, xmax = upper, ymin=-1, ymax=1,
+        fill=factor(as.character(prob), 
+          levels = c("0.5", "0.99"), labels = c("50%", "99%"))),
+    alpha = 0.9
+  ) +
+  scale_fill_manual(
+    breaks = c("50%", "99%"), 
+    values = c("#00659e", "#6da1bf")
+    ) +
+  guides(fill = guide_legend(title = "HDR coverage")) 
 ```
 
 Points outside the 99% region are shown separately and indicate possible outliers.
