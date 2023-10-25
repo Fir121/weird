@@ -510,59 +510,60 @@ The idea of depth regions and the depth median can be easily generaized to data 
 
 We can compute HDRs from a kernel density estimate to find regions of the sample space where observations are unlikely to occur.
 
-Let's illustrate the idea with univariate data. In @sec-kde, we estimated the density of the duration of Old Faithful eruptions using a kernel density estimate, and plotted it in @fig-oldfaithful4. We can find the 50% and 99% HDRs of this density,
+Let's illustrate the idea with univariate data. In @sec-kde, we estimated the density of the duration of Old Faithful eruptions using a kernel density estimate, and plotted it in @fig-oldfaithful4. We can find the 50% and 99% HDRs of this density, which can then be used to form an "HDR boxplot" [@HDR96] as shown in @fig-hdr-faithful.
 
 ```{r}
 #| label: fig-hdr-faithful
-#| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015, with the 50% and 99% highest density regions shown in blue."
+#| fig.cap: "Top: Kernel density estimate of the duration of Old Faithful eruptions since 2015. Bottom: an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions."
 of <- oldfaithful |>
   filter(duration < 7000)
 hdr <- hdr_table(of$duration, prob = c(0.5, 0.99))
-of |>
-  ggplot(aes(x = duration)) +
-  geom_density() +
-  geom_line(data = tibble(x = c(hdr$lower[1],hdr$upper[1])), aes(x = x, y = 0),
-            col = "#0072B2", linewidth = 2, alpha = 0.5) +
-  geom_line(data = tibble(x = c(hdr$lower[2],hdr$upper[2])), aes(x = x, y = 0),
-            col = "#0072B2", linewidth = 2, alpha=0.5) +
-  geom_line(data = tibble(x = c(hdr$lower[3],hdr$upper[3])), aes(x = x, y = 0.0003),
-            col = "#0072B2", linewidth = 2) +
-  geom_rug() +
-  labs(x = "Duration (seconds)")
-```
-
-These HDRs can then be used to form an "HDR boxplot" [@HDR96]
-
-```{r}
-#| label: fig-hdr-faithful2
-#| fig.asp: 0.2
-#| warning: false
-#| message: false
-#| fig-cap: HDR boxplot of the Old Faithful durations
-#| dependson: fig-hdr-faithful
-oldfaithful |>
-  filter(duration < 7000) |>
+hdr_outliers <- which(
+    !(of$duration > hdr$lower[1] & of$duration < hdr$upper[1]) &
+    !(of$duration > hdr$lower[2] & of$duration < hdr$upper[2])
+  )
+p1 <- of |>
   ggplot() +
-  geom_jitter(aes(x = duration, y = 0), width=0, height=0.9) +
+  geom_density(aes(x = duration)) +
+  labs(x = "") + theme(axis.text.x = element_blank())
+p2 <- of |>
+  ggplot() +
   geom_rect(
     data = hdr,
     aes(xmin = lower, xmax = upper, ymin=-1, ymax=1,
         fill=factor(as.character(prob), 
           levels = c("0.5", "0.99"), labels = c("50%", "99%"))),
-    alpha = 0.9
+    alpha = 0.92
   ) +
+  geom_point(data = of[hdr_outliers,], aes(x = duration, y = 0)) +
   scale_fill_manual(
     breaks = c("50%", "99%"), 
     values = c("#00659e", "#6da1bf")
     ) +
-  guides(fill = guide_legend(title = "HDR coverage")) 
+  guides(fill = guide_legend(title = "HDR coverage")) +
+  scale_y_discrete() +
+  labs(y = "", x = "Duration (seconds)")
+patchwork::wrap_plots(p1, p2, ncol = 1, heights = c(6,1))
 ```
 
-Points outside the 99% region are shown separately and indicate possible outliers.
+Points outside the 99% region are shown separately and indicate possible outliers. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
-The idea naturally extends to higher dimensions.
+Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space.
 
+The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bivariate HDR boxplot of the duration and waiting times for the Old Faithful data. Here we have filtered out very long durations and waiting times first.
 
+```{r}
+#| eval: false
+of2 <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000)
+hdr2 <- hdr_table(select(of2, duration, waiting), prob = c(0.5, 0.99))
+
+of |> 
+  ggplot(aes(x = duration, y = waiting)) +
+  geom_point(color = "gray") +
+  geom_density_2d(color = "#0072B2") +
+  labs(x = "Duration (seconds)")
+```
 
 ## Summary
 
