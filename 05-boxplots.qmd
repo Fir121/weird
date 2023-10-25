@@ -448,7 +448,7 @@ p2 <- df |>
   geom_path(data = (df[!df$hull, ])[hull2, ], col = "red") +
   guides(col = "none") +
   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
-p1 | p2
+patchwork::wrap_plots(p1, p2, nrow = 1)
 ```
 
 This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of @fig-convexhull. The third convex layer will consist of the one remaining point that is within the second convex hull.

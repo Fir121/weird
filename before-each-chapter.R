@@ -1,7 +1,7 @@
 set.seed(1967)
 library(tidyverse)
 library(weird)
-library(patchwork)
+#library(patchwork)
 
 knitr::opts_chunk$set(
   comment = "#>",

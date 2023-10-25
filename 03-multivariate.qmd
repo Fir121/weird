@@ -237,7 +237,7 @@ oldfaithful |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(color = "gray") +
   geom_density_2d(color = "#0072B2") +
-  labs(x = "Duration (seconds)")
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
 ```
 
 Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There is one anomalous eruption where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
@@ -262,7 +262,7 @@ oldfaithful |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(color = "gray") +
   geom_density_2d(adjust = 2, color = "#0072B2") +
-  labs(x = "Duration (seconds)")
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
 ```
 
 There is a rich literature on multivariate kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
@@ -323,7 +323,7 @@ plot2 <- mixture_density |>
   scale_y_continuous(minor_breaks = NULL, breaks = y2) +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6))
 # Show plots side by side
-plot1 | plot2
+patchwork::wrap_plots(plot1, plot2, nrow = 1)
 ```
 
 Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
