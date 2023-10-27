@@ -77,15 +77,23 @@ To visualise three-way relationships, we need to use a 3d-scatterplot. It is eas
 knitr::knit_hooks$set(webgl = rgl::hook_webgl)
 ```
 
+::: {#fig-rgl}
+
+::: {.figure-content}
+  
 ```{r}
-#| label: fig-rgl
 #| webgl: true
 #| code-fold: false
-#| fig-cap: 3d scatterplot of the three variables, with anomalies shown in orange.
 rgl::plot3d(df[, 1:3], size = 5,
   col = c(rep("#777777", 998), rep("#D55E00", 2))
 )
 ```
+
+:::
+
+3d scatterplot of the three variables, with anomalies shown in orange.
+
+:::
 
 This second anomaly is not particularly unusual in any combination of two variables, but it is unusual in the combination of all three variables.
 
@@ -93,7 +101,7 @@ When looking for anomalies, it is important to consider all the variables togeth
 
 ## The curse of dimensionality {#sec-curse}
 
-The "curse of dimensionality" refers to increasing sparseness of space as the number of dimensions increases.
+The "curse of dimensionality" refers to the increasing sparseness of space as the number of dimensions increases.
 
 Suppose we observed a high-dimensional data set of independent U(-1,1) variables, and consider the proportion of points that lie outside the unit sphere (in the corners of the space) as the number of dimensions increases.
 First, let's visualise what this means in 1, 2 and 3 dimensions. In 1 dimension, the unit sphere is just the interval [-1,1], so no points lie outside this interval. In 2 dimensions, the unit sphere is the circle with radius 1, sitting snugly within a square of side length 2, as shown in @fig-curse2d.
@@ -120,10 +128,12 @@ The proportion of points lying outside the circle in the corners of the space (s
 
 The equivalent plot in 3-dimensions is shown in @fig-curse3d. The unit sphere is now a ball sitting within a box, and $`r sprintf("%.1f", 100*(1-pi/6))`$% of points lie outside the ball.
 
+::: {#fig-curse3d}
+
+::: {.figure-content}
+  
 ```{r}
-#| label: fig-curse3d
 #| webgl: true
-#| fig-cap: 2000 simulated observations from three independent U(-1,1) distributions, with points within the unit sphere shown in grey, and points outside the unit sphere shown in orange.
 df <- tibble(
   x = runif(2000, -1, 1),
   y = runif(2000, -1, 1),
@@ -134,6 +144,12 @@ df <- tibble(
 rgl::plot3d(df[, 1:3], size = 5,
   col = df$color)
 ```
+
+:::
+
+2000 simulated observations from three independent U(-1,1) distributions, with points within the unit sphere shown in grey, and points outside the unit sphere shown in orange.
+
+:::
 
 As the number of dimensions grows, it becomes increasingly likely that points will lie in the corners of the space. In fact, the proportion of points lying outside the unit sphere in $d$ dimensions is
 $$
@@ -154,7 +170,7 @@ tibble(d = seq(10)) |>
 
 Remarkably, by 10 dimensions, almost all points lie outside the unit sphere, and live in the corners of the space. Almost no points are in the center of the space. This a consequence of the curse of dimensionality.
 
-Another way to think about this is to consider hypercubes which contain 50% of the observations. These must have sides of length $2^{1-1/d}$, so that the volume of the hypercube is $2^{d-1}$, exactly half of the entire space.
+Another way to think about this is to consider hypercubes that contain 50% of the observations. These must have sides of length $2^{1-1/d}$, so that the volume of the hypercube is $2^{d-1}$, exactly half of the entire space.
 
 For $d=1$, the hypercube is a unit interval. For $d=2$, it is a square of side length $2/\sqrt{2}$, and so on. @fig-hypercubes shows the side length of these hypercubes as the number of dimensions increases.
 
@@ -170,12 +186,11 @@ tibble(d = seq(20)) |>
   ylim(1,2)
 ```
 
-The whole space has side length equal to 2, so the side lengths of these hypercubes increasingly approaches the maximum of 2 as the number of dimensions increases. 
-
-Because of the curse of dimensionality, we cannot use methods that rely on local neighbourhoods in high dimensions, as these neighbourhoods must become so large as to no longer be "local".
+The side lengths of these hypercubes increasingly approaches the maximum of 2 as the number of dimensions increases. Therefore, we cannot use methods that rely on local neighbourhoods in high dimensions, as these neighbourhoods must become so large as to no longer be "local".
 
 ## Joint probability distributions {#sec-joint}
 
+Now we have a sense of what it means to have data in many dimensions, let's consider how we can describe the joint probability distribution of multiple variables.
 
 ### Statistical definitions
 
