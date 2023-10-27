@@ -497,7 +497,9 @@ p +
 
 Unlike the examples discussed in @sec-common, we will not normally know what distribution our data come from, and they will almost never be from a standard parametric distribution such as a Normal, t, $\chi^2$ or Gamma distribution. Instead, we will need to estimate the probability density function from the data. Kernel density estimation is the most popular method for nonparametric estimation of a probability density function.
 
-Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are independent draws from a probability distribution, and we want to estimate the underlying probability density function. The kernel estimate [see @WJ1995] is given by
+### Kernel density estimates
+
+Suppose we have $n$ univariate observations, $\{y_1,\dots,y_n\}$, which are independent draws from a probability distribution, and we want to estimate the underlying probability density function. The kernel density estimate [see @WJ1995] is given by
 $$
   \hat{f}(y) = \frac{1}{n} \sum_{i=1}^n K_h(y-y_i),
 $$ {#eq-kde}
@@ -511,7 +513,7 @@ of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
   mutate(eruption = row_number())
-h <- ks::hns(of2021$duration)
+h <- bw.nrd0(of2021$duration)
 ```
 
 Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
@@ -579,11 +581,11 @@ of2021 |>
   geom_label(x = 320, y = .004, label = "h = 40", col = "#009E73")
 ```
 
-When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ (explained later) uses  
+When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ is Silverman's "rule-of-thumb" [@Silverman1986, p48] given by
 $$
-  h = 1.06 s n^{-1/5},
-$$  {#eq-nrr}
-where $s$ is the sample standard deviation. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used.
+  h = 0.9 \min\left\{s, \frac{\text{IQR}}{1.34}\right\} n^{-1/5},
+$$ {#eq-nrd0}
+where $s$ is the sample standard deviation, and $\text{IQR} = \hat{Q}(0.75)-\hat{Q}(0.25)$ is the sample interquartile range. For the 10 observations in the example above, it gives $h = `r round(h, 1)`$, which is the value we used.
 
 This example using only 10 observations was purely to illustrate the method. Let's now estimate a kernel density estimate for the full data set (other than that one pesky duration of 2 hours).
 
@@ -593,10 +595,11 @@ We will use the `geom_density()` function, which uses the Gaussian kernel and Si
 #| label: fig-oldfaithful4
 #| fig.asp: 0.45
 #| fig.cap: "Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
-oldfaithful |>
-  filter(duration < 7000) |>
+of <- oldfaithful |>
+  filter(duration < 7000)
+of |>
   ggplot(aes(x = duration)) +
-  geom_density(bw = "nrd") +
+  geom_density() +
   geom_rug() +
   labs(x = "Duration (seconds)")
 ```
@@ -604,16 +607,15 @@ oldfaithful |>
 ```{r}
 #| label: ofbw2
 #| include: false
-of <- oldfaithful |>
-  filter(duration < 7000)
-h <- ks::hns(of$duration)
+#| dependson: fig-oldfaithful4
+h <- bw.nrd0(of$duration)
 ```
 
 As this is a much bigger data set (with `r NROW(of)` observations), the selected bandwidth is smaller and is now $h = `r round(h, 2)`$. Here the estimate has clearly identified the two groups of eruptions, one much larger than the other. The extreme observation of 1 second, and the unusual observations between 140 and 180 seconds are in the areas of low density. Later we will use density estimates at each observation to identify anomalous points.
 
 ### Statistical properties {-}
 
-The statistical properties of the kernel density estimator @eq-kde have been extensively studied, and are described in several books including @WJ1995 and @Scott2015.
+The statistical properties of the kernel density estimator (@eq-kde) have been extensively studied, and are described in several books including @WJ1995 and @Scott2015.
 
 An important asymptotic result is that the mean square error (MSE) of $\hat{f}(y)$ is
 $$
@@ -626,14 +628,16 @@ $$
   \qquad\text{and}\qquad
   \lim_{n\rightarrow\infty} nh = \infty,
 $$ {#eq-asymptotickde}
-and so $h$ should decrease slowly as $n$ increases. Note that these conditions hold for @eq-nrr.
+and so $h$ should decrease slowly as $n$ increases. Note that these conditions hold for @eq-nrd0.
 
 If we integrate the MSE given by @eq-mse over $y$ (assuming $f$ is sufficiently smooth for the integral to exist), we obtain the mean integrated squared error (MISE) given by
 $$
   \text{E}\int \left[(\hat{f}(y) - f(y))^2\right] dy \approx
   \frac{1}{4}h^4R(f'') + \frac{R(K)}{nh} ,
 $$ {#eq-mise}
-where $R(f'') = \int [f''(y)]^2 dy$ is the roughness of the second derivative of the underlying density.
+where $R(f'') = \int [f''(y)]^2 dy$ is the roughness of the second derivative of the underlying density. This gives us the average squared error over the whole range of $y$.
+
+### Bandwidth selection
 
 The optimal overall bandwidth is obtained by minimizing the MISE. This can be calculated by differentiating @eq-mise with respect to $h$ and setting the derivative to zero, yielding
 $$
@@ -641,28 +645,111 @@ $$
 $$ {#eq-opth}
 So the optimal $h$ is proportional to $n^{-1/5}$, which clearly satisfies the conditions given by @eq-asymptotickde.
 
-However, this value of $h$ depends on the underlying density $f$ which we don't know. For a Normal density $g$ with variance $\sigma^2$, $R(g) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(g'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, replace $\sigma$ by its sample estimate, and assume the underlying density has the same roughness as a Normal density, we obtain the "normal reference rule" previously given by @eq-nrr:
+However, this value of $h$ depends on the underlying density $f$ which we don't know. If $f$ is a Normal density with variance $\sigma^2$, then $R(f) = \frac{1}{2\sqrt{\pi}}\sigma^{-1}$ and $R(f'') = \frac{3}{8\sqrt{\pi}}\sigma^{-5}$. So if we use a Gaussian kernel, replace $\sigma$ by its sample estimate, and assume the underlying density has the same roughness as a Normal density, we obtain the "normal reference rule":
 $$
   h = s\left(\frac{4}{3n}\right)^{1/5} = 1.06s n^{-1/5}.
-$$ {#eq-nrr2} 
-To use this bandwidth in `geom_density()`, set `bw = "nrd"`. It can also be computed using the `ks::hns()` function, or the `stats::bw.nrd()` function.
+$$ {#eq-nrr}
+This can be computed using the `ks::hns()` function.
 
-A related approach is Silverman's "rule-of-thumb" [@Silverman1986,p48], 
-which uses a smaller multiplying constant, and a more robust estimate of the standard deviation:
-$$
-  h = 0.9 \min\left\{s, \frac{\text{IQR}}{1.34}\right\} n^{-1/5},
-$$
-where $\text{IQR} = \hat{Q}(0.75)-\hat{Q}(0.25)$ is the sample interquartile range. For most data sets, this will give a smaller value than @eq-nrr2. This is the default bandwidth used by `geom_density()`. It can also be computed using the `stats::bw.nrd0()` function.
+If we replace $s$ by a more robust estimate of the standard deviation given by $\min\{s, \text{IQR}/1.34\}$,
+we obtain the bandwidth estimate computed by the `bw.nrd()` function, and available in `geom_density()` by setting `bw = "nrd"`.
 
-Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data.  Again, for most data sets, this will give a smaller value than @eq-nrr2. To use this bandwidth, set `bw = "SJ"` in `geom_density()`. It can also be computed using the `stats::bw.SJ()` function, or using  `ks::hpi()`.
+Silverman's "rule-of-thumb" (@eq-nrd0) is similar, but also replaces 1.06 by 0.9, because Silverman argued that most densities are not as smooth as a Normal density, and so a smaller bandwidth is required. This variation is computed using the `bw.nrd0()` function, and is the default bandwidth used by `geom_density()`.
+
+Another popular bandwidth choice is the Sheather-Jones "plug-in" bandwidth [@SJ91], obtained by replacing $R(f'')$ in @eq-opth by an estimate based on the data. For most data sets, this will give a smaller value than @eq-nrr. To use this bandwidth, set `bw = "SJ"` in `geom_density()`. It can also be computed using the `bw.SJ()` function. The bandwidth computed by `ks::hpi()` is similar, but uses a different estimate of $R(f'')$.
 
 Bandwidths obtained in this way are designed to give a good overall estimate of the underlying density, but may not be optimal for any particular point of the density. Our goal is to find anomalies in the data, rather than find a good representation for the rest of the data, and so we are interested in the regions of low density.
 
-If we optimized MSE @eq-mse rather than MISE @eq-mise, we would obtain
+If we optimized MSE (@eq-mse) rather than MISE (@eq-mise), we would obtain
 $$
 h = \left(\frac{f(y)R(K)}{n[f''(y)]^2}\right)^{1/5}.
 $$
-This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which often occurs in the extreme tails of a distribution. So bandwidths for anomaly detection tend to be a little larger than bandwidths for other purposes. For that reason, we will use the normal reference rule @eq-nrr for most examples in this book.
+This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which often occurs in the extreme tails of a distribution. So bandwidths for anomaly detection tend to be larger than bandwidths for other purposes. Unless otherwise stated, we will use the normal reference rule (@eq-nrr) for examples in the rest of this book.
+
+### Estimating the density using R
+
+As we have seen, `geom_density()` allows us to plot the kernel density estimate, with the bandwidth specified using the `bw` argument and the kernel specified by `kernel`. If we want to save the estimate of the kernel density estimate for later analysis, we could use the `density()` function, where again the `bw` and `kernel` arguments control the bandwidth and the kernel.
+
+However, we will use the `kde()` function from the `ks` package instead, as it also handles multivariate density estimation (discussed in @sec-multivariate). It uses a Gaussian kernel, and allows the bandwidth to be controlled via the `h` argument. The default bandwidth is given by `ks::hpi()`, implementing a variation of the Sheather-Jones plug-in rule.
+
+For example, suppose we want to compute the kernel density estimate for the `oldfaithful` data set, using the normal reference rule (@eq-nrr), and then generate a graph similar to @fig-oldfaithful4 (but with a larger bandwidth). We can do this using the following code.
+
+```{r}
+#| label: fig-oldfaithful5
+#| code-fold: false
+#| fig-cap: Kernel density estimate for the duration of the Old Faithful eruptions, using the normal reference rule for the bandwidth.
+library(ks)
+of <- oldfaithful |>
+  filter(duration < 7000)
+of_density <- kde(of$duration, h = hns(of$duration))
+tibble(
+    x = of_density$eval.points,
+    y = of_density$estimate
+  ) |>
+  ggplot() +
+  geom_line(aes(x=x, y=y)) +
+  geom_rug(data = of, aes(x=duration)) +
+  labs(x = "Duration (seconds)", y = "density")
+```
+
+### Highest kernel density regions
+
+The kernel density estimate can be used to identify regions of highest density in the data. We could simply take the estimated density function and use the `hdr_table()` function to find the HDR regions with specified probability coverage.
+
+However, as noted above, the bandwidth used for the kernel density estimate is designed to give a good overall estimate of the underlying density, and we often need a larger bandwidth in the tails of the distribution.
+
+@Samworth2010 proposed a method for finding the optimal bandwidth when estimating highest density regions of a distribution, which is implemented in the `hdrbw()` function in the `hdrcde` package. @fig-hdrbw shows the corresponding bandwidths obtained for the `oldfaithful` data for different values of the probability coverage, along with those obtained by the normal reference rule (@eq-nrr), the robust normal reference rule, Silverman's rule of thumb (@eq-nrd0), and the Sheather-Jones plug-in rule.
+
+```{r}
+#| label: fig-hdrbw
+#| fig-cap: Optimal bandwidths (in black) for computing the highest density regions of the `oldfaithful` data set at different coverage probabilities, along with bandwidths specified by various methods.
+bandwidths <- tibble(
+  Method = c("Normal reference rule", "Robust normal reference rule",
+           "Silverman's rule of thumb", "Sheather-Jones plug-in rule"),
+  Bandwidth = c(hns(of$duration), bw.nrd(of$duration),
+                bw.nrd0(of$duration), bw.SJ(of$duration))
+  ) |>
+  mutate(Method = fct_reorder(Method, Bandwidth, .desc = TRUE))
+prob <- seq(0.5, 0.99, by=0.005)
+bw <- numeric(length(prob))
+for (i in seq_along(prob)) {
+  bw[i] <- hdrcde::hdrbw(of$duration, prob[i])
+}
+tibble(Probability = prob, Bandwidth = bw) |>
+  ggplot() +
+  geom_line(aes(x=Probability, y=Bandwidth)) +
+  geom_hline(data = bandwidths, aes(yintercept = Bandwidth, col = Method)) +
+  labs(x = "HDR Probability Coverate", y = "Optimal bandwidth")
+```
+
+Clearly, most of the popular rules give bandwidths that are too small for the purpose of estimating the highest density regions. For this example, the normal reference rule gives a bandwidth suitable for an HDR of about 90% coverage. This was the value used when estimating the density shown in @fig-oldfaithful5, so we already have the density estimate we need.
+
+We can compute the 90% HDR for the `oldfaithful` data set as follows:
+
+```{r}
+# code-fold: false
+hdr <- hdr_table(density = of_density, prob = 0.90)
+hdr
+```
+
+The resulting estimate is shown in @fig-of-hdr, along with the jittered data.
+
+```{r}
+#| label: fig-of-hdr
+#| fig-cap: 90% highest density region for the `oldfaithful` data set.
+#| fig-asp: 0.2
+of |>
+  ggplot() +
+  geom_jitter(aes(x = duration, y = 0),
+              alpha = 0.5, width = 0, height = 0.8) +
+  geom_rect(data = hdr,
+    aes(xmin = lower, xmax = upper, ymin=-1, ymax=1),
+    fill = "#00659e", alpha = 0.92
+  ) +
+  scale_y_discrete() +
+  labs(y = "", x = "Duration (seconds)")
+```
+
 
 ### Boundaries
 
