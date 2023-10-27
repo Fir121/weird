@@ -8,8 +8,176 @@ source("before-each-chapter.R")
 
 While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
 
-## Joint probability distributions {#sec-multivariate}
+## Hiding in high-dimensional space {#sec-hiding}
 
+When first thinking about multivariate probability distributions, it can take some time to develop an intuition for how they behave. One way to start developing this intuition is to first consider univariate case, and then extend the ideas to higher dimensions.
+
+Let's take the `n01` data set, which contains 10 variables, each from independent standard normal distributions. We will consider only the first three variables, but to make the example more interesting, we will consider cumulative sums of these variables. We will also add a couple of anomalies, and then see if we can find them using some data visualizations.
+
+```{r}
+#| label: demo_data
+#| code-fold: false
+# Construct example data set
+df <- n01 |>
+  transmute(
+    V1 = v1,
+    V2 = v1 + v2,
+    V3 = v1 + v2 + v3
+  )
+# Add anomalies
+df[999, ] <- tibble(V1 = -2, V2 = 3.4, V3 = 1.3)
+df[1000, ] <- tibble(V1 = 1.2, V2 = -1.8, V3 = 1.1)
+df$anomaly <- c(rep(FALSE, 998), TRUE, TRUE)
+```
+
+First, we can do a strip plot of each variable to see their univariate marginal distributions.
+
+```{r}
+#| label: fig-demo_strip
+#| code-fold: false
+#| fig-asp: 0.3
+#| fig-cap: Strip plots of each of the three variables, with anomalies shown in orange.
+df |>
+  pivot_longer(V1:V3) |>
+  ggplot(aes(x = value, y = 0, col = anomaly)) +
+  geom_jitter(width = 0) +
+  facet_grid(name ~ .) +
+  scale_y_discrete() +
+  labs(x = "", y = "") +
+  scale_color_manual(values = c("#777777", "#D55E00"))
+```
+
+The only obvious feature of these graphs is that the variance increases in successive panels. This is because the variance of the sum of independent random variables is the sum of their variances. The two anomalies are plotted in each panel, but they are not obviously different from the other observations.
+
+Now we will plot pairwise scatterplots of the four variables.
+
+```{r}
+#| label: fig-demo-pairs
+#| fig-cap: Pairwise scatterplots of the three variables, with anomalies shown in orange.
+#| code-fold: false
+#| warning: false
+#| message: false
+GGally::ggpairs(df[, 1:3],
+    lower = list(
+      continuous = GGally::wrap("points"),
+      mapping = aes(color = df$anomaly)
+    )
+  ) +
+  scale_color_manual(values = c("#777777", "#D55E00"))
+```
+
+This shows that there are positive relationships between the variables, with the strongest between `V2` and `V3`. One of the anomalies is now clearly separate from the other observations in the plot of `V2` vs `V1` (the top left scatterplot). For this anomaly, the value of `V1` is -2, which is not particularly unusual compared to the other observations. Similarly, the value of `V2` is 3.4, which is also not particularly unusual. But because of their positive correlation, the combination of these two values is unusual, so it shows up in the 2-dimensional scatterplot. The other anomaly does not look particularly unusual in any of the plots.
+
+To visualise three-way relationships, we need to use a 3d-scatterplot. It is easiest to see this if it can spin. Try dragging the plot around with your mouse to view if from different angles. See if you can find an viewpoint where the second anomaly is clearly separated from the other observations.
+
+```{r}
+#| label: rglhook
+#| include: false
+#| cache: false
+knitr::knit_hooks$set(webgl = rgl::hook_webgl)
+```
+
+```{r}
+#| label: fig-rgl
+#| webgl: true
+#| code-fold: false
+#| fig-cap: 3d scatterplot of the three variables, with anomalies shown in orange.
+rgl::plot3d(df[, 1:3], size = 5,
+  col = c(rep("#777777", 998), rep("#D55E00", 2))
+)
+```
+
+This second anomaly is not particularly unusual in any combination of two variables, but it is unusual in the combination of all three variables.
+
+When looking for anomalies, it is important to consider all the variables together, rather than looking at each variable in isolation, or even looking at all the pairwise relationships. It is possible for an observation to be unusual in $d$ dimensions, but not unusual in any of the $(d-1)$-dimensional subsets of variables. In other words, there are more places for anomalies to hide in higher dimensions.
+
+## The curse of dimensionality {#sec-curse}
+
+The "curse of dimensionality" refers to increasing sparseness of space as the number of dimensions increases.
+
+Suppose we observed a high-dimensional data set of independent U(-1,1) variables, and consider the proportion of points that lie outside the unit sphere (in the corners of the space) as the number of dimensions increases.
+First, let's visualise what this means in 1, 2 and 3 dimensions. In 1 dimension, the unit sphere is just the interval [-1,1], so no points lie outside this interval. In 2 dimensions, the unit sphere is the circle with radius 1, sitting snugly within a square of side length 2, as shown in @fig-curse2d.
+
+```{r}
+#| label: fig-curse2d
+#| fig-cap: 2000 simulated observations from two independent U(-1,1) distributions, with points within the unit circle shown in grey, and points outside the unit circle shown in orange.
+#| fig-height: 5
+#| fig-width: 5
+#| out-width: 70%
+tibble(
+    x = runif(2000, -1, 1),
+    y = runif(2000, -1, 1),
+    within_sphere = (x^2 + y^2) < 1
+  ) |>
+  ggplot(aes(x=x, y=y, color = within_sphere)) +
+  geom_point() +
+  coord_fixed() +
+  scale_color_manual(values = c("#D55E00","#777777")) +
+  guides(col = "none")
+```
+
+The proportion of points lying outside the circle in the corners of the space (shown in orange) is $`r sprintf("%.1f", 100*(1-pi/4))`$%.
+
+The equivalent plot in 3-dimensions is shown in @fig-curse3d. The unit sphere is now a ball sitting within a box, and $`r sprintf("%.1f", 100*(1-pi/6))`$% of points lie outside the ball.
+
+```{r}
+#| label: fig-curse3d
+#| webgl: true
+#| fig-cap: 2000 simulated observations from three independent U(-1,1) distributions, with points within the unit sphere shown in grey, and points outside the unit sphere shown in orange.
+df <- tibble(
+  x = runif(2000, -1, 1),
+  y = runif(2000, -1, 1),
+  z = runif(2000, -1, 1),
+  within_sphere = (x^2 + y^2 + z^2) < 1,
+  color = if_else(within_sphere, "#777777", "#D55E00")
+)
+rgl::plot3d(df[, 1:3], size = 5,
+  col = df$color)
+```
+
+As the number of dimensions grows, it becomes increasingly likely that points will lie in the corners of the space. In fact, the proportion of points lying outside the unit sphere in $d$ dimensions is
+$$
+1 - \frac{\pi^{d/2}}{2^d\Gamma(d/2 + 1)}
+$$
+where $\Gamma$ is the gamma function. This is plotted in @fig-curse.
+
+```{r}
+#| label: fig-curse
+#| fig-cap: For observations from a $d$-dimensional U(-1,1) distribution, the percentage of points lying outside the unit sphere in the corners of the space.
+tibble(d = seq(10)) |>
+  mutate(outside = 100 * (1 - (pi^(d / 2) / (2^d * gamma(d / 2 + 1))))) |>
+  ggplot(aes(x = d, y = outside)) +
+  geom_line() +
+  labs(x = "Dimensions (d)", y = "Percentage of points outside unit sphere") +
+  scale_x_continuous(breaks = seq(10), minor_breaks = NULL)
+```
+
+Remarkably, by 10 dimensions, almost all points lie outside the unit sphere, and live in the corners of the space. Almost no points are in the center of the space. This a consequence of the curse of dimensionality.
+
+Another way to think about this is to consider hypercubes which contain 50% of the observations. These must have sides of length $2^{1-1/d}$, so that the volume of the hypercube is $2^{d-1}$, exactly half of the entire space.
+
+For $d=1$, the hypercube is a unit interval. For $d=2$, it is a square of side length $2/\sqrt{2}$, and so on. @fig-hypercubes shows the side length of these hypercubes as the number of dimensions increases.
+
+```{r}
+#| label: fig-hypercubes
+#| fig-cap: For observations from a $d$-dimensional U(-1,1) distribution, the side length of a hypercube which contains 50% of points.
+tibble(d = seq(20)) |>
+  mutate(length = 2*(0.5)^(1/d)) |>
+  ggplot(aes(x = d, y = length)) +
+  geom_line() +
+  labs(x = "Dimensions (d)", y = "Side length of hypercube containing 50% of points") +
+  scale_x_continuous(breaks = seq(2, 20, by=2), minor_breaks = NULL) +
+  ylim(1,2)
+```
+
+The whole space has side length equal to 2, so the side lengths of these hypercubes increasingly approaches the maximum of 2 as the number of dimensions increases. 
+
+Because of the curse of dimensionality, we cannot use methods that rely on local neighbourhoods in high dimensions, as these neighbourhoods must become so large as to no longer be "local".
+
+## Joint probability distributions {#sec-joint}
+
+
+### Statistical definitions
 
 Suppose $\bm{Y} = [Y_1,\dots,Y_n]'$ is a random variable taking values in $\mathbb{R}^d$, the $d$-dimensional real numbers. Then the joint distribution of $\bm{Y}$ is defined by the joint cdf
 $$
@@ -78,10 +246,10 @@ den$z <- dmvnorm(expand_grid(grid, grid), mu, Sigma) |>
 prob <- seq(9) / 10
 hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
 # Plot the contours
-  expand_grid(
-    x = seq(-3, 3, l = 199),
-    y = seq(-3, 3, l = 199)
-  ) |>
+expand_grid(
+  x = seq(-3, 3, l = 199),
+  y = seq(-3, 3, l = 199)
+) |>
   mutate(z = dmvnorm(cbind(x, y), mu, Sigma)) |>
   ggplot(aes(x = x, y = y, z = z)) +
   geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
@@ -121,7 +289,7 @@ maxy <- round(max(samp[, 2]) + 0.5, 1)
 den <- list(x = seq(minx, maxx, l = 999), y = seq(miny, maxy, l = 999))
 den$z <- matrix(
   p1 * dmvnorm(expand_grid(den$x, den$y), mu1, Sigma1) +
-  p2 * dmvnorm(expand_grid(den$x, den$y), mu2, Sigma2),
+    p2 * dmvnorm(expand_grid(den$x, den$y), mu2, Sigma2),
   nrow = length(den$x), ncol = length(den$y)
 )
 # Find the HDRs with probability 0.1, 0.2, ..., 0.9
@@ -129,9 +297,9 @@ prob <- seq(9) / 10
 hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
 # Plot the contours
 mixture_density <- expand_grid(
-    x = seq(minx, maxx, by = 0.05),
-    y = seq(miny, maxy, by = 0.05)
-  ) |>
+  x = seq(minx, maxx, by = 0.05),
+  y = seq(miny, maxy, by = 0.05)
+) |>
   mutate(
     z = p1 * dmvnorm(cbind(x, y), mu1, Sigma1) +
       p2 * dmvnorm(cbind(x, y), mu2, Sigma2)
@@ -193,17 +361,19 @@ of2021 <- oldfaithful |>
   mutate(eruption = row_number())
 h <- c(13, 300)
 k <- expand_grid(
-    x = seq(-3 * h[1], 3 * h[1], l = 100),
-    y = seq(-3 * h[2], 3 * h[2], l = 100)
-  ) |>
+  x = seq(-3 * h[1], 3 * h[1], l = 100),
+  y = seq(-3 * h[2], 3 * h[2], l = 100)
+) |>
   mutate(z = dnorm(x, 0, h[1]) * dnorm(y, 0, h[2]))
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
   unnest(k) |>
   mutate(x = x + duration, y = y + waiting)
 ggplot() +
-  geom_contour(data = of2021kde, aes(x = x, y = y, group = eruption, z = z),
-               bins = 4, col = "gray") +
+  geom_contour(
+    data = of2021kde, aes(x = x, y = y, group = eruption, z = z),
+    bins = 4, col = "gray"
+  ) +
   geom_point(data = of2021, mapping = aes(x = duration, y = waiting)) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
   xlim(147, 287) +
@@ -237,7 +407,7 @@ oldfaithful |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(color = "gray") +
   geom_density_2d(color = "#0072B2") +
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There is one anomalous eruption where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
@@ -262,7 +432,7 @@ oldfaithful |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(color = "gray") +
   geom_density_2d(adjust = 2, color = "#0072B2") +
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 There is a rich literature on multivariate kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
@@ -315,7 +485,8 @@ plot2 <- mixture_density |>
   ) |>
   ggplot(aes(x = x, y = z + y, group = y2)) +
   geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4),
-              col = "#8ab3f6", fill = "#8ab3f6") +
+    col = "#8ab3f6", fill = "#8ab3f6"
+  ) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")
