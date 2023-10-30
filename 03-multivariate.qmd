@@ -97,7 +97,7 @@ rgl::plot3d(df[, 1:3], size = 5,
 
 This second anomaly is not particularly unusual in any combination of two variables, but it is unusual in the combination of all three variables.
 
-When looking for anomalies, it is important to consider all the variables together, rather than looking at each variable in isolation, or even looking at all the pairwise relationships. It is possible for an observation to be unusual in $d$ dimensions, but not unusual in any of the $(d-1)$-dimensional subsets of variables. In other words, there are more places for anomalies to hide in higher dimensions.
+When looking for anomalies, it is important to consider all the variables together, rather than looking at each variable in isolation, or even looking at all the pairwise relationships. It is possible for an observation to be unusual in $d$ dimensions, but not unusual in any of the lower-dimensional subsets of variables. In other words, there are more places for anomalies to hide in higher dimensions.
 
 ## The curse of dimensionality {#sec-curse}
 
