@@ -695,6 +695,18 @@
       ],
       "Hash": "1363f02b54d086ace5af19f590697f90"
     },
+    "deldir": {
+      "Package": "deldir",
+      "Version": "1.0-9",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics"
+      ],
+      "Hash": "81dc74aa2dbe87672a8f73934fcf2dae"
+    },
     "desc": {
       "Package": "desc",
       "Version": "1.4.2",
@@ -1277,6 +1289,19 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6154ec2223172bce8162d4153cda21f7"
+    },
+    "interp": {
+      "Package": "interp",
+      "Version": "1.1-4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "RcppEigen",
+        "deldir"
+      ],
+      "Hash": "3fff1eabca2e23beba50982e9b6fccaa"
     },
     "isoband": {
       "Package": "isoband",
@@ -2764,8 +2789,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
+      "RemotePkgRef": "robjhyndman/weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "f502f624274367f2ed59c4b25d86b7f70f85f0c2",
+      "RemoteSha": "efd9fc21401cd4bf4c003b511198c75a848f6e2b",
       "Requirements": [
         "R",
         "aplpack",
@@ -2775,12 +2801,13 @@
         "dplyr",
         "evd",
         "ggplot2",
+        "interp",
         "ks",
         "purrr",
         "rstudioapi",
         "tibble"
       ],
-      "Hash": "6bcca78ff3896ccf6ef7124e4e946161"
+      "Hash": "f5a1076f9dc32c93db54a5804b8a6ce6"
     },
     "whisker": {
       "Package": "whisker",

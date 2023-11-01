@@ -250,24 +250,18 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 library(mvtnorm)
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-# Random sample from the distribution
-samp <- rmvnorm(10000, mu, Sigma)
 # Define the density function on a grid
-grid <- seq(-5.5, 5.5, l = 999)
-den <- list(x = grid, y = grid)
-den$z <- dmvnorm(expand_grid(grid, grid), mu, Sigma) |>
-  matrix(nrow = length(grid), ncol = length(grid), byrow = TRUE)
-# Find the HDRs with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9) / 10
-hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
+grid <- seq(-5.5, 5.5, l = 199)
+den <- list(x = expand_grid(y1 = grid, y2 = grid))
+den$y <- mvtnorm::dmvnorm(den$x, mu, Sigma) 
+# Find the HDR contours with probability 0.1, 0.2, ..., 0.9
+prob <- seq(9)/10
+hdr <- hdr_table(density = den, prob = prob)
 # Plot the contours
-expand_grid(
-  x = seq(-3, 3, l = 199),
-  y = seq(-3, 3, l = 199)
-) |>
-  mutate(z = dmvnorm(cbind(x, y), mu, Sigma)) |>
-  ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
+den$x |> 
+  mutate(z = den$y) |> 
+  ggplot(aes(x = y1, y = y2, z = z)) +
+  geom_contour_filled(breaks = rev(c(hdr$density, 100))) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
@@ -292,36 +286,17 @@ mu1 <- c(0, 0)
 mu2 <- c(3, 1)
 Sigma1 <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
 Sigma2 <- diag(2)
-n1 <- round(10000 * p1)
-n2 <- round(10000 * p2)
-# Random sample from mixture distribution
-samp <- rbind(rmvnorm(n1, mu1, Sigma1), rmvnorm(n2, mu2, Sigma2))
 # Define the density function on a grid
-minx <- round(min(samp[, 1]) - 0.5, 1)
-maxx <- round(max(samp[, 1]) + 0.5, 1)
-miny <- round(min(samp[, 2]) - 0.5, 1)
-maxy <- round(max(samp[, 2]) + 0.5, 1)
-den <- list(x = seq(minx, maxx, l = 999), y = seq(miny, maxy, l = 999))
-den$z <- matrix(
-  p1 * dmvnorm(expand_grid(den$x, den$y), mu1, Sigma1) +
-    p2 * dmvnorm(expand_grid(den$x, den$y), mu2, Sigma2),
-  nrow = length(den$x), ncol = length(den$y)
-)
-# Find the HDRs with probability 0.1, 0.2, ..., 0.9
+den <- list(x = expand_grid(y1 = seq(-3, 6, l = 199), y2 = seq(-3, 4, l = 199)))
+den$y <- p1 * dmvnorm(den$x, mu1, Sigma1) + p2 * dmvnorm(den$x, mu2, Sigma2)
+# Find the HDR contours with probability 0.1, 0.2, ..., 0.9
 prob <- seq(9) / 10
-hdr <- hdrcde::hdr.2d(x = samp[, 1], y = samp[, 2], den = den, prob = prob)
+hdr <- hdr_table(density = den, prob = prob)
 # Plot the contours
-mixture_density <- expand_grid(
-  x = seq(minx, maxx, by = 0.05),
-  y = seq(miny, maxy, by = 0.05)
-) |>
-  mutate(
-    z = p1 * dmvnorm(cbind(x, y), mu1, Sigma1) +
-      p2 * dmvnorm(cbind(x, y), mu2, Sigma2)
-  )
-mixture_plot <- mixture_density |>
-  ggplot(aes(x = x, y = y, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$falpha, 100))) +
+den$x |> 
+  mutate(z = den$y) |> 
+  ggplot(aes(x = y1, y = y2, z = z)) +
+  geom_contour_filled(breaks = rev(c(hdr$density, 100))) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
@@ -329,8 +304,7 @@ mixture_plot <- mixture_density |>
   scale_fill_manual(
     values = rev(viridisLite::viridis(10)),
     labels = rev(paste0(100 * rev(prob), "%"))
-  )
-mixture_plot +
+  ) +
   guides(fill = guide_legend(title = "HDR coverage"))
 ```
 
@@ -358,12 +332,11 @@ of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
   mutate(eruption = row_number())
-
-h1 <- MASS::bandwidth.nrd(of2021$duration)
-h2 <- MASS::bandwidth.nrd(of2021$waiting)
+H <- diag(c(MASS::bandwidth.nrd(of2021$duration),
+       MASS::bandwidth.nrd(of2021$waiting))^2/16)
 ```
 
-We will illustrate the idea using a simple bivariate example of 10 observations: the same 10 eruption durations discussed above, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{cc}`r round(h1,0)` & 0 \\ 0 & `r round(h2,0)`\end{array}\right]$.
+We will illustrate the idea using a simple bivariate example of 10 observations: the same 10 eruption durations discussed above, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{cc}`r sprintf("%.f", H[1,1])` & `r sprintf("%.f", H[1,2])` \\ `r sprintf("%.f", H[2,1])` & `r sprintf("%.f", H[2,2])`\end{array}\right]$.
 
 ```{r}
 #| label: fig-ofdw
@@ -374,7 +347,9 @@ of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
   mutate(eruption = row_number())
-h <- c(13, 300)
+H <- diag(c(MASS::bandwidth.nrd(of2021$duration),
+       MASS::bandwidth.nrd(of2021$waiting))^2/16)
+h <- sqrt(diag(H))
 k <- expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
   y = seq(-3 * h[2], 3 * h[2], l = 100)
@@ -391,23 +366,23 @@ ggplot() +
   ) +
   geom_point(data = of2021, mapping = aes(x = duration, y = waiting)) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
-  xlim(147, 287) +
-  ylim(3070, 6860)
+  xlim(140, 290) +
+  ylim(3010, 6860)
 ```
 
 If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate kernel density estimate shown below.
 
 ```{r}
 #| label: fig-ofbivariate1
-#| dependson: of2021
+#| dependson: fig-ofdw
 #| fig-cap: Bivariate kernel density estimate formed by summing the kernels shown in @fig-ofdw.
 of2021 |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point() +
-  geom_density_2d(color = "#0072B2") +
+  geom_density_2d(color = "#0072B2", h = 4*h) + 
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
-  xlim(147, 287) +
-  ylim(3070, 6860)
+  xlim(140, 290) +
+  ylim(3010, 6860)
 ```
 
 Now we will apply the method to the full data set, other than the 2 hour eruption and observations where the subsequent waiting time is more than 2 hours (which are likely to be data errors).
