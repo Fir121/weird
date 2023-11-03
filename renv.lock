@@ -699,7 +699,7 @@
       "Package": "deldir",
       "Version": "1.0-9",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "grDevices",
@@ -1294,7 +1294,7 @@
       "Package": "interp",
       "Version": "1.1-4",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "Rcpp",
@@ -2789,9 +2789,8 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
-      "RemotePkgRef": "robjhyndman/weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "efd9fc21401cd4bf4c003b511198c75a848f6e2b",
+      "RemoteSha": "8472c56c08a288b1602c5b87b27a44dc933e9d95",
       "Requirements": [
         "R",
         "aplpack",
@@ -2805,9 +2804,10 @@
         "ks",
         "purrr",
         "rstudioapi",
-        "tibble"
+        "tibble",
+        "viridisLite"
       ],
-      "Hash": "f5a1076f9dc32c93db54a5804b8a6ce6"
+      "Hash": "9a5022bea36b0f8c910d9960af1bb5ff"
     },
     "whisker": {
       "Package": "whisker",
@@ -2818,7 +2818,7 @@
     },
     "withr": {
       "Package": "withr",
-      "Version": "2.5.1",
+      "Version": "2.5.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2827,7 +2827,7 @@
         "graphics",
         "stats"
       ],
-      "Hash": "d77c6f74be05c33164e33fbc85540cae"
+      "Hash": "4b25e70111b7d644322e9513f403a272"
     },
     "xfun": {
       "Package": "xfun",
