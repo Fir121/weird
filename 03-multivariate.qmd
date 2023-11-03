@@ -246,31 +246,19 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 ```{r}
 #| label: fig-bivariate
 #| message: false
+#| echo: false
 #| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-library(mvtnorm)
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-# Define the density function on a grid
-grid <- seq(-5.5, 5.5, l = 199)
-den <- list(x = expand_grid(y1 = grid, y2 = grid))
-den$y <- mvtnorm::dmvnorm(den$x, mu, Sigma) 
-# Find the HDR contours with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9)/10
-hdr <- hdr_table(density = den, prob = prob)
-# Plot the contours
-den$x |> 
-  mutate(z = den$y) |> 
-  ggplot(aes(x = y1, y = y2, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$density, 100))) +
+grid <- seq(-3, 3, by = 0.05)
+den <- list(y = expand_grid(y1 = grid, y2 = grid))
+den$density <- mvtnorm::dmvnorm(den$y, mu, Sigma)
+as_kde(den) |>
+  autoplot(fill = TRUE) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
-  ) +
-  scale_fill_manual(
-    values = rev(viridisLite::viridis(10)),
-    labels = rev(paste0(100 * rev(prob), "%"))
-  ) +
-  guides(fill = guide_legend(title = "HDR coverage"))
+  )
 ```
 
 Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two bivariate Normal distributions with means $(0,0)$ and $(3,1)$, and covariance matrices equal to  $\begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and the identity matrix $\bm{I}_2$ respectively. Then the HDRs for an equal mixture of these two distributions is shown in @fig-bivariate-mixture.
@@ -279,33 +267,25 @@ Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two biv
 #| label: fig-bivariate-mixture
 #| message: false
 #| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-library(mvtnorm)
-p1 <- 0.5
-p2 <- 0.5
+p1 <- p2 <- 0.5
 mu1 <- c(0, 0)
 mu2 <- c(3, 1)
-Sigma1 <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+Sigma1 <- rbind(c(1, 0.5), c(0.5, 1))
 Sigma2 <- diag(2)
 # Define the density function on a grid
-den <- list(x = expand_grid(y1 = seq(-3, 6, l = 199), y2 = seq(-3, 4, l = 199)))
-den$y <- p1 * dmvnorm(den$x, mu1, Sigma1) + p2 * dmvnorm(den$x, mu2, Sigma2)
-# Find the HDR contours with probability 0.1, 0.2, ..., 0.9
-prob <- seq(9) / 10
-hdr <- hdr_table(density = den, prob = prob)
+mixture_density <- list(
+  y = expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
+)
+mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density$y, mu1, Sigma1) + 
+               p2 * mvtnorm::dmvnorm(mixture_density$y, mu2, Sigma2)
 # Plot the contours
-den$x |> 
-  mutate(z = den$y) |> 
-  ggplot(aes(x = y1, y = y2, z = z)) +
-  geom_contour_filled(breaks = rev(c(hdr$density, 100))) +
+mixture_plot <- as_kde(mixture_density) |>
+  autoplot(fill = TRUE) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
-  ) +
-  scale_fill_manual(
-    values = rev(viridisLite::viridis(10)),
-    labels = rev(paste0(100 * rev(prob), "%"))
-  ) +
-  guides(fill = guide_legend(title = "HDR coverage"))
+  )
+mixture_plot
 ```
 
 Here, the 10% and 20% HDRs contain disconnected regions, but for the larger HDRs, there is just one region for each.
@@ -325,36 +305,33 @@ $$
   K_H(\bm{u}) = (2\pi)^{-d/2} |\bm{H}|^{-1/2} \exp \{-\textstyle\frac12 \bm{u}'\bm{H}^{-1}\bm{u} \}.
 $$
 
+### Bivariate kernel density estimation
+
 ```{r}
 #| label: bivariatebandwidths
 #| include: false
 of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
+  select(duration, waiting) |> 
   mutate(eruption = row_number())
-H <- diag(c(MASS::bandwidth.nrd(of2021$duration),
-       MASS::bandwidth.nrd(of2021$waiting))^2/16)
+H <- ks::Hns(of2021[,1:2])
 ```
 
 We will illustrate the idea using a simple bivariate example of 10 observations: the same 10 eruption durations discussed above, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{cc}`r sprintf("%.f", H[1,1])` & `r sprintf("%.f", H[1,2])` \\ `r sprintf("%.f", H[2,1])` & `r sprintf("%.f", H[2,2])`\end{array}\right]$.
 
 ```{r}
 #| label: fig-ofdw
-#| dependson: of2021
+#| dependson: bivariatebandwidths
+#| echo: false
 #| warning: false
 #| fig-cap: Contours of bivariate kernels centered over the observations.
-of2021 <- oldfaithful |>
-  filter(as.Date(time) > "2021-01-01") |>
-  head(10) |>
-  mutate(eruption = row_number())
-H <- diag(c(MASS::bandwidth.nrd(of2021$duration),
-       MASS::bandwidth.nrd(of2021$waiting))^2/16)
 h <- sqrt(diag(H))
 k <- expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
   y = seq(-3 * h[2], 3 * h[2], l = 100)
 ) |>
-  mutate(z = dnorm(x, 0, h[1]) * dnorm(y, 0, h[2]))
+  mutate(z = mvtnorm::dmvnorm(x = cbind(x,y), sigma = H)) 
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
   unnest(k) |>
@@ -365,9 +342,7 @@ ggplot() +
     bins = 4, col = "gray"
   ) +
   geom_point(data = of2021, mapping = aes(x = duration, y = waiting)) +
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
-  xlim(140, 290) +
-  ylim(3010, 6860)
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
 ```
 
 If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate kernel density estimate shown below.
@@ -375,57 +350,67 @@ If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate
 ```{r}
 #| label: fig-ofbivariate1
 #| dependson: fig-ofdw
+#| echo: false
 #| fig-cap: Bivariate kernel density estimate formed by summing the kernels shown in @fig-ofdw.
+of2021 <- oldfaithful |> 
+  filter(as.Date(time) > "2021-01-01") |>
+  head(10) |>
+  select(duration, waiting)
 of2021 |>
-  ggplot(aes(x = duration, y = waiting)) +
-  geom_point() +
-  geom_density_2d(color = "#0072B2", h = 4*h) + 
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") +
-  xlim(140, 290) +
-  ylim(3010, 6860)
+  kde(H = Hns(of2021)) |> 
+  autoplot() +
+  geom_point(data = of2021, aes(x = duration, y = waiting)) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 Now we will apply the method to the full data set, other than the 2 hour eruption and observations where the subsequent waiting time is more than 2 hours (which are likely to be data errors).
 
-We will use the `geom_density_2d()` function, which by default uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by @eq-nrr.
+We will use the `kde()` function, which uses a bivariate Gaussian kernel, and the bandwidth matrix given by the `Hns()` function.
 
 ```{r}
 #| label: fig-ofbivariate2
+#| code-fold: false
 #| fig.cap: "Bivariate kernel density estimate with default bandwidths."
-oldfaithful |>
-  filter(duration < 7000, waiting < 7000) |>
-  ggplot(aes(x = duration, y = waiting)) +
-  geom_point(color = "gray") +
-  geom_density_2d(color = "#0072B2") +
+of <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000) |> 
+  select(duration, waiting)
+of_density <- of |> 
+  kde(H = Hns(of)) 
+of_density |> 
+  autoplot() +
+  geom_point(aes(duration, waiting), data = of, alpha=0.15) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
-Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There is one anomalous eruption where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
+Here we see that the short durations tended to be followed by a short waiting time until the next duration, while the long durations tend to be followed by a long waiting time until the next duration. There are two anomalous eruptions: the one with the 1 second duration, and one where a short duration was followed by a long waiting time. The unusual durations between 150 and 180 seconds can be followed by either short or long durations.
 
-If $\bm{H}$ is diagonal with values $h_1,\dots,h_d$, then the estimator is consistent when
+### Bandwidth matrix selection
+
+The theory underpinning multivariate kernel density estimation is beyond the scope of this book, and readers are referred to @chacon2018multivariate for details. Here, we briefly discuss some of the key results, and how they relate to the choice of bandwidth matrix.
+
+Historically, $\bm{H}$ has often been chosen to be diagonal. When $\bm{H}$ is diagonal with values $h_1,\dots,h_d$, then the estimator is consistent when
 $$
   \lim_{n\rightarrow\infty} h = 0
   \qquad\text{and}\qquad
   \lim_{n\rightarrow\infty} nh^d = \infty,
 $$
-where $h = (h_1h_2\dots,h_d)^{1/d}$ is the geometric mean of the diagonal values of $\bm{H}$. The default values for `geom_density_2d()` satisfy this property.
+where $h = (h_1h_2\dots,h_d)^{1/d}$ is the geometric mean of the diagonal values of $\bm{H}$.
 
-Note that the diagonal values $h_1,\dots,h_d$ tend to be larger than the values used in the corresponding univariate density estimates, as the convergence properties of the estimate are slower for larger $d$. Consequently, the default bandwidths for `geom_density_2d()` tend to be too small. Further, because we are interested in the tails of the distribution, we usually want larger bandwidths than would be suitable for obtaining good estimates of the density function.
+The optimal bandwidth values (minimizing the mean integrated squared error between the true density and its estimate) are of the order $n^{-2/(d+4)}$. If such bandwidths are used, then the estimator converges at rate $n^{-4/(d+4)}$, implying that kernel density estimation becomes increasingly difficult as the dimension $d$ increases. This is to be expected given the curse of dimensionality (@sec-curse), as the number of observations required to obtain a good estimate increases exponentially with the dimension. In practice, we rarely attempt to estimate a density in more than $d=3$ dimensions.
 
-@fig-ofbivariate3 shows a bivariate kernel density estimate where the bandwidths are double the default values.
+A common approach is to specify the diagonal values of $\bm{H}$ using the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel.) That is, if $\sqrt{h_1},\dots,\sqrt{h_d}$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1,\dots,h_d)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator.
 
-```{r}
-#| label: fig-ofbivariate3
-#| fig.cap: "Bivariate kernel density estimate with double the default bandwidths."
-oldfaithful |>
-  filter(duration < 7000, waiting < 7000) |>
-  ggplot(aes(x = duration, y = waiting)) +
-  geom_point(color = "gray") +
-  geom_density_2d(adjust = 2, color = "#0072B2") +
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
-```
+If the underlying density is Normal with mean $\bm{\mu}$ and variance $\bm{\Sigma}$, then the optimal bandwidth matrix is given by
+$$
+  \bm{H} = \left(\frac{4}{d+2}\right)^{2/(d+4)} n^{-2/(d+4)} \bm{\Sigma}.
+$$
+Replacing $\bm{\Sigma}$ by the sample covariance $\bm{S}$, we obtain the normal reference rule, calculated by `ks::Hns()`.
 
-There is a rich literature on multivariate kernel density estimation. A good starting point is @Scott2015 or @chacon2018multivariate.
+@fig-ofbivariate2 shows a bivariate kernel density estimate computed using this approach.
+
+### Further reading
+
+There is a rich literature on multivariate kernel density estimation. Good starting points are @Scott2015 or @chacon2018multivariate.
 
 ## Conditional probability distributions
 
@@ -449,39 +434,39 @@ The conditional pdf can be thought of as slices of the joint pdf, with the value
 #| depends: fig-bivariate-mixture
 #| fig-cap: Conditional distribution of $Y_2|Y_1$, where $(Y_1,Y_2)$ has the joint distribution plotted in @fig-bivariate-mixture. The left plot shows the joint density with the values of $y_2$ where we will condition, while the right plot shows conditional density functions at different values of $y_2$.
 # Conditioning points
-y2 <- -2:3
+y2_slice <- -2:3
+# Make mixture_density a tibble and grab only slices
+mixture_density <- mixture_density |>
+  as_tibble() |> 
+  unnest(y) |> 
+  filter(round(y2, 2) %in% round(y2_slice, 2))
 # Scaling factor for each density
 scale_cond_density <- mixture_density |>
-  filter(round(y, 2) %in% round(y2, 2)) |>
-  summarise(scale = sum(z), .by = y) |>
-  transmute(
-    scale = scale / max(scale),
-    y2 = factor(y, levels = y2)
-  )
+  summarise(scale = sum(density), .by = y2) |>
+  mutate(scale = scale / max(scale))
+# Scale each conditional density
+mixture_density <- mixture_density |> 
+  left_join(scale_cond_density, by = "y2") |>
+  mutate(
+    density = density / scale,
+    density = density / max(density) * 0.9
+  ) 
 # Joint density plot
 plot1 <- mixture_plot +
   guides(fill = "none") +
-  scale_y_continuous(breaks = y2, minor_breaks = NULL) +
+  scale_y_continuous(breaks = y2_slice, minor_breaks = NULL) +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
-  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2), color = "#8ab3f6")
+  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2_slice), color = "#8ab3f6")
 # Conditional density plots
-plot2 <- mixture_density |>
-  filter(round(y, 2) %in% round(y2, 2)) |>
-  mutate(y2 = factor(y, levels = y2)) |>
-  left_join(scale_cond_density, by = "y2") |>
-  mutate(
-    z = z / scale,
-    z = z / max(z) * 0.9
-  ) |>
-  ggplot(aes(x = x, y = z + y, group = y2)) +
-  geom_ribbon(aes(ymin = y, ymax = z + y, xmin = -2, xmax = 4),
-    col = "#8ab3f6", fill = "#8ab3f6"
-  ) +
+plot2 <- mixture_density |> 
+  ggplot(aes(x = y1, y = density + y2, group = y2)) +
+  geom_ribbon(aes(ymin = y2, ymax = density + y2, xmin = -2, xmax = 4),
+    col = "#8ab3f6", fill = "#8ab3f6") +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")
   ) +
-  scale_y_continuous(minor_breaks = NULL, breaks = y2) +
+  scale_y_continuous(minor_breaks = NULL, breaks = y2_slice) +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6))
 # Show plots side by side
 patchwork::wrap_plots(plot1, plot2, nrow = 1)
