@@ -276,7 +276,7 @@ Sigma2 <- diag(2)
 mixture_density <- list(
   y = expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
 )
-mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density$y, mu1, Sigma1) + 
+mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density$y, mu1, Sigma1) +
                p2 * mvtnorm::dmvnorm(mixture_density$y, mu2, Sigma2)
 # Plot the contours
 mixture_plot <- as_kde(mixture_density) |>
@@ -313,7 +313,7 @@ $$
 of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
-  select(duration, waiting) |> 
+  select(duration, waiting) |>
   mutate(eruption = row_number())
 H <- ks::Hns(of2021[,1:2])
 ```
@@ -331,7 +331,7 @@ k <- expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
   y = seq(-3 * h[2], 3 * h[2], l = 100)
 ) |>
-  mutate(z = mvtnorm::dmvnorm(x = cbind(x,y), sigma = H)) 
+  mutate(z = mvtnorm::dmvnorm(x = cbind(x,y), sigma = H))
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
   unnest(k) |>
@@ -342,7 +342,7 @@ ggplot() +
     bins = 4, col = "gray"
   ) +
   geom_point(data = of2021, mapping = aes(x = duration, y = waiting)) +
-  labs(x = "Duration (seconds)", y = "Waiting time (seconds)") 
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate kernel density estimate shown below. The contours shown correspond to the 10%, 20%, $\dots$, 90% highest density regions (HDRs) of the density estimate. With 10 observations, one of them must lie outside the 90% HDR.
@@ -352,12 +352,12 @@ If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate
 #| dependson: fig-ofdw
 #| echo: false
 #| fig-cap: Bivariate kernel density estimate formed by summing the kernels shown in @fig-ofdw.
-of2021 <- oldfaithful |> 
+of2021 <- oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
   select(duration, waiting)
 of2021 |>
-  kde(H = Hns(of2021)) |> 
+  kde(H = Hns(of2021)) |>
   autoplot() +
   geom_point(data = of2021, aes(x = duration, y = waiting)) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
@@ -372,11 +372,11 @@ We will use the `kde()` function, which uses a bivariate Gaussian kernel, and th
 #| code-fold: false
 #| fig.cap: "Bivariate kernel density estimate with default bandwidths."
 of <- oldfaithful |>
-  filter(duration < 7000, waiting < 7000) |> 
+  filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting)
-of_density <- of |> 
-  kde(H = Hns(of)) 
-of_density |> 
+of_density <- of |>
+  kde(H = Hns(of))
+of_density |>
   autoplot() +
   geom_point(aes(duration, waiting), data = of, alpha=0.15) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
@@ -386,27 +386,19 @@ Here we see that the short durations tended to be followed by a short waiting ti
 
 ### Bandwidth matrix selection
 
-The theory underpinning multivariate kernel density estimation is beyond the scope of this book, and readers are referred to @chacon2018multivariate for details. Here, we briefly discuss some of the key results, and how they relate to the choice of bandwidth matrix.
-
-Historically, $\bm{H}$ has often been chosen to be diagonal. When $\bm{H}$ is diagonal with values $h_1,\dots,h_d$, then the estimator is consistent when
-$$
-  \lim_{n\rightarrow\infty} h = 0
-  \qquad\text{and}\qquad
-  \lim_{n\rightarrow\infty} nh^d = \infty,
-$$
-where $h = (h_1h_2\dots,h_d)^{1/d}$ is the geometric mean of the diagonal values of $\bm{H}$.
-
-The optimal bandwidth values (minimizing the mean integrated squared error between the true density and its estimate) are of the order $n^{-2/(d+4)}$. If such bandwidths are used, then the estimator converges at rate $n^{-4/(d+4)}$, implying that kernel density estimation becomes increasingly difficult as the dimension $d$ increases. This is to be expected given the curse of dimensionality (@sec-curse), as the number of observations required to obtain a good estimate increases exponentially with the dimension. In practice, we rarely attempt to estimate a density in more than $d=3$ dimensions.
-
-A common approach is to specify the diagonal values of $\bm{H}$ using the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel.) That is, if $\sqrt{h_1},\dots,\sqrt{h_d}$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1,\dots,h_d)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator.
+The optimal bandwidth matrix (minimizing the mean integrated squared error between the true density and its estimate) is of the order $n^{-2/(d+4)}$. If such a bandwidth matrix is used, then the estimator converges at rate $n^{-4/(d+4)}$, implying that kernel density estimation becomes increasingly difficult as the dimension $d$ increases. This is to be expected given the curse of dimensionality (@sec-curse), as the number of observations required to obtain a good estimate increases exponentially with the dimension. In practice, we rarely attempt to estimate a density in more than $d=3$ dimensions.
 
 If the underlying density is Normal with mean $\bm{\mu}$ and variance $\bm{\Sigma}$, then the optimal bandwidth matrix is given by
 $$
   \bm{H} = \left(\frac{4}{d+2}\right)^{2/(d+4)} n^{-2/(d+4)} \bm{\Sigma}.
 $$
-Replacing $\bm{\Sigma}$ by the sample covariance $\bm{S}$, we obtain the normal reference rule, calculated by `ks::Hns()`.
+Replacing $\bm{\Sigma}$ by the sample covariance $\bm{S}$, we obtain the normal reference rule, calculated by `Hns()`. @fig-ofbivariate2 shows a bivariate kernel density estimate computed using this approach. Notice that in the univariate case, when $d=1$, this rule gives the same bandwidth as the rule of thumb given by @eq-nrr.
 
-@fig-ofbivariate2 shows a bivariate kernel density estimate computed using this approach.
+A more data-driven approach, is the "plug-in" estimator [@chacon2018multivariate] implemented by `Hpi()`, which is a generalization of the Sheather-Jones bandwidths popular for univariate kernel density estimation [@sec-kde]. While this typically leads to better estimates of the density as a whole, it can lead to poor estimates in the tails of the distribution where anomalies tend to lie.
+
+A common approach is to specify $\bm{H}$ to be diagonal, with elements equal to the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel. Hence, the univariate bandwidths need to be squared if used in a bandwith matrix.) That is, if $h_1,\dots,h_d$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1^2,\dots,h_d^2)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator. Additionally, any diagonal bandwidth matrix implicitly assumes that the variables are uncorrelated, and leads to more biased estimators.
+
+In general, we will use the normal reference rule, as implemented by `Hns()`, unless otherwise stated.
 
 ### Further reading
 
@@ -437,20 +429,20 @@ The conditional pdf can be thought of as slices of the joint pdf, with the value
 y2_slice <- -2:3
 # Make mixture_density a tibble and grab only slices
 mixture_density <- mixture_density |>
-  as_tibble() |> 
-  unnest(y) |> 
+  as_tibble() |>
+  unnest(y) |>
   filter(round(y2, 2) %in% round(y2_slice, 2))
 # Scaling factor for each density
 scale_cond_density <- mixture_density |>
   summarise(scale = sum(density), .by = y2) |>
   mutate(scale = scale / max(scale))
 # Scale each conditional density
-mixture_density <- mixture_density |> 
+mixture_density <- mixture_density |>
   left_join(scale_cond_density, by = "y2") |>
   mutate(
     density = density / scale,
     density = density / max(density) * 0.9
-  ) 
+  )
 # Joint density plot
 plot1 <- mixture_plot +
   guides(fill = "none") +
@@ -458,7 +450,7 @@ plot1 <- mixture_plot +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
   geom_hline(aes(yintercept = y2), data = tibble(y2 = y2_slice), color = "#8ab3f6")
 # Conditional density plots
-plot2 <- mixture_density |> 
+plot2 <- mixture_density |>
   ggplot(aes(x = y1, y = density + y2, group = y2)) +
   geom_ribbon(aes(ymin = y2, ymax = density + y2, xmin = -2, xmax = 4),
     col = "#8ab3f6", fill = "#8ab3f6") +
