@@ -598,8 +598,8 @@ We will use the `kde()` function from the `ks` package, which uses the Gaussian 
 #| fig.cap: "Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
 of <- oldfaithful |>
   filter(duration < 7000)
-of_density <- kde(of$duration, h=hns(of$duration)) 
-of_density |> 
+of_density <- kde(of$duration, h=hns(of$duration))
+of_density |>
   autoplot() +
   geom_rug(aes(x=duration), of) +
   labs(x = "Duration (seconds)")
@@ -664,7 +664,7 @@ If we optimized MSE (@eq-mse) rather than MISE (@eq-mise), we would obtain
 $$
 h = \left(\frac{f(y)R(K)}{n[f''(y)]^2}\right)^{1/5}.
 $$
-This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which often occurs in the extreme tails of a distribution. So bandwidths for anomaly detection tend to be larger than bandwidths for other purposes. Unless otherwise stated, we will use the robust normal reference rule (@eq-nrd) for examples in the rest of this book.
+This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relatively large, which often occurs in the extreme tails of a distribution. So bandwidths for anomaly detection tend to be larger than bandwidths for other purposes. Unless otherwise stated, we will use the normal reference rule (@eq-nrr) for examples in the rest of this book.
 
 ### Highest kernel density regions
 
@@ -687,16 +687,16 @@ bandwidths <- tibble(
 prob <- seq(0.5, 0.99, by=0.005)
 bw <- numeric(length(prob))
 for (i in seq_along(prob)) {
-  bw[i] <- hdrcde::hdrbw(of$duration, prob[i])
+  bw[i] <- hdrcde::hdrbw(of$duration, 1-prob[i])
 }
 tibble(Probability = prob, Bandwidth = bw) |>
   ggplot() +
   geom_line(aes(x=Probability, y=Bandwidth)) +
   geom_hline(data = bandwidths, aes(yintercept = Bandwidth, col = Method)) +
-  labs(x = "HDR Probability Coverate", y = "Optimal bandwidth")
+  labs(x = "HDR Probability Coverage", y = "Optimal bandwidth")
 ```
 
-Clearly, most of the popular rules give bandwidths that are too small for the purpose of estimating the highest density regions. For this example, the normal reference rule gives a bandwidth suitable for an HDR of about 90% coverage. This was the value used when estimating the density shown in @fig-oldfaithful4, so we already have the density estimate we need.
+While it is increasingly difficult to estimate the required bandwidth as the probability coverage increases, it is clear that most of the popular rules give bandwidths that are too small for the purpose of estimating the highest density regions. For this example, the normal reference rule gives a bandwidth suitable for an HDR of between 75% and 90% coverage. This was the value used when estimating the density shown in @fig-oldfaithful4, so we already have the density estimate we need.
 
 We can compute the 90% HDR for the `oldfaithful` data set as follows:
 
