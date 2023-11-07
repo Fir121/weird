@@ -506,44 +506,17 @@ The idea of depth regions and the depth median can be easily generaized to data 
 
 ## HDR boxplots
 
-### Highest density regions
-
 We can compute HDRs from a kernel density estimate to find regions of the sample space where observations are unlikely to occur.
 
 Let's illustrate the idea with univariate data. In @sec-kde, we estimated the density of the duration of Old Faithful eruptions using a kernel density estimate, and plotted it in @fig-oldfaithful4. We can find the 50% and 99% HDRs of this density, which can then be used to form an "HDR boxplot" [@HDR96] as shown in @fig-hdr-faithful.
 
 ```{r}
 #| label: fig-hdr-faithful
-#| fig.cap: "Top: Kernel density estimate of the duration of Old Faithful eruptions since 2015. Bottom: an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions."
+#| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015. Below the density estimate is shown an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions, and observations outside the 99% region shown as individual points."
 of <- oldfaithful |>
   filter(duration < 7000)
-hdr <- hdr_table(of$duration, prob = c(0.5, 0.99))
-hdr_outliers <- which(
-    !(of$duration > hdr$lower[1] & of$duration < hdr$upper[1]) &
-    !(of$duration > hdr$lower[2] & of$duration < hdr$upper[2])
-  )
-p1 <- of |>
-  ggplot() +
-  geom_density(aes(x = duration)) +
-  labs(x = "") + theme(axis.text.x = element_blank())
-p2 <- of |>
-  ggplot() +
-  geom_rect(
-    data = hdr,
-    aes(xmin = lower, xmax = upper, ymin=-1, ymax=1,
-        fill=factor(as.character(prob), 
-          levels = c("0.5", "0.99"), labels = c("50%", "99%"))),
-    alpha = 0.92
-  ) +
-  geom_point(data = of[hdr_outliers,], aes(x = duration, y = 0)) +
-  scale_fill_manual(
-    breaks = c("50%", "99%"), 
-    values = c("#00659e", "#6da1bf")
-    ) +
-  guides(fill = guide_legend(title = "HDR coverage")) +
-  scale_y_discrete() +
-  labs(y = "", x = "Duration (seconds)")
-patchwork::wrap_plots(p1, p2, ncol = 1, heights = c(6,1))
+kde(of$duration, h = hns(of$duration)) |>
+  autoplot(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
 ```
 
 Points outside the 99% region are shown separately and indicate possible outliers. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
@@ -553,15 +526,13 @@ Of course, by definition, 1% of points will lie outside the 99% region, so the p
 The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bivariate HDR boxplot of the duration and waiting times for the Old Faithful data. Here we have filtered out very long durations and waiting times first.
 
 ```{r}
-#| eval: false
+#| label: fig-hdr-faithful2
+#| fig.cap: "Bivariate kernel density estimate of the duration and waiting times of Old Faithful eruptions since 2015, excluding durations and waiting times longer than 2 hours."
 of2 <- oldfaithful |>
-  filter(duration < 7000, waiting < 7000)
-hdr2 <- hdr_table(select(of2, duration, waiting), prob = c(0.5, 0.99))
-
-of |> 
-  ggplot(aes(x = duration, y = waiting)) +
-  geom_point(color = "gray") +
-  geom_density_2d(color = "#0072B2") +
+  filter(duration < 7000, waiting < 7000) |>
+  select(duration, waiting)
+kde(of2, H = Hns(of2)) |>
+  autoplot(prob = c(0.5, 0.99), fill=TRUE, show_points = 0.99) +
   labs(x = "Duration (seconds)")
 ```
 
