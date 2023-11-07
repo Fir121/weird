@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.3.1",
+    "Version": "4.3.2",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -259,17 +259,16 @@
     },
     "RcppEigen": {
       "Package": "RcppEigen",
-      "Version": "0.3.3.9.3",
+      "Version": "0.3.3.9.4",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
-        "Matrix",
         "R",
         "Rcpp",
         "stats",
         "utils"
       ],
-      "Hash": "1e035db628cefb315c571202d70202fe"
+      "Hash": "acb0a5bf38490f26ab8661b467f4f53a"
     },
     "RcppProgress": {
       "Package": "RcppProgress",
@@ -2790,7 +2789,7 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "8472c56c08a288b1602c5b87b27a44dc933e9d95",
+      "RemoteSha": "1228ec056798796e02a4f10f64524c231cca33e9",
       "Requirements": [
         "R",
         "aplpack",
@@ -2800,14 +2799,14 @@
         "dplyr",
         "evd",
         "ggplot2",
+        "grDevices",
         "interp",
         "ks",
         "purrr",
         "rstudioapi",
-        "tibble",
-        "viridisLite"
+        "tibble"
       ],
-      "Hash": "9a5022bea36b0f8c910d9960af1bb5ff"
+      "Hash": "9b807bd5542cad05474dfc9aaeddab68"
     },
     "whisker": {
       "Package": "whisker",
