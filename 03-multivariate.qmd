@@ -246,13 +246,12 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 ```{r}
 #| label: fig-bivariate
 #| message: false
-#| echo: false
 #| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
 grid <- seq(-3, 3, by = 0.05)
-den <- list(y = expand_grid(y1 = grid, y2 = grid))
-den$density <- mvtnorm::dmvnorm(den$y, mu, Sigma)
+den <- expand_grid(y1 = grid, y2 = grid)
+den$density <- mvtnorm::dmvnorm(den, mu, Sigma)
 as_kde(den) |>
   autoplot(fill = TRUE) +
   labs(
@@ -273,11 +272,9 @@ mu2 <- c(3, 1)
 Sigma1 <- rbind(c(1, 0.5), c(0.5, 1))
 Sigma2 <- diag(2)
 # Define the density function on a grid
-mixture_density <- list(
-  y = expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
-)
-mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density$y, mu1, Sigma1) +
-               p2 * mvtnorm::dmvnorm(mixture_density$y, mu2, Sigma2)
+mixture_density <- expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
+mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density, mu1, Sigma1) +
+               p2 * mvtnorm::dmvnorm(mixture_density, mu2, Sigma2)
 # Plot the contours
 mixture_plot <- as_kde(mixture_density) |>
   autoplot(fill = TRUE) +
@@ -429,8 +426,6 @@ The conditional pdf can be thought of as slices of the joint pdf, with the value
 y2_slice <- -2:3
 # Make mixture_density a tibble and grab only slices
 mixture_density <- mixture_density |>
-  as_tibble() |>
-  unnest(y) |>
   filter(round(y2, 2) %in% round(y2_slice, 2))
 # Scaling factor for each density
 scale_cond_density <- mixture_density |>
@@ -448,12 +443,12 @@ plot1 <- mixture_plot +
   guides(fill = "none") +
   scale_y_continuous(breaks = y2_slice, minor_breaks = NULL) +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
-  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2_slice), color = "#8ab3f6")
+  geom_hline(aes(yintercept = y2), data = tibble(y2 = y2_slice), color = "#4c93bb")
 # Conditional density plots
 plot2 <- mixture_density |>
   ggplot(aes(x = y1, y = density + y2, group = y2)) +
   geom_ribbon(aes(ymin = y2, ymax = density + y2, xmin = -2, xmax = 4),
-    col = "#8ab3f6", fill = "#8ab3f6") +
+    col = "#4c93bb", fill = "#4c93bb") +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")

@@ -495,7 +495,19 @@ A more interesting example is obtained in @fig-oldfaithfulbagplot, showing a bag
 #| fig.cap: Bagplot of the durations and waiting times of Old Faithful eruptions since 2015.
 oldfaithful |>#|
   filter(duration < 7200, waiting < 7200) |>
-  gg_bagplot(duration, waiting, scatterplot = TRUE)
+  gg_bagplot(duration, waiting) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
+```
+
+Blah blah
+
+```{r}
+#| label: fig-oldfaithfulbagplot2
+#| fig.cap: Bagplot of the durations and waiting times of Old Faithful eruptions since 2015.
+oldfaithful |>#|
+  filter(duration < 7200, waiting < 7200) |>
+  gg_bagplot(duration, waiting, scatterplot = TRUE) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 This plot shows the value of the scatterplot version of a bagplot, as you can see a lot of detail in the bag and loop that would not be visible otherwise. It also shows the drawback of using a bagplot to identify anomalies. The plot has identified all the shorter duration eruptions as anomalous, along with a small number of other eruptions.
@@ -519,6 +531,15 @@ kde(of$duration, h = hns(of$duration)) |>
   autoplot(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
 ```
 
+The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
+
+```{r}
+#| label: fig-of-hdrboxplot
+#| fig.cap: "HDR boxplot of the duration of Old Faithful eruptions since 2015."
+of |> gg_hdrboxplot(duration) +
+  labs(x = "Duration (seconds)")
+```
+
 Points outside the 99% region are shown separately and indicate possible outliers. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
 Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space.
@@ -531,9 +552,17 @@ The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bi
 of2 <- oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting)
-kde(of2, H = Hns(of2)) |>
-  autoplot(prob = c(0.5, 0.99), fill=TRUE, show_points = 0.99) +
-  labs(x = "Duration (seconds)")
+of2 |> gg_hdrboxplot(duration, waiting) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
+```
+
+As with bagplots, there is a variation that shows the individual points colored according to the HDR region in which they fall.
+
+```{r}
+#| label: fig-hdr-faithful3
+#| fig.cap: "Bivariate HDR boxplot of the duration and waiting times of Old Faithful eruptions since 2015, excluding durations and waiting times longer than 2 hours. Individual points are colored according to the HDR region in which they fall."
+of2 |> gg_hdrboxplot(duration, waiting, scatterplot = TRUE) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
 ## Summary
