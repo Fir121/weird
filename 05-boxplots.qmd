@@ -493,7 +493,7 @@ A more interesting example is obtained in @fig-oldfaithfulbagplot, showing a bag
 ```{r}
 #| label: fig-oldfaithfulbagplot
 #| fig.cap: Bagplot of the durations and waiting times of Old Faithful eruptions since 2015.
-oldfaithful |>#|
+oldfaithful |>
   filter(duration < 7200, waiting < 7200) |>
   gg_bagplot(duration, waiting) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
@@ -504,7 +504,7 @@ Blah blah
 ```{r}
 #| label: fig-oldfaithfulbagplot2
 #| fig.cap: Bagplot of the durations and waiting times of Old Faithful eruptions since 2015.
-oldfaithful |>#|
+oldfaithful |>
   filter(duration < 7200, waiting < 7200) |>
   gg_bagplot(duration, waiting, scatterplot = TRUE) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
