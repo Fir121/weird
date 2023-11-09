@@ -476,16 +476,6 @@ n01 |>
   geom_point(aes(x = v1, y = v2), data = n01[1:10, ])
 ```
 
-A useful variation of the bagplot, especially for larger data sets, displays a scatterplot of the observations, but colored using the same colors as the bagplot, with the deepest observation in the strongest blue, the points within the bag in a lighter blue, and the points within the loop in the lightest color. Outliers are shown in black if any exist.
-
-```{r}
-#| label: fig-bagplot2
-#| fig.cap: "A variation of the bagplot showing individual points colored according to the region in which they fall."
-n01 |>
-  head(10) |>
-  gg_bagplot(v1, v2, scatterplot = TRUE)
-```
-
 ### Old faithful bagplot
 
 A more interesting example is obtained in @fig-oldfaithfulbagplot, showing a bagplot of the durations and waiting times of Old Faithful eruptions.
@@ -499,7 +489,9 @@ oldfaithful |>
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
-Blah blah
+This demonstrates the drawback of using a bagplot to identify anomalies. The plot has identified all the shorter duration eruptions as anomalous, along with a small number of other eruptions.
+
+A useful variation of the bagplot, especially for larger data sets, displays a scatterplot of the observations, but colored using the same colors as the bagplot, with the deepest observation in the strongest blue, the points within the bag in a lighter blue, and the points within the loop in the lightest color. Outliers are shown in black if any exist.
 
 ```{r}
 #| label: fig-oldfaithfulbagplot2
@@ -510,7 +502,7 @@ oldfaithful |>
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
-This plot shows the value of the scatterplot version of a bagplot, as you can see a lot of detail in the bag and loop that would not be visible otherwise. It also shows the drawback of using a bagplot to identify anomalies. The plot has identified all the shorter duration eruptions as anomalous, along with a small number of other eruptions.
+@fig-oldfaithfulbagplot2 shows the value of this version of a bagplot, as you can see a lot of detail in the bag and loop that would not be visible otherwise.
 
 ### General comments
 
@@ -536,6 +528,7 @@ The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
 ```{r}
 #| label: fig-of-hdrboxplot
 #| fig.cap: "HDR boxplot of the duration of Old Faithful eruptions since 2015."
+#| fig.asp: 0.2
 of |> gg_hdrboxplot(duration) +
   labs(x = "Duration (seconds)")
 ```

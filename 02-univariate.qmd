@@ -706,22 +706,15 @@ hdr <- hdr_table(density = of_density, prob = 0.90)
 hdr
 ```
 
-The resulting estimate is shown in @fig-of-hdr, along with the jittered data.
+The resulting estimate is shown in @fig-of-hdr, along with the 10% of observations that lie outside the 90% HDR.
 
 ```{r}
 #| label: fig-of-hdr
 #| fig-cap: 90% highest density region for the `oldfaithful` data set.
-#| fig-asp: 0.2
-of |>
-  ggplot() +
-  geom_jitter(aes(x = duration, y = 0),
-              alpha = 0.5, width = 0, height = 0.8) +
-  geom_rect(data = hdr,
-    aes(xmin = lower, xmax = upper, ymin=-1, ymax=1),
-    fill = "#00659e", alpha = 0.92
-  ) +
-  scale_y_discrete() +
-  labs(y = "", x = "Duration (seconds)")
+of_density |> 
+  autoplot(show_hdr = TRUE, prob = 0.9, show_points = TRUE,
+           alpha = 0.2) +
+  labs(x = "Duration (seconds)")
 ```
 
 
