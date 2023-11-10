@@ -6,10 +6,11 @@
 source("before-each-chapter.R")
 ```
 
+Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
 ## KDE scores {#kdescores}
 
-A popular way of defining anomalies is that they are observations of low probability. The kernel density estimate at each observation is @eq-mkde
+The kernel density estimate at each observation is @eq-mkde
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$
@@ -17,7 +18,7 @@ and we define the "**kde score**" at each observation as
 $$
   s_i = -\log(f_i).
 $$
-These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $|\bm{y}_i-\bm{y}_j|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
+These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $\|\bm{y}_i-\bm{y}_j\|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
 $$
   -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}).
 $$
@@ -28,18 +29,25 @@ $$
 
 For the Old Faithful eruption duration data, we obtain the following kde scores.
 
-```{r, fig.cap="KDE scores for the Old Faithful eruption durations."}
-#| label: fig-ofscores
+```{r}
+#| label: ofscores
+#| code-fold: false
 of_scores <- oldfaithful |>
   mutate(score = kde_scores(duration))
 of_scores |> arrange(desc(score))
+```
+
+The two largest scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. The lowest kde scores correspond to the mode of the estimated density.
+
+```{r}
+#| label: fig-ofscores
+#| fig.cap: "KDE scores for the Old Faithful eruption durations."
+#| dependson: ofscores
 of_scores |>
   filter(duration < 7000) |>
   ggplot(aes(x = duration, y = score)) +
   geom_point()
 ```
-
-The two large scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. The lowest kde scores correspond to the mode of the estimated density.
 
 For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
 

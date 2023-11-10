@@ -519,7 +519,7 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 #| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015. Below the density estimate is shown an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions, and observations outside the 99% region shown as individual points."
 of <- oldfaithful |>
   filter(duration < 7000)
-kde(of$duration, h = hns(of$duration)) |>
+kde(of$duration, h = kde_bandwidth(of$duration)) |>
   autoplot(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
 ```
 
@@ -533,7 +533,7 @@ of |> gg_hdrboxplot(duration) +
   labs(x = "Duration (seconds)")
 ```
 
-Points outside the 99% region are shown separately and indicate possible outliers. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
+Points outside the 99% region are shown separately and indicate possible outliers. These points are jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
 Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space.
 
@@ -549,6 +549,8 @@ of2 |> gg_hdrboxplot(duration, waiting) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
+There are `r NROW(of2)` observations used to compute this density estimate, and even with that many observations, computing the 99% HDR contour is difficult, as shown by the rather jagged boundary of the HDR region. This is simply a consequence of the sparsity of points in multidimensional space and in the tails of a distribution.
+
 As with bagplots, there is a variation that shows the individual points colored according to the HDR region in which they fall.
 
 ```{r}
@@ -560,4 +562,6 @@ of2 |> gg_hdrboxplot(duration, waiting, scatterplot = TRUE) +
 
 ## Summary
 
-Boxplots, letter value plots and bagplots are all extremely useful tools in exploratory data analysis, and deserve to be widely applied. They are particularly useful in summarising univariate and bivariate data distributions when they are unimodal. However, as we have seen, none of them are effective at anomaly detection, and none of them allow for data with multiple modes.
+Boxplots, letter value plots, bagplots, and HDR boxplots are all extremely useful tools in exploratory data analysis, and deserve to be widely applied. They are particularly useful in summarising univariate and bivariate data distributions. However, as we have seen, none of them are effective at anomaly detection, and only HDR boxplots allow for data with multiple modes.
+
+Nevertheless, we will find these tools useful when summarising results from anomaly detection algorithms, and in understanding why some points have been labelled as anomalies.

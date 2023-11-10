@@ -9,3 +9,7 @@ source("before-each-chapter.R")
 ## Principal component analysis
 
 ## Multi-dimensional scaling
+
+## PCout
+
+* Filzmoser, Maronna and Werner (CSDA, 2008) -- mvoutlier::pcout

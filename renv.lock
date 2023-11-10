@@ -325,13 +325,6 @@
       ],
       "Hash": "ba8b7622e56670f1df45faf88abd534b"
     },
-    "ash": {
-      "Package": "ash",
-      "Version": "1.0-15",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "e16751c399be6260ddf41f8148a3f8ef"
-    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.2.0",
@@ -1135,27 +1128,6 @@
       ],
       "Hash": "9b302fe352f9cfc5dcf0a4139af3a565"
     },
-    "hdrcde": {
-      "Package": "hdrcde",
-      "Version": "3.4",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "hdrcde",
-      "RemoteUsername": "robjhyndman",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "453ce3634aa6c8100aeee8db40a3e20375b57bf3",
-      "Requirements": [
-        "KernSmooth",
-        "R",
-        "RColorBrewer",
-        "ash",
-        "ggplot2",
-        "ks",
-        "locfit"
-      ],
-      "Hash": "4848bc361502dfc817d274e4d81cec4b"
-    },
     "here": {
       "Package": "here",
       "Version": "1.0.1",
@@ -1559,17 +1531,6 @@
         "xmlparsedata"
       ],
       "Hash": "93e9379f4be8c0bf1862dfc7f720193e"
-    },
-    "locfit": {
-      "Package": "locfit",
-      "Version": "1.5-9.8",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "lattice"
-      ],
-      "Hash": "3434988413fbabfdb0fcd6067d7e1aa4"
     },
     "lookout": {
       "Package": "lookout",
@@ -2789,7 +2750,7 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "e313224f637d8fe2669b9486b65e982115b045c7",
+      "RemoteSha": "c30ce23a4e82d1feed313fceab69fcd1af2fd785",
       "Requirements": [
         "R",
         "aplpack",
@@ -2803,10 +2764,11 @@
         "interp",
         "ks",
         "purrr",
+        "robustbase",
         "rstudioapi",
         "tibble"
       ],
-      "Hash": "d989427cd1568179468ed97b4d5418b1"
+      "Hash": "355aa7b8e6fb7411feb0d6b9c95b557c"
     },
     "whisker": {
       "Package": "whisker",
