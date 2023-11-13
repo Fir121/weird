@@ -1889,9 +1889,9 @@
     },
     "pracma": {
       "Package": "pracma",
-      "Version": "2.4.2",
+      "Version": "2.4.4",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "grDevices",
@@ -1899,7 +1899,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "69f905ec128691ff7108de88fc5a4964"
+      "Hash": "44bc172d47d1ea0a638d9f299e321203"
     },
     "prettyunits": {
       "Package": "prettyunits",
@@ -2750,7 +2750,7 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "c30ce23a4e82d1feed313fceab69fcd1af2fd785",
+      "RemoteSha": "fbbc80b8ec79f268957423e810377506c2f83cfd",
       "Requirements": [
         "R",
         "aplpack",
@@ -2768,7 +2768,7 @@
         "rstudioapi",
         "tibble"
       ],
-      "Hash": "355aa7b8e6fb7411feb0d6b9c95b557c"
+      "Hash": "16a4adae37c7b8c09cfac294baad6f69"
     },
     "whisker": {
       "Package": "whisker",
