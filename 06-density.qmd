@@ -69,8 +69,8 @@ In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the P
 #| code-fold: false
 of_scores <- oldfaithful |>
   mutate(
-    score = kde_scores(duration),
-    looscore = kde_scores(duration, loo = TRUE),
+    score = kde_scores(duration, h = kde_bandwidth(duration, method = "lookout")),
+    looscore = kde_scores(duration, , h = kde_bandwidth(duration, method = "lookout"), loo = TRUE),
   )
 threshold <- quantile(of_scores$score, prob = 0.90, type = 8)
 gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
@@ -93,7 +93,18 @@ of_lookout <- of_scores |>
 of_lookout
 ```
 
-Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers, with several other values around 90--93 seconds, 155 seconds and 304--305 seconds as likely outliers as well. These latter observations are in the regions of low density that we have previous noted. @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red.
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
+
+```{r}
+#| label: lookout
+#| code-fold: false
+#| dependson: ofpot
+oldfaithful |>
+  mutate(lookout_pval = lookout_prob(duration)) |>
+  arrange(lookout_pval)
+```
+
+Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. All other observations have p-values greater than 0.05, and we can conclude that they are not anomalies. @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red.
 
 ```{r}
 #| label: fig-ofpot
@@ -104,14 +115,13 @@ oldfaithful  |>
   filter(duration < 7200)  |>
   gg_hdrboxplot(duration) +
   geom_point(data = of_lookout |> filter(duration < 7200, pval < 0.05), aes(x = duration, y = 0), color = "red")
-
-
 ```
 
-The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function. Let's apply it to the six examples introduced in @sec-examples.
+
+Let's apply it to the six examples introduced in @sec-examples.
 
 ```{r}
-#| label: lookout
+#| label: cricket-lookout
 #| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
