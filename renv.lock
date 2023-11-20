@@ -1603,9 +1603,9 @@
     },
     "mclust": {
       "Package": "mclust",
-      "Version": "6.0.0",
+      "Version": "6.0.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "grDevices",
@@ -1613,7 +1613,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "a42d1a95e400fcd75294b1464d1a84ac"
+      "Hash": "6381ce71e9498075fbeb229fd3180f62"
     },
     "memoise": {
       "Package": "memoise",
@@ -2355,22 +2355,22 @@
     },
     "stringi": {
       "Package": "stringi",
-      "Version": "1.7.12",
+      "Version": "1.8.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "stats",
         "tools",
         "utils"
       ],
-      "Hash": "ca8bd84263c77310739d2cf64d84d7c9"
+      "Hash": "12bf57fdcb9b7068bea39b32f87ecac9"
     },
     "stringr": {
       "Package": "stringr",
-      "Version": "1.5.0",
+      "Version": "1.5.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "cli",
@@ -2381,7 +2381,7 @@
         "stringi",
         "vctrs"
       ],
-      "Hash": "671a4d384ae9d32fc47a14e98bfa3dc8"
+      "Hash": "960e2ae9e09656611e0b8214ad543207"
     },
     "styler": {
       "Package": "styler",
@@ -2750,7 +2750,7 @@
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
       "RemoteRef": "HEAD",
-      "RemoteSha": "fbbc80b8ec79f268957423e810377506c2f83cfd",
+      "RemoteSha": "3ae2ac9f9d9173a5cf78d5117f115865b3d82030",
       "Requirements": [
         "R",
         "aplpack",
@@ -2763,12 +2763,13 @@
         "grDevices",
         "interp",
         "ks",
+        "lookout",
         "purrr",
         "robustbase",
         "rstudioapi",
         "tibble"
       ],
-      "Hash": "16a4adae37c7b8c09cfac294baad6f69"
+      "Hash": "0d9760a3318b7ee0b5283d6bb53959d8"
     },
     "whisker": {
       "Package": "whisker",

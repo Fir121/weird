@@ -195,3 +195,17 @@ of_scores |>
 ```
 
 Again, the two large scores correspond to the extreme 2 hour duration and the tiny 1 second duration. The value of $k=150$ has been chosen by trial and error.
+
+
+## Stray algorithm
+
+```{r}
+#| label: fig-stray
+of_scores <- of_scores |>
+  mutate(stray = stray_scores(duration))
+of_scores |> arrange(desc(stray))
+of_scores |>
+  filter(duration < 7000) |>
+  ggplot(aes(x = duration, y = stray)) +
+  geom_point()
+```
