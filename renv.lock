@@ -232,6 +232,16 @@
       ],
       "Hash": "45f0398006e83a5b10b72a90663d8d8c"
     },
+    "RTriangle": {
+      "Package": "RTriangle",
+      "Version": "1.6-0.12",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "16ec95cc4daa123bb7fd4a0ba26dae56"
+    },
     "Rcpp": {
       "Package": "Rcpp",
       "Version": "1.0.11",
@@ -1001,6 +1011,24 @@
         "withr"
       ],
       "Hash": "313d31eff2274ecf4c1d3581db7241f9"
+    },
+    "ggtda": {
+      "Package": "ggtda",
+      "Version": "0.1.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "ggtda",
+      "RemoteUsername": "tdaverse",
+      "RemotePkgRef": "tdaverse/ggtda",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "4701e13d3936c81e02926498e3ca986a8343fdc0",
+      "Requirements": [
+        "R",
+        "RTriangle",
+        "ggplot2"
+      ],
+      "Hash": "93e1bfffe20d7a967ee05cb88d0e2f84"
     },
     "gh": {
       "Package": "gh",
