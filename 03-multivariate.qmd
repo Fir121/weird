@@ -732,7 +732,7 @@ annulus_density |>
 In this example, we have simply used a diagonal bandwidth matrix with the same bandwidth in each direction. That works for the annulus example, because the variables are on the same scale, and there is no correlation between them. However, in general we will want to use a bandwidth matrix that is not diagonal, and that allows for correlation between the variables.
 
 The simplest procedure is to first normalize the data matrix $\bm{Y}$ to obtain a new data set $\bm{Y}^* = \bm{S}_{\text{OGK}}^{-1/2} \bm{Y}$, where $\bm{S}_{\text{OGK}}$ is the robust covariance matrix estimate from the OGK algorithm given in @eq-ogk. This normalized data set will have a covariance matrix that is approximately equal to the identity matrix. From $\bm{Y}^*$, we can compute the Vietoris-Rips death diameters, $d_1,\dots,d_n$. These are then ordered to give $d_{(1)},\dots,d_{(n)}$, and we find the largest interval by computing successive differences
-$\Delta_i = d_{(i+1)} - d_{(i)}$, for $i=1,\dots,n-1$. We choose $h_*$ to be the diameter corresponding to the largest $\Delta_i$, and let $\bm{V}$ denote the diagonal matrix with entries equal to the diagonals of $\bm{S}_{\text{OGK}}$. Then we can define the bandwidth matrix to be
+$\Delta_i = d_{(i+1)} - d_{(i)}$, for $i=1,\dots,n-1$. We choose $h_*$ to be the diameter corresponding to the largest $\Delta_i$. Then we can define the bandwidth matrix to be
 $$
   \bm{H} = \left(\frac{4}{d+2}\right)^{2/(d+4)} n^{-2/(d+4)} h_*\bm{V}^{-1/2}\bm{S}_{\text{OGK}}.
 $$ {#eq-lookoutH}

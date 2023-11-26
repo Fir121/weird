@@ -142,7 +142,7 @@ of <- oldfaithful  |>
   select(duration, waiting) |>
   filter(duration < 7200, waiting < 7200)
 of |>
-  mutate(lookout = lookout_prob(of)) |>
+  mutate(lookout = lookout_prob(duration)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, duration)
 ```
