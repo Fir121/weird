@@ -2830,7 +2830,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "f5950381191a3c0617533ab38865b30da4286577",
+      "RemoteSha": "e2ddf23121fac106a80b22662903465eabcee61f",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -2850,7 +2850,7 @@
         "rstudioapi",
         "tibble"
       ],
-      "Hash": "468de1a90a1f934ae6a9956b6031da22"
+      "Hash": "fcc879caeb2429debb6517b7ec1fa0c9"
     },
     "whisker": {
       "Package": "whisker",
