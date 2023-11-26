@@ -14,7 +14,7 @@ launch:
 
 deploy:
 	cp .htaccess _book
-	rsync -zrvce 'ssh -p 18765' _book/ u192-zw4zvui1lqsb@m80.siteground.biz:www/otexts.com/public_html/weird
+	rsync -zrvce 'ssh -p 18765' _book/ u192-zw4zvui1lqsb@ssh.otexts.com:www/otexts.com/public_html/weird
 
 clean:
 	rm -rf _book
