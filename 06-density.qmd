@@ -192,4 +192,4 @@ chisq4 |>
 
 The algorithm has found 6 of the 1000 N(0,1) observations to be possible anomalies, as well as the one true anomaly in the fourth example.
 
-The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach. This idea will be discussed in Chapter ??
+The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach.
