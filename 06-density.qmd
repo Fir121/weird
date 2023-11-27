@@ -150,12 +150,12 @@ of |>
 
 Again, only the two anomalies are identified: the 1 second eruption, and the 90 second eruption.
 
-Next we consider the artificial examples, starting with the first 18 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
+Next we consider some artificial examples. Because the lookout algorithm uses the tail of the distribution, it requires a reasonably large sample size to work effectively. The `lookout_prob` function will return a warning if there are fewer than 25 observations. Here we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
 
 ```{r}
 #| label: lookout3
 #| code-fold: false
-n01b <- tibble(y = c(n01$v2[1:18], 4, 4.5))
+n01b <- tibble(y = c(n01$v2[1:48], 4, 4.5))
 n01b |>
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
@@ -170,23 +170,20 @@ Finally, we consider simulated data from each of the distributions, N(0,1), $\te
 #| label: lookout4
 #| code-fold: false
 set.seed(1)
-t3 <- tibble(y = rt(1000, df = 3))
-chisq4 <- tibble(y = rchisq(1000, df = 4))
 n01 |>
   select(v1) |>
   mutate(lookout = lookout_prob(v1)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, v1)
-t3 |>
+tibble(y = rt(1000, df = 3)) |> 
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
-chisq4 |>
+tibble(y = rchisq(1000, df = 4)) |> 
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
 ```
 
-The algorithm has found a small number of spurious anomalies in each case.
+The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
 
-The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach.
