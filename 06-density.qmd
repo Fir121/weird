@@ -69,8 +69,12 @@ In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the P
 #| code-fold: false
 of_scores <- oldfaithful |>
   mutate(
-    score = kde_scores(duration, h = kde_bandwidth(duration, method = "lookout")),
-    looscore = kde_scores(duration, , h = kde_bandwidth(duration, method = "lookout"), loo = TRUE),
+    score = kde_scores(duration, 
+      h = kde_bandwidth(duration, method = "lookout")),
+    looscore = kde_scores(duration, 
+      h = kde_bandwidth(duration, method = "lookout"), 
+      loo = TRUE
+    ),
   )
 threshold <- quantile(of_scores$score, prob = 0.90, type = 8)
 gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate

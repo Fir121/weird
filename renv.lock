@@ -1626,9 +1626,14 @@
     },
     "lookout": {
       "Package": "lookout",
-      "Version": "0.1.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "0.1.5",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "lookout",
+      "RemoteUsername": "sevvandi",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "1854a9752b88bc86177b6f20efbb2fd2e8a09125",
       "Requirements": [
         "RANN",
         "TDAstats",
@@ -1636,7 +1641,7 @@
         "ggplot2",
         "tidyr"
       ],
-      "Hash": "ab62df3c0bfeb761484e70adeba21192"
+      "Hash": "232f1974f090a37cf933f6b1dadfe94a"
     },
     "lpSolve": {
       "Package": "lpSolve",
@@ -2434,6 +2439,27 @@
       ],
       "Hash": "58767e44739b76965332e8a4fe3f91f1"
     },
+    "stray": {
+      "Package": "stray",
+      "Version": "0.1.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "stray",
+      "RemoteUsername": "pridiltal",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "519b2e05b76ef9644131386f039767acf52b8124",
+      "Requirements": [
+        "FNN",
+        "R",
+        "colorspace",
+        "ggplot2",
+        "ks",
+        "pcaPP",
+        "stats"
+      ],
+      "Hash": "5c3e3b7cc4ac564559157dbbbdc8c147"
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.8.1",
@@ -2830,7 +2856,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "e2ddf23121fac106a80b22662903465eabcee61f",
+      "RemoteSha": "a7a00e2853fe46164dd096ed43b8bd12ada73990",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -2848,9 +2874,10 @@
         "purrr",
         "robustbase",
         "rstudioapi",
+        "stray",
         "tibble"
       ],
-      "Hash": "fcc879caeb2429debb6517b7ec1fa0c9"
+      "Hash": "5f47a6d557654d5774c12816c0deca63"
     },
     "whisker": {
       "Package": "whisker",
