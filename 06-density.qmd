@@ -69,10 +69,10 @@ In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the P
 #| code-fold: false
 of_scores <- oldfaithful |>
   mutate(
-    score = kde_scores(duration, 
+    score = kde_scores(duration,
       h = kde_bandwidth(duration, method = "lookout")),
-    looscore = kde_scores(duration, 
-      h = kde_bandwidth(duration, method = "lookout"), 
+    looscore = kde_scores(duration,
+      h = kde_bandwidth(duration, method = "lookout"),
       loo = TRUE
     ),
   )
@@ -105,10 +105,11 @@ The above code was introduced to illustrate each step of the procedure, but it i
 #| dependson: ofpot
 oldfaithful |>
   mutate(lookout_pval = lookout_prob(duration)) |>
+  filter(lookout_pval < 0.05) |>
   arrange(lookout_pval)
 ```
 
-Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. All other observations have p-values greater than 0.05, and we can conclude that they are not anomalies. @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red.
+Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, ten other observations have been identified as potential anomalies, as they occur in regions of low probability. @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red.
 
 ```{r}
 #| label: fig-ofpot
@@ -117,8 +118,7 @@ Low probabilities indicate likely outliers and high probabilities indicate norma
 #| fig.asp: 0.2
 oldfaithful  |>
   filter(duration < 7200)  |>
-  gg_hdrboxplot(duration) +
-  geom_point(data = of_lookout |> filter(duration < 7200, pval < 0.05), aes(x = duration, y = 0), color = "red")
+  gg_hdrboxplot(duration, show_lookout = TRUE)
 ```
 
 
