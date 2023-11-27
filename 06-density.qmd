@@ -169,12 +169,12 @@ Finally, we consider simulated data from each of the distributions, N(0,1), $\te
 ```{r}
 #| label: lookout4
 #| code-fold: false
-set.seed(1)
 n01 |>
   select(v1) |>
   mutate(lookout = lookout_prob(v1)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, v1)
+set.seed(1)
 tibble(y = rt(1000, df = 3)) |> 
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
