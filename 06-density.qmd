@@ -62,21 +62,18 @@ where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. This is because th
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these lookout scores to find the probability of each observation being an anomaly.
 
-In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ percentile as the threshold.
+In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold.
 
 ```{r}
 #| label: ofpot
 #| code-fold: false
+h <- kde_bandwidth(oldfaithful$duration)
 of_scores <- oldfaithful |>
   mutate(
-    score = kde_scores(duration,
-      h = kde_bandwidth(duration, method = "lookout")),
-    looscore = kde_scores(duration,
-      h = kde_bandwidth(duration, method = "lookout"),
-      loo = TRUE
-    ),
+    score = kde_scores(duration, h = h),
+    looscore = kde_scores(duration, h = h, loo = TRUE)
   )
-threshold <- quantile(of_scores$score, prob = 0.90, type = 8)
+threshold <- quantile(of_scores$score, prob = 0.95, type = 8)
 gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
 ```
 
@@ -88,13 +85,13 @@ Now we apply the fitted distribution to the leave-one-out scores to obtain the p
 #| dependson: ofpot
 of_lookout <- of_scores |>
   mutate(
-    pval = evd::pgpd(looscore,
-      loc = threshold,
+    pval = evd::pgpd(looscore, loc = threshold,
       scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
     )
   ) |>
   arrange(pval)
-of_lookout
+of_lookout |> 
+  filter(pval < 0.05)
 ```
 
 The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
@@ -135,7 +132,7 @@ cricket_batting |>
   arrange(lookout)
 ```
 
-Here Bradman is a clear anomaly, with a handful of other batters (all males) also showing up as possible anomalies (with probabilities a little less than 0.05).
+Here Bradman is a clear anomaly (with a very low lookout probability), and no-one else is identified as a possible anomaly.
 
 The same algorithm is easily applied in two dimensions. Here we use the `oldfaithful` data set, and consider the distribution of Duration and Waiting time, ignoring those observations that are greater than 2 hours in either dimension.
 
@@ -151,7 +148,7 @@ of |>
   arrange(lookout, duration)
 ```
 
-The lookout algorithm has identified the 1 second eruption, as well as a few others in regions of low probability.
+Again, only the two anomalies are identified: the 1 second eruption, and the 90 second eruption.
 
 Next we consider the artificial examples, starting with the first 18 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
 
@@ -190,6 +187,6 @@ chisq4 |>
   arrange(lookout, y)
 ```
 
-The algorithm has found 6 of the 1000 N(0,1) observations to be possible anomalies, as well as the one true anomaly in the fourth example.
+The algorithm has found a small number of spurious anomalies in each case.
 
 The `lookout` package also implements this method, but uses the Epanechnikov kernel rather than the Gaussian kernel, and selects the bandwidth using a different approach.
