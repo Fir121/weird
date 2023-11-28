@@ -89,7 +89,7 @@ This example reveals some lessons about anomaly detection:
 
 ## Approaches to anomaly detection
 
-We will take a probabilistic perspective of anomaly detection, where we aim to estimate the probability that an observation is identified as an anomaly. Consequently, we will need to introduce (or revise) some material on probability distributions and related tools in @sec-univariate and @sec-multivariate.
+We will take a probabilistic perspective on anomaly detection, where we aim to estimate the probability that an observation is identified as an anomaly. Consequently, we will need to introduce (or revise) some material on probability distributions and related tools in @sec-univariate and @sec-multivariate.
 
 ### Z-scores and statistical tests
 
@@ -123,7 +123,7 @@ In this book, we will only consider unsupervised problems. That is, we have no i
 
 That makes it difficult to measure how good an anomaly detection algorithm performs. If we don't know the right answer, we can't know if an algorithm has found the true anomalies. There are three solutions to this problem that are often employed when testing anomaly detection algorithms.
 
-1. **Synthetic data**: We can use synthetic data that has been deliberately contaminated with a small number of known anomalies. This approach allows us to study the sensitivity of an algorithm to anomalies --- how anomalous does an observation have to be before it is detected? However, a drawback is that synthetic data is often simpler and neater than real data, making the anomaly detection task easier than it is in reality.
+1. **Synthetic data**: We can use synthetic data that has been deliberately contaminated with a small number of known anomalies. This approach allows us to study the sensitivity of an algorithm to anomalies --- how anomalous does an observation have to be before it is detected? A drawback to this approach is that synthetic data is often simpler and neater than real data, making the anomaly detection task easier than it is in reality.
 2. **Human labelled**: We can use real data where a human has labelled some of the observations as anomalous. As noted above, this only works when the human has correctly and completely labelled the anomalies. It also requires that what a human considers an anomaly is also anomalous in a statistical sense.
 3. **Downsampled category**: We can use real data that contains a categorical variable taking two label values. One of the labels is downsampled and the corresponding observations form the anomalous subset. This approach is useful in obtaining large sets of realistic data, as it takes little time to create the data set. However, it requires that the observations labelled anomalies are different in some way from the other observations (apart from their label).
 
@@ -254,11 +254,9 @@ oldfaithful |>
   labs(y = "Waiting time to next eruption (seconds)", x = "Duration (seconds)")
 ```
 
-We have filtered out some extreme waiting times (which are probably due to incomplete records), and the two-hour duration we have seen previously. This shows some anomalies that occur due to the combination of the two variables, although they do not appear anomalous within the data on any one of the variables.
+In @fig-oldfaithful3, we have plotted the duration of each eruption and the waiting time to the next eruption, after filtering some extreme waiting times (which are probably due to incomplete records), and the two-hour duration we have seen previously.
 
-For example, there is one duration of over 6000 seconds, following an eruption of 120 seconds. Neither the waiting time nor the duration are unusual on their own, but the combination is anomalous.
-
-Similarly, there are two eruptions of 170 seconds, followed by waiting times of under 4000 seconds. Those waiting times are not particularly unusual compared to other waiting times, but they are unusual given the durations of the previous eruptions.
+The resulting plot shows some anomalies that occur due to the *combination* of the two variables, although they do not appear anomalous within the data on any one of the variables. For example, there is one eruption of 120 seconds, followed by a waiting time of over 6000 seconds. Neither the waiting time nor the duration are unusual on their own, but the combination is anomalous. Similarly, there are two eruptions of 170 seconds, followed by waiting times of under 4000 seconds. Those waiting times are not particularly unusual compared to other waiting times, but they are unusual given the durations of the previous eruptions.
 
 ### Example: Wine prices and quality {-}
 
@@ -277,7 +275,7 @@ wine_reviews |>
 
 The jittering in the horizontal direction helps reduce overplotting as `points` is always an integer value. This adds a small amount of random noise to the points variable, but not so much that it overlaps with the neighbouring values. The price is shown on a log scale to allow all the points to be seen more clearly.
 
-Here the most interesting observations are the ones that have an unusual price given their points value. For example, the lowest priced wine above 95 points is a 2007 Syrah from the Rulo vineyard in the Columbia Valley, Washington. It is an anomaly given its high points value and low price, although neither the price nor the points value are particularly unusual.
+Here the most interesting observations are the ones that have an unusual price given their points value. For example, the lowest priced wine above 95 points is a 2007 Syrah from the Rulo vineyard in the Columbia Valley, Washington. It is an anomaly given its high points value and low price, although neither the price nor the points value are particularly unusual. There are also two very expensive wines that do not have a rating to match, with points values in the low 90s. These can also be considered anomalies.
 
 ```{r}
 #| label: shiraz2

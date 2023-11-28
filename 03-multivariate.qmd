@@ -170,17 +170,36 @@ tibble(d = seq(10)) |>
 
 Remarkably, by 10 dimensions, almost all points lie outside the unit sphere, and live in the corners of the space. Almost no points are in the center of the space. This occurs because, with enough variables, at least one of the univariate observations is going to lie in the tails of the distribution, and so the multivariate observation will not lie near the center of the space.
 
-Another way to think about this is to consider hypercubes that contain 50% of the observations. These must have sides of length $2^{1-1/d}$, in order for the volume of the hypercube to be $2^{d-1}$, exactly half of the entire space.
+Another way to think about this is to consider hypercubes that contain 50% of the observations. These must have sides of length $2^{1-1/d}$, in order for the volume of the hypercube to be $2^{d-1}$, exactly half of the entire space. For $d=1$, the hypercube is a unit interval. For $d=2$, it is a square of side length $\sqrt{2} \approx 1.41$ as shown in @fig-hypercube. For $d=3$, the central cube must have side length $2^{2/3} \approx 1.59$, and so on.
 
-For $d=1$, the hypercube is a unit interval. For $d=2$, it is a square of side length $2/\sqrt{2}$, and so on. @fig-hypercubes shows the side length of these hypercubes as the number of dimensions increases.
+```{r}
+#| label: fig-hypercube
+#| fig-cap: 2000 simulated observations from two independent U(-1,1) distributions, with the central square containing 50% of the observations.
+#| fig-height: 5
+#| fig-width: 5
+#| out-width: 70%
+tibble(
+    x = runif(2000, -1, 1),
+    y = runif(2000, -1, 1),
+    within_cube = (abs(x) < 2^(-1/2)) & (abs(y) < 2^(-1/2))
+  ) |>
+  ggplot(aes(x=x, y=y, color = within_cube)) +
+  geom_point() +
+  coord_fixed() +
+  scale_color_manual(values = c("#D55E00","#777777")) +
+  guides(col = "none")
+```
+
+As the dimension $d$ increases, the size of the hypercube containing 50% of the observations must also increase.
+@fig-hypercubes shows the side length of these hypercubes plotted against the dimension $d$.
 
 ```{r}
 #| label: fig-hypercubes
 #| fig-cap: For observations from a $d$-dimensional U(-1,1) distribution, the side length of a hypercube which contains 50% of points.
 tibble(d = seq(20)) |>
-  mutate(length = 2*(0.5)^(1/d)) |>
+  mutate(length = 2^(1-1/d)) |>
   ggplot(aes(x = d, y = length)) +
-  geom_line() +
+  geom_line() + geom_point() +
   labs(x = "Dimensions (d)", y = "Side length of hypercube containing 50% of points") +
   scale_x_continuous(breaks = seq(2, 20, by=2), minor_breaks = NULL) +
   ylim(1,2)
@@ -332,7 +351,7 @@ We can repeat this for each pair of variables, to obtain a robust estimate of th
 
 These orthogonalization steps are usually repeated one more time.
 
-This procedure is implemented in the `covOGK` function in the `robustbase` package [robustbase].
+This procedure is implemented in the `covOGK` function in the `robustbase` package [@robustbase].
 
 ## Multivariate kernel density estimation
 
@@ -505,4 +524,3 @@ patchwork::wrap_plots(plot1, plot2, nrow = 1)
 ```
 
 Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
-
