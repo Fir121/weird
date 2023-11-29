@@ -6,6 +6,34 @@
 source("before-each-chapter.R")
 ```
 
+## Multivariate distances {#sec-distances}
+
+Euclidean distance
+
+Mahalanobis distance
+
+Manhattan:
+: Absolute distance between the two vectors:
+$$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
+This is also known as the $L_1$ distance.  It is called the Manhattan distance as it gives the shortest path  between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
+
+Minkowski:
+: This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
+$$\|\bm{y}_i - \bm{y}_j\| = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
+The value of $p$ is specified using the `p` argument. It is named after the German mathematician Hermann Minkowski.
+
+Maximum:
+: Maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$:
+$$\|\bm{y}_i - \bm{y}_j\| = \max_k |y_{ik}-y_{jk}|.$$
+
+Canberra:
+: $$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d \frac{|y_{ik}-y_{jk}|}{|y_{ik}|+|y_{jk}|}.$$
+Terms with zero numerator and denominator are omitted from the sum. This distance was introduced by two Australian scientists, Godfrey Lance and Bill Williams, who named it after their home city of Canberra. It scales the distances between components by the size of the components, so there is an inbuilt scaling which avoids problems with variables on different units. However, if there are components which are close to zero, but not identical to zero, the measure is numerically unstable. So it is better to scale the data explicitly before computing a distance, unless the variables cannot take small values.
+
+Binary:
+: This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
+
+
 ## Pairwise distances
 
 Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a very long time for large $n$.
@@ -41,28 +69,7 @@ oldfaithful |>
 
 The `scale()` function subtracts the mean and divides by the standard deviation for each column of data. Therefore, all variables in the resulting scaled data have mean zero and standard deviation equal to 1.
 
-The `dist()` function will also compute other types of distances which may be more appropriate for some kinds of data. These are specified using the `method` argument and defined below.
-
-Manhattan:
-: Absolute distance between the two vectors:
-$$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
-This is also known as the $L_1$ distance.  It is called the Manhattan distance as it gives the shortest path  between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
-
-Minkowski:
-: This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
-$$\|\bm{y}_i - \bm{y}_j\| = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
-The value of $p$ is specified using the `p` argument. It is named after the German mathematician Hermann Minkowski.
-
-Maximum:
-: Maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$:
-$$\|\bm{y}_i - \bm{y}_j\| = \max_k |y_{ik}-y_{jk}|.$$
-
-Canberra:
-: $$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d \frac{|y_{ik}-y_{jk}|}{|y_{ik}|+|y_{jk}|}.$$
-Terms with zero numerator and denominator are omitted from the sum. This distance was introduced by two Australian scientists, Godfrey Lance and Bill Williams, who named it after their home city of Canberra. It scales the distances between components by the size of the components, so there is an inbuilt scaling which avoids problems with variables on different units. However, if there are components which are close to zero, but not identical to zero, the measure is numerically unstable. So it is better to scale the data explicitly before computing a distance, unless the variables cannot take small values.
-
-Binary:
-: This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
+The `dist()` function will also compute other types of distances (discussed in @sec-distances) which may be more appropriate for some kinds of data. These are specified using the `method` argument.
 
 For more information about pairwise distances, see @Borg2005.
 
@@ -197,7 +204,7 @@ of_scores |>
 Again, the two large scores correspond to the extreme 2 hour duration and the tiny 1 second duration. The value of $k=150$ has been chosen by trial and error.
 
 
-## Stray algorithm
+## Stray and HDoutliers algorithms
 
 ```{r}
 #| label: fig-stray
@@ -209,3 +216,6 @@ of_scores |>
   ggplot(aes(x = duration, y = stray)) +
   geom_point()
 ```
+
+## Clustering methods
+

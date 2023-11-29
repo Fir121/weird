@@ -8,7 +8,16 @@ source("before-each-chapter.R")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data (perhaps leaving some observations out), and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## KDE scores {#kdescores}
+## Log scores
+
+### Marginal distribution scores
+
+### Conditional distribution scores
+
+* Example using regression residuals
+
+
+### KDE scores {#kdescores}
 
 The kernel density estimate at each observation is @eq-mkde
 $$
@@ -54,7 +63,11 @@ For data sets of low dimension (say $d \le 3$), this approach works quite well i
 
 ## Lookout algorithm
 
-A variation on the idea of kde scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation". Then the leave-one-out kde (or lookout) scores are simply
+A variation on the idea of log scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation". 
+
+
+
+For example, the leave-one-out kde (or lookout) scores are simply
 $$
   f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
 $$ {#eq-lookout}
@@ -186,4 +199,6 @@ tibble(y = rchisq(1000, df = 4)) |>
 ```
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
+
+## Other density-based methods
 
