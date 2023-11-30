@@ -8,26 +8,146 @@ source("before-each-chapter.R")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data (perhaps leaving some observations out), and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Log scores
+## Log scores and log-loo scores
 
-### Marginal distribution scores
+Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y})$. This may be an assumed density, or estimated from the data. It may be a parametric function, or a nonparametric estimate. It may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents the probability density function that is appropriate for the data set.
 
-### Conditional distribution scores
+The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of anomalous that observation is, given the density. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value under the density $f$, and so is a potential anomaly. On the other hand, typical values under the density $f$, will have small log scores.
 
-* Example using regression residuals
+If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-loo score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
+
+### Regression log scores
+
+A regression model defines the conditional density of the observations, given the predictors. For a linear Gaussian regression, we can write the model as
+$$
+  \bm{y} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}),
+$$
+where $\bm{X}$ is a matrix containing a column of ones (for the intercept), with the other columns containing the predictors in the model. 
+
+For example, consider the wine reviews of Syrah, plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate.
+
+```{r}
+#| label: shiraz-regression
+fit <- lm(log(price) ~ points, 
+          data = wine_reviews |>
+  filter(variety %in% c("Shiraz", "Syrah")))
+summary(fit)
+```
+
+The fitted model is given by
+$$ 
+  \log(\text{Price}) \sim N(`r sprintf("%.3f",coef(fit)[1])` + `r sprintf("%.3f",coef(fit)[2])` \times \text{Points}, `r sprintf("%.3f",sigma(fit))`^2),
+$$
+and is depicted in @fig-shiraz-regression with 95% prediction intervals.
+
+```{r}
+#| label: fig-shiraz-regression
+#| warning: false
+#| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting.
+pred <- predict(fit, interval = "prediction", level = 0.95) |> 
+  suppressWarnings() |>
+  exp()
+wine_reviews |> 
+  filter(variety %in% c("Shiraz", "Syrah")) |> 
+  bind_cols(pred) |> 
+  mutate(within = (price > lwr & price < upr)) |> 
+  ggplot(aes(y = price, x = points, col = within)) +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.4) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "#0072B2", alpha = 0.2) +
+  geom_line(aes(y = fit), color = "#0072B2") +
+  scale_y_log10() +
+  guides(fill = "none", col = "none") 
+```
+
+The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores.
+
+```{r}
+#| label: fig-shiraz-regression-scores
+#| fig.cap: Residuals and log scores for the Shiraz data using a linear regression model. Points are colored to match the 95% prediction intervals in @fig-shiraz-regression.
+#| fig.height: 6
+#| fig.asp: 0.8
+sigma <- sigma(fit)
+fit_stats <- broom::augment(fit) |> 
+  bind_cols(pred) |> 
+  mutate(
+    price = exp(`log(price)`),
+    within = (price > lwr & price < upr)
+  ) |> 
+  rename(Residuals = .resid) |> 
+  mutate(Log_scores = -log(dnorm(Residuals, sd = sigma))) 
+fit_stats |> 
+  select(points, Residuals, Log_scores, within) |>
+  pivot_longer(c(Residuals, Log_scores), names_to = "variable", values_to = "value") |> 
+  mutate(variable = factor(variable, levels = c("Residuals", "Log_scores"))) |> 
+  ggplot(aes(x = points, y = value, col = within)) +
+  facet_grid(variable ~ ., scales = "free_y") +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "#0072B2") +
+  labs(x = "Points", y = "") +
+  guides(fill = "none", col = "none") 
+```
+
+```{r}
+#| label: shiraz-regression-scores
+#| include: false
+most_anomalous <- fit_stats |> 
+  filter(Log_scores == max(Log_scores))
+```
+
+This shows that the most anomalous point is the one with the largest residual, which is the observation with `r most_anomalous$points[1]` points and a price of `r exp(most_anomalous[["log(price)"]])`. 
+
+### Regression log-loo scores
+
+Leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times.
+
+First, recall that the fitted values can be calculated using 
+$$
+  \bm{\hat{y}} = \bm{X}\hat{\bm{\beta}} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y} = \bm{H}\bm{y},
+$$
+where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is known as the "hat-matrix" because it is used to compute $\bm{\hat{y}}$ ("y-hat").
+
+The diagonal values of $\bm{H}$ are denoted by $h_{1},\dots,h_{T}$, and take values between 0 and 1. These are the "leverage" values for each observation, and measure how much each observation influences the fitted values. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals. The leverage values can easily be computed using the `hatvalues()` function in R.
+
+It can be shown [??ref] that the leave-one-out residuals are given by
+$$
+  e_{-i}  = e_{i}/(1-h_{i}),
+$$
+where $e_{i}$ is the residual obtained from fitting the model to all observations. So the leave-one-out residual variance is given by
+$$
+  \sigma_{\text{LOO}}^2 = \frac{1}{n} \sum_{j=1}^n e_{-j}^2,
+$$
+and the log-loo scores are given by
+$$
+  s_{-i} = -\log f_{-i} = -\log \phi\left(\frac{e_{-i}}{\sigma_{\text{LOO}}}\right) .
+$$
+The following code shows how to compute them.
+
+```{r}
+#| code-fold: false
+hat_values <- hatvalues(fit)
+fit_stats |> 
+  mutate(
+    Loo_residuals = Residuals / (1 - hat_values),
+    Log_Loo_scores = -log(dnorm(Loo_residuals, sd = sqrt(mean(Loo_residuals^2))))
+  ) |> 
+  arrange(desc(Log_Loo_scores)) |> 
+  select(points, price, Residuals, Log_scores, Loo_residuals, Log_Loo_scores) 
+```
+
+In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small.
 
 ### KDE scores {#kdescores}
 
-The kernel density estimate at each observation is @eq-mkde
+Suppose we estimate $f$ using a kernel density estimate. Then we call the resulting log-scores "kde scores". The kernel density estimate at each observation is @eq-mkde
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
-and we define the "**kde score**" at each observation as
+and so the "**kde score**" at each observation as
 $$
   s_i = -\log(f_i).
 $$
-These provide a measure of how anomalous each point is --- anomalies are points where the kde scores are relatively large. The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $\|\bm{y}_i-\bm{y}_j\|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
+The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $\|\bm{y}_i-\bm{y}_j\|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
 $$
   -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}).
 $$
@@ -61,9 +181,16 @@ of_scores |>
 
 For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
 
+## Log-loo scores and EVT
+
+Let $s_i = -\log f(y_i)$. Then we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold.
+
+Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
+
+
 ## Lookout algorithm
 
-A variation on the idea of log scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation". 
+A variation on the idea of log scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation".
 
 
 
@@ -103,7 +230,7 @@ of_lookout <- of_scores |>
     )
   ) |>
   arrange(pval)
-of_lookout |> 
+of_lookout |>
   filter(pval < 0.05)
 ```
 
@@ -188,11 +315,11 @@ n01 |>
   filter(lookout < 0.05) |>
   arrange(lookout, v1)
 set.seed(1)
-tibble(y = rt(1000, df = 3)) |> 
+tibble(y = rt(1000, df = 3)) |>
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
-tibble(y = rchisq(1000, df = 4)) |> 
+tibble(y = rchisq(1000, df = 4)) |>
   mutate(lookout = lookout_prob(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
@@ -200,5 +327,5 @@ tibble(y = rchisq(1000, df = 4)) |>
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
 
-## Other density-based methods
 
+## Other density-based methods
