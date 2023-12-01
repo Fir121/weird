@@ -6,36 +6,51 @@
 source("before-each-chapter.R")
 ```
 
-Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data (perhaps leaving some observations out), and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
+Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
 ## Log scores and log-loo scores
 
-Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y})$. This may be an assumed density, or estimated from the data. It may be a parametric function, or a nonparametric estimate. It may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents the probability density function that is appropriate for the data set.
+Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data. It may be a parametric function, or a nonparametric estimate. It may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents the probability density function that is appropriate for the data set.
 
-The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of anomalous that observation is, given the density. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value under the density $f$, and so is a potential anomaly. On the other hand, typical values under the density $f$, will have small log scores.
+The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value under the density $f$, and so is a potential anomaly. On the other hand, typical values under the density $f$, will have low log scores.
 
 If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-loo score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
 
-### Regression log scores
+## Regression log scores
 
-A regression model defines the conditional density of the observations, given the predictors. For a linear Gaussian regression, we can write the model as
+A regression model defines the conditional expectation of the observations, given the predictors. For a linear regression, we can write the model as the conditional expectation $\text{E}(\bm{y}\mid\bm{X}) = \bm{X}\bm{\beta}$, where $\bm{X}$ is a matrix containing a column of ones (for the intercept), with the other columns containing the predictors in the model.  There is no need to assume a particular conditional distribution in order to estimate the model. The model can be estimated using ordinary least squares regression [@faraway2004linear], resulting in the estimate
 $$
-  \bm{y} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}),
+  \hat{\bm{\beta}} = (\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y}.
 $$
-where $\bm{X}$ is a matrix containing a column of ones (for the intercept), with the other columns containing the predictors in the model. 
+The fitted values are given by
+$$
+  \hat{\bm{y}} = \bm{X}\hat{\bm{\beta}} = \bm{H}\bm{y}.
+$$
+where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is the "hat"-matrix. The residuals are given by
+$$
+  \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
+$$
 
-For example, consider the wine reviews of Syrah, plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate.
+To use a regression model for anomaly detection, we need a little more than the conditional expectation. We will need to define the conditional density $f(\bm{y}\mid\bm{X})$. The most common choice is to assume that the model errors, $\bm{y} - \bm{X}\bm{\beta}$, are normally distributed, uncorrelated, and homoskedastic, so that the conditional density is given by
+$$
+  \bm{y} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}).
+$$
+
+### Example: wine reviews
+
+For example, consider the wine reviews of Syrah, plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate of price given the points awarded to each wine. Then, $\bm{X}$ contains just two columns: a column of 1s, and a column containing the points values. The vector $\bm{y}$ contains the log prices of the wines. The model can be fitted as follows.
 
 ```{r}
 #| label: shiraz-regression
-fit <- lm(log(price) ~ points, 
-          data = wine_reviews |>
-  filter(variety %in% c("Shiraz", "Syrah")))
+#| code-fold: false
+fit <- lm(log(price) ~ points,
+  data = wine_reviews |> filter(variety %in% c("Shiraz", "Syrah"))
+)
 summary(fit)
 ```
 
-The fitted model is given by
+The fitted model can be written as 
 $$ 
   \log(\text{Price}) \sim N(`r sprintf("%.3f",coef(fit)[1])` + `r sprintf("%.3f",coef(fit)[2])` \times \text{Points}, `r sprintf("%.3f",sigma(fit))`^2),
 $$
@@ -45,7 +60,8 @@ and is depicted in @fig-shiraz-regression with 95% prediction intervals.
 #| label: fig-shiraz-regression
 #| warning: false
 #| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting.
-pred <- predict(fit, interval = "prediction", level = 0.95) |> 
+pred <- fit |> 
+  predict(interval = "prediction", level = 0.95) |> 
   suppressWarnings() |>
   exp()
 wine_reviews |> 
@@ -60,7 +76,7 @@ wine_reviews |>
   guides(fill = "none", col = "none") 
 ```
 
-The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores.
+The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is within the 95% prediction interval. 
 
 ```{r}
 #| label: fig-shiraz-regression-scores
@@ -92,35 +108,32 @@ fit_stats |>
 #| label: shiraz-regression-scores
 #| include: false
 most_anomalous <- fit_stats |> 
-  filter(Log_scores == max(Log_scores))
+  filter(Log_scores > 15)
+underpriced <- fit_stats |> 
+  filter(Residuals == min(Residuals))
 ```
 
-This shows that the most anomalous point is the one with the largest residual, which is the observation with `r most_anomalous$points[1]` points and a price of `r exp(most_anomalous[["log(price)"]])`. 
+This shows that the most anomalous observations are the two with Log scores above 15, and residuals above 2.5. The largest Log score is for the most over-priced wine, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`. The largest Log score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`.
 
 ### Regression log-loo scores
 
-Leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times.
+The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the  predicted value obtained using a model that uses all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ models, where $n$ is the number of observations. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times.
 
-First, recall that the fitted values can be calculated using 
-$$
-  \bm{\hat{y}} = \bm{X}\hat{\bm{\beta}} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y} = \bm{H}\bm{y},
-$$
-where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is known as the "hat-matrix" because it is used to compute $\bm{\hat{y}}$ ("y-hat").
+The diagonal values of $\bm{H}$, which we will write as $h_{1},\dots,h_{T}$, take values between 0 and 1. These are the "leverage" values for each observation, and measure how much each observation influences the fitted values. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals. The leverage values can easily be computed using the `hatvalues()` function in R.
 
-The diagonal values of $\bm{H}$ are denoted by $h_{1},\dots,h_{T}$, and take values between 0 and 1. These are the "leverage" values for each observation, and measure how much each observation influences the fitted values. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals. The leverage values can easily be computed using the `hatvalues()` function in R.
-
-It can be shown [??ref] that the leave-one-out residuals are given by
+It can be shown (see [the Appendix](./06-density.html#appendix-fast-computation-of-leave-one-out-residuals-for-linear-regression)) that the leave-one-out residuals are given by
 $$
   e_{-i}  = e_{i}/(1-h_{i}),
+$$ {#eq-loo-residuals}
+where $e_{i}$ is the residual obtained from fitting the model to *all* observations. So the leave-one-out residual variance is given by
 $$
-where $e_{i}$ is the residual obtained from fitting the model to all observations. So the leave-one-out residual variance is given by
+  \sigma_{\text{LOO}}^2 = \frac{1}{n} \sum_{i=1}^n e_{-i}^2,
 $$
-  \sigma_{\text{LOO}}^2 = \frac{1}{n} \sum_{j=1}^n e_{-j}^2,
+and the log-loo regression scores are given by
 $$
-and the log-loo scores are given by
+  s_{-i} = -\log f_{-i} = -\log \phi\left(\frac{e_{-i}}{\sigma_{\text{LOO}}}\right) ,
 $$
-  s_{-i} = -\log f_{-i} = -\log \phi\left(\frac{e_{-i}}{\sigma_{\text{LOO}}}\right) .
-$$
+where $\phi(u) = (2\pi)^{-1/2}e^{u^2}$ is the standard normal density.
 The following code shows how to compute them.
 
 ```{r}
@@ -135,11 +148,12 @@ fit_stats |>
   select(points, price, Residuals, Log_scores, Loo_residuals, Log_Loo_scores) 
 ```
 
-In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small.
+In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small. 
 
-### KDE scores {#kdescores}
 
-Suppose we estimate $f$ using a kernel density estimate. Then we call the resulting log-scores "kde scores". The kernel density estimate at each observation is @eq-mkde
+## KDE scores {#kdescores}
+
+Suppose, instead of a regression, we estimate $f$ using a kernel density estimate. Then we call the resulting log-scores "kde scores". The kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
@@ -149,75 +163,72 @@ $$
 $$
 The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $\|\bm{y}_i-\bm{y}_j\|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
 $$
-  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}).
+  -\log(K_H(\bm{0})/n) \approx \log(n) + \frac{d}{2}\log(2\pi) + \frac{1}{2}\text{log det}(\bm{H}),
 $$
-For univariate data, when $d=1$, this simplifies to
+where $\bm{H}$ is now the bandwidth matrix. For univariate data, when $d=1$, this simplifies to
 $$
   -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
 $$
 
-For the Old Faithful eruption duration data, we obtain the following kde scores.
+### Leave-one-out kde scores
+
+The contribution of the $i$th point to the kernel density estimate at that point is $K_H(\bm{0})/n$. Therefore, we can compute leave-one-out kde scores as
+$$
+  f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
+$$ {#eq-lookout}
+where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the the leave-one-out kernel density scores without needing to re-estimate the density many times.
+
+
+### Example: Old Faithful eruption durations
+
+For the Old Faithful eruption duration data, we obtain the following kde log-loo scores.
 
 ```{r}
 #| label: ofscores
 #| code-fold: false
 of_scores <- oldfaithful |>
-  mutate(score = kde_scores(duration))
+  mutate(
+    score = kde_scores(duration, loo = FALSE),
+    loo_score = kde_scores(duration, loo = TRUE)
+  )
 of_scores |> arrange(desc(score))
 ```
 
-The two largest scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. In both cases, the kde score is at its maximum. @fig-ofscores shows the kde scores for each observation. This has the shape of $-\log(f)$, and so we can see that the lowest score corresponds to the mode of the estimated density.
+The two infinite LOO scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values. @fig-ofscores shows the kde scores for each observation. This has the shape of $-\log(f)$, and so we can see that the lowest score corresponds to the mode of the estimated density.
 
 
 ```{r}
 #| label: fig-ofscores
 #| fig.cap: "KDE scores for the Old Faithful eruption durations."
 #| dependson: ofscores
+#| code-fold: false
 of_scores |>
   filter(duration < 7000) |>
   ggplot(aes(x = duration, y = score)) +
   geom_point()
 ```
 
-For data sets of low dimension (say $d \le 3$), this approach works quite well in identifying anomalies. However, as $d$ increases, it becomes increasingly difficult to estimate the density, and so it does not work so effectively for large values of $d$.
-
-## Log-loo scores and EVT
-
-Let $s_i = -\log f(y_i)$. Then we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold.
-
-Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
-
 
 ## Lookout algorithm
 
-A variation on the idea of log scores, is to consider estimates of the density at each observation, after removing that observation from the calculation. This is known as "leave-one-out density estimation".
+The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses leave-one-out scores to find the probability of each observation being an anomaly. Although it was proposed using kernel density estimates, it can be applied to scores obtained using any density.
 
+In this procedure, we fit a Generalized Pareto Distribution to the log scores using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the *leave-one-out* scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
+Let's consider an example using the Old Faithful eruption durations.
 
-For example, the leave-one-out kde (or lookout) scores are simply
-$$
-  f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
-$$ {#eq-lookout}
-where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. This is because the contribution of the $i$th point to the kernel density estimate at that point is $K_H(\bm{0})/n$, so the leave-one-out kernel density estimate is simple to compute (without needing to re-estimate the density).
+### Example: Old Faithful eruption durations
 
-The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses these lookout scores to find the probability of each observation being an anomaly.
-
-In this procedure, we fit a Generalized Pareto Distribution to $s_i$ using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold.
+First, let's estimate the Generalized Pareto Distribution using the points with the top 5% of score values.
 
 ```{r}
 #| label: ofpot
 #| code-fold: false
-h <- kde_bandwidth(oldfaithful$duration)
-of_scores <- oldfaithful |>
-  mutate(
-    score = kde_scores(duration, h = h),
-    looscore = kde_scores(duration, h = h, loo = TRUE)
-  )
 threshold <- quantile(of_scores$score, prob = 0.95, type = 8)
 gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
 ```
 
-Now we apply the fitted distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
+Now we apply the fitted GPD distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
 ```{r}
 #| label: ofpot2
@@ -225,7 +236,7 @@ Now we apply the fitted distribution to the leave-one-out scores to obtain the p
 #| dependson: ofpot
 of_lookout <- of_scores |>
   mutate(
-    pval = evd::pgpd(looscore, loc = threshold,
+    pval = evd::pgpd(loo_score, loc = threshold,
       scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
     )
   ) |>
@@ -258,6 +269,7 @@ oldfaithful  |>
   gg_hdrboxplot(duration, show_lookout = TRUE)
 ```
 
+### More examples
 
 Let's apply it to the six examples introduced in @sec-examples.
 
@@ -329,3 +341,50 @@ The algorithm has found a small number of spurious anomalies in each case, out o
 
 
 ## Other density-based methods
+
+
+
+## Appendix: Fast computation of leave-one-out residuals for linear regression {-}
+
+For the linear regression model, $E[\bm{y}|\bm{X}] = \bm{X}\bm{\beta}$, the least-squares estimates are given by
+$$
+  \hat{\bm{\beta}} = (\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y},
+$$
+and the residuals are given by 
+$$
+  \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
+$$
+where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$. Then the leave-one-out residuals can be computed using
+$$
+  e_{-i} = \frac{e_i}{1 - h_{i}}
+$$
+where $\bm{h}_i$ is the $i$th diagonal of $\bm{H}$
+
+What follows is the simplest proof I know [adapted from @seberlee2003].
+
+### Proof
+
+Let $\bm{X}_{-i}$ and $\bm{y}_{-i}$ be similar to $\bm{X}$ and $\bm{y}$ but with the $i$th row deleted in each case. Let $\bm{x}'_i$ be the $i$th row of $\bm{X}$ and let
+$$
+\hat{\bm{\beta}}_{-i} = (\bm{X}_{-i}'\bm{X}_{-i})^{-1}\bm{X}_{-i}' \bm{y}_{-i}
+$$
+be the estimate of $\bm{\beta}$ without the $i$th case. Then $e_{-i} = y_i - \bm{x}_i'\hat{\bm{\beta}}_{-i}$.
+
+Now $\bm{X}_{-i}'\bm{X}_{-i} = (\bm{X}'\bm{X} - \bm{x}_i\bm{x}_i')$ and $\bm{x}_i'(\bm{X}'\bm{X})^{-1}\bm{x}_i = h_i$. So by the [Sherman--Morrison--Woodbury formula](http://en.wikipedia.org/wiki/Sherman%E2%80%93Morrison_formula),
+$$
+(\bm{X}_{-i}'\bm{X}_{-i})^{-1} = (\bm{X}'\bm{X})^{-1} + \frac{(\bm{X}'\bm{X})^{-1}\bm{x}_i\bm{x}_i'(\bm{X}'\bm{X})^{-1}}{1-h_i}.
+$$
+Also note that $\bm{X}_{-i}' \bm{y}_{-i} = \bm{X}'\bm{y} - \bm{x}_iy_i$. Therefore
+\begin{align*}
+\bm{\hat{\beta}}_{-i}
+&=  \left[ (\bm{X}'\bm{X})^{-1}  + \frac{ (\bm{X}'\bm{X})^{-1}\bm{x}_i\bm{x}_i'(\bm{X}'\bm{X})^{-1} }{1-h_i} \right] (\bm{X}'\bm{y} - \bm{x}_i y_i)\\
+&=  \hat{\bm{\beta}} - \left[ \frac{ (\bm{X}'\bm{X})^{-1}\bm{x}_i}{1-h_i}\right] \left[y_i(1-h_i) -  \bm{x}_i' \hat{\bm{\beta}} +h_i y_i \right]\\
+&=  \hat{\bm{\beta}} - (\bm{X}'\bm{X})^{-1}\bm{x}_i e_i / (1-h_i)
+\end{align*}
+Thus
+\begin{align*}
+e_{-i} &= y_i - \bm{x}_i'\hat{\bm{\beta}}_{-i} \\
+& = y_i - \bm{x}_i' \left[ \hat{\bm{\beta}} - (\bm{X}'\bm{X})^{-1}\bm{x}_ie_i/(1-h_i)\right] \\
+&= e_i + h_i e_i/(1-h_i) \\
+&= e_i/(1-h_i),
+\end{align*}
