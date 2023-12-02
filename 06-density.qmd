@@ -10,32 +10,77 @@ Anomalies are observations that are unlikely to have come from the same distribu
 
 ## Log scores and log-loo scores
 
-Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data. It may be a parametric function, or a nonparametric estimate. It may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents the probability density function that is appropriate for the data set.
+Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set.
 
-The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value under the density $f$, and so is a potential anomaly. On the other hand, typical values under the density $f$, will have low log scores.
+The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low log scores.
 
 If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-loo score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
 
 ## Regression log scores
 
-A regression model defines the conditional expectation of the observations, given the predictors. For a linear regression, we can write the model as the conditional expectation $\text{E}(\bm{y}\mid\bm{X}) = \bm{X}\bm{\beta}$, where $\bm{X}$ is a matrix containing a column of ones (for the intercept), with the other columns containing the predictors in the model.  There is no need to assume a particular conditional distribution in order to estimate the model. The model can be estimated using ordinary least squares regression [@faraway2004linear], resulting in the estimate
+Suppose we want to find anomalies in a vector of $n$ observations $\bm{y}$, and we have $p$ variables that we think might be useful for predicting $\bm{y}$. Then we can write the conditional density as $f(\bm{y}\mid\bm{X})$, where $\bm{X}$ is an $n\times(p+1)$ matrix with the first column being a vector of 1s, and the other columns containing the predictor variables.  Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
+
+### Linear Gaussian regression
+
+For a linear Gaussian regression model, with independent observations and homoscedastic errors, the conditional distribution is given by
+$$
+  \bm{y}\mid\bm{X} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}),
+$$ {#eq-gaussian-regression}
+or equivalently as
+$$
+  \bm{\varepsilon} = \bm{y} - \bm{X}\bm{\beta} \sim N(\bm{0}, \sigma^2\bm{I}).
+$$ {#eq-error-distribution}
+Provided $\bm{X}$ is of rank $p+1$, and the errors $\bm{\varepsilon}$ are independent of $\bm{X}$, the model can be estimated using ordinary least squares regression [@seberlee2003], resulting in the estimate
 $$
   \hat{\bm{\beta}} = (\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y}.
 $$
 The fitted values are given by
 $$
-  \hat{\bm{y}} = \bm{X}\hat{\bm{\beta}} = \bm{H}\bm{y}.
+  \hat{\bm{y}} = \bm{X}\hat{\bm{\beta}} = \bm{H}\bm{y},
 $$
-where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is the "hat"-matrix. The residuals are given by
+where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is known as the "hat"-matrix because it creates the "y-hat" values $\hat{\bm{y}}$ from the data $\bm{y}$.
+
+The diagonals of $\bm{H}$, given by $h_1,\dots,h_n$, take values between 0 and 1. These are known as the "leverage" values [@faraway2004linear, p69], and measure how much each observation influences the corresponding fitted value. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals.
+
+The residuals from the model are given by
 $$
   \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
+$$ {#eq-residual-distribution}
+Note that the residuals have the distribution $\bm{e}\mid\bm{X} \sim N(\bm{0}, \sigma^2(\bm{I} - \bm{H}))$, which is not quite the same as the distribution of the errors given by @eq-error-distribution. However, the two distributions are asymptotically equivalent as $n\rightarrow\infty$. Often, we need standardized residuals, which are obtained by dividing each residual by its estimated standard deviation, giving
+$$ r_i = \frac{e_i}{\hat{\sigma}\sqrt{1-h_i}}, \qquad i = 1,\dots, n,
 $$
+where
+$$
+\hat\sigma^2 = \frac{1}{n-p-1}\sum_{i=1}^n e_i^2
+$$ {#eq-residual-variance}
+is the estimated residual variance. These are also known as the "internally studentized" residuals [@seberlee2003, p267].
 
-To use a regression model for anomaly detection, we need a little more than the conditional expectation. We will need to define the conditional density $f(\bm{y}\mid\bm{X})$. The most common choice is to assume that the model errors, $\bm{y} - \bm{X}\bm{\beta}$, are normally distributed, uncorrelated, and homoskedastic, so that the conditional density is given by
+The log-scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these internally studentized residuals, giving
 $$
-  \bm{y} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}).
+  s_i = -\log\phi(r_i) = -\log \phi\left(\frac{e_i}{(1-h_i)\hat\sigma}\right),
+$$ {#eq-regression-log-score}
+where $\phi(u) = (2\pi)^{-1/2}e^{u^2}$ is the standard normal density and
+
+The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the  predicted value obtained using a model that uses all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times. It can be shown (see [the Appendix](./06-density.html#appendix-fast-computation-of-leave-one-out-residuals-for-linear-regression)) that the leave-one-out (LOO) residuals are given by
 $$
+  e_{-i}  = e_{i}/(1-h_{i}),
+$$ {#eq-loo-residuals}
+where $e_{i}$ is the residual obtained from fitting the model to *all* observations. If we divide the LOO residuals by $\hat\sigma$ from @eq-residual-variance, we obtain the "internally studentized" residuals. Note that this is exactly the quantity we have used in computing the log scores in @eq-regression-log-score.
+
+In the context of anomaly detection, it often makes more sense to standardize each LOO residual by the variance estimated from the model fitted to all other observations. If we leave out the $i$th observation, and fit a regression model to the remaining observations, then the estimated variance of the residuals is given by [@seberlee2003, p268]
+$$
+  \hat\sigma_{-i}^2 = \frac{1}{n-p-2}\left[(n-p-1)\hat\sigma^2 - e_{-i}^2\right].
+$$
+If we standardize each residual using this expression, we obtain the "externally studentized" residuals
+$$
+  r_{-i} = \frac{e_{i}}{\hat\sigma_{-i}\sqrt{1-h_i}},
+$$
+from which we obtain the log-loo regression scores given by
+$$
+  s_{-i} = -\log \phi\left(\frac{e_{i}}{(1-h_i)\hat\sigma_{-i}}\right) .
+$$ {#eq-regression-log-loo-score}
+
 
 ### Example: wine reviews
 
@@ -50,8 +95,8 @@ fit <- lm(log(price) ~ points,
 summary(fit)
 ```
 
-The fitted model can be written as 
-$$ 
+The fitted model can be written as
+$$
   \log(\text{Price}) \sim N(`r sprintf("%.3f",coef(fit)[1])` + `r sprintf("%.3f",coef(fit)[2])` \times \text{Points}, `r sprintf("%.3f",sigma(fit))`^2),
 $$
 and is depicted in @fig-shiraz-regression with 95% prediction intervals.
@@ -60,23 +105,23 @@ and is depicted in @fig-shiraz-regression with 95% prediction intervals.
 #| label: fig-shiraz-regression
 #| warning: false
 #| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting.
-pred <- fit |> 
-  predict(interval = "prediction", level = 0.95) |> 
+pred <- fit |>
+  predict(interval = "prediction", level = 0.95) |>
   suppressWarnings() |>
   exp()
-wine_reviews |> 
-  filter(variety %in% c("Shiraz", "Syrah")) |> 
-  bind_cols(pred) |> 
-  mutate(within = (price > lwr & price < upr)) |> 
+wine_reviews |>
+  filter(variety %in% c("Shiraz", "Syrah")) |>
+  bind_cols(pred) |>
+  mutate(within = (price > lwr & price < upr)) |>
   ggplot(aes(y = price, x = points, col = within)) +
   geom_jitter(height = 0, width = 0.1, alpha = 0.4) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "#0072B2", alpha = 0.2) +
   geom_line(aes(y = fit), color = "#0072B2") +
   scale_y_log10() +
-  guides(fill = "none", col = "none") 
+  guides(fill = "none", col = "none")
 ```
 
-The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is within the 95% prediction interval. 
+The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is within the 95% prediction interval.
 
 ```{r}
 #| label: fig-shiraz-regression-scores
@@ -84,72 +129,56 @@ The log-scores obtained from this model are equivalent to finding the log-scores
 #| fig.height: 6
 #| fig.asp: 0.8
 sigma <- sigma(fit)
-fit_stats <- broom::augment(fit) |> 
-  bind_cols(pred) |> 
+fit_stats <- broom::augment(fit) |>
+  bind_cols(pred) |>
   mutate(
     price = exp(`log(price)`),
     within = (price > lwr & price < upr)
-  ) |> 
-  rename(Residuals = .resid) |> 
-  mutate(Log_scores = -log(dnorm(Residuals, sd = sigma))) 
-fit_stats |> 
+  ) |>
+  rename(Residuals = .resid) |>
+  mutate(Log_scores = -log(dnorm(Residuals, sd = sigma)))
+fit_stats |>
   select(points, Residuals, Log_scores, within) |>
-  pivot_longer(c(Residuals, Log_scores), names_to = "variable", values_to = "value") |> 
-  mutate(variable = factor(variable, levels = c("Residuals", "Log_scores"))) |> 
+  pivot_longer(c(Residuals, Log_scores), names_to = "variable", values_to = "value") |>
+  mutate(variable = factor(variable, levels = c("Residuals", "Log_scores"))) |>
   ggplot(aes(x = points, y = value, col = within)) +
   facet_grid(variable ~ ., scales = "free_y") +
   geom_jitter(height = 0, width = 0.1, alpha = 0.3) +
   geom_hline(yintercept = 0, color = "#0072B2") +
   labs(x = "Points", y = "") +
-  guides(fill = "none", col = "none") 
+  guides(fill = "none", col = "none")
 ```
 
 ```{r}
 #| label: shiraz-regression-scores
 #| include: false
-most_anomalous <- fit_stats |> 
+most_anomalous <- fit_stats |>
   filter(Log_scores > 15)
-underpriced <- fit_stats |> 
+underpriced <- fit_stats |>
   filter(Residuals == min(Residuals))
 ```
 
 This shows that the most anomalous observations are the two with Log scores above 15, and residuals above 2.5. The largest Log score is for the most over-priced wine, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`. The largest Log score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`.
 
-### Regression log-loo scores
-
-The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the  predicted value obtained using a model that uses all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ models, where $n$ is the number of observations. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times.
-
-The diagonal values of $\bm{H}$, which we will write as $h_{1},\dots,h_{T}$, take values between 0 and 1. These are the "leverage" values for each observation, and measure how much each observation influences the fitted values. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals. The leverage values can easily be computed using the `hatvalues()` function in R.
-
-It can be shown (see [the Appendix](./06-density.html#appendix-fast-computation-of-leave-one-out-residuals-for-linear-regression)) that the leave-one-out residuals are given by
-$$
-  e_{-i}  = e_{i}/(1-h_{i}),
-$$ {#eq-loo-residuals}
-where $e_{i}$ is the residual obtained from fitting the model to *all* observations. So the leave-one-out residual variance is given by
-$$
-  \sigma_{\text{LOO}}^2 = \frac{1}{n} \sum_{i=1}^n e_{-i}^2,
-$$
-and the log-loo regression scores are given by
-$$
-  s_{-i} = -\log f_{-i} = -\log \phi\left(\frac{e_{-i}}{\sigma_{\text{LOO}}}\right) ,
-$$
-where $\phi(u) = (2\pi)^{-1/2}e^{u^2}$ is the standard normal density.
-The following code shows how to compute them.
+The following code shows how to compute the the regression log-loo scores.
 
 ```{r}
 #| code-fold: false
 hat_values <- hatvalues(fit)
-fit_stats |> 
+fit_stats |>
   mutate(
     Loo_residuals = Residuals / (1 - hat_values),
     Log_Loo_scores = -log(dnorm(Loo_residuals, sd = sqrt(mean(Loo_residuals^2))))
-  ) |> 
-  arrange(desc(Log_Loo_scores)) |> 
-  select(points, price, Residuals, Log_scores, Loo_residuals, Log_Loo_scores) 
+  ) |>
+  arrange(desc(Log_Loo_scores)) |>
+  select(points, price, Residuals, Log_scores, Loo_residuals, Log_Loo_scores)
 ```
 
-In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small. 
+In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small.
 
+## GAM log scores
+
+d
 
 ## KDE scores {#kdescores}
 
@@ -350,7 +379,7 @@ For the linear regression model, $E[\bm{y}|\bm{X}] = \bm{X}\bm{\beta}$, the leas
 $$
   \hat{\bm{\beta}} = (\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y},
 $$
-and the residuals are given by 
+and the residuals are given by
 $$
   \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
 $$
