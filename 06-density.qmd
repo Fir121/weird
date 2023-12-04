@@ -60,7 +60,7 @@ A linear model can be estimated in R using the `stats::lm()` function. The `broo
 
 The log-scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
 $$
-  s_i = -\log\phi(r_i) = \frac{1}{2}\log(2\pi) + \frac{e_i^2}{2(1-h_i)\hat\sigma^2},
+  s_i = -\log\phi(r_i),
 $$ {#eq-regression-log-score}
 where $\phi(u) = (2\pi)^{-1/2}e^{-u^2}$ is the standard normal density. This can be computed as follows, assuming that `fit` is the output from `stats::lm()`.
 
@@ -88,7 +88,6 @@ $$ {#eq-studentized-residuals}
 from which we obtain the log-LOO regression scores given by
 $$
   s_{-i} = -\log \phi(r_{-i})
-    = \frac{1}{2}\log(2\pi) + \frac{e_{i}^2}{2(1-h_i)\hat\sigma_{-i}^2}
 $$ {#eq-log-loo-regression-scores}
 
 If `fit` is the output from `stats::lm()`, then these quantities can be computed as follows.
@@ -97,7 +96,7 @@ If `fit` is the output from `stats::lm()`, then these quantities can be computed
 broom::augment(fit) |>
   mutate(
     studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
-    log_loo_scores = -log(dnorm(studentized_residuals))
+    log_loo_scores = -log(dnorm(studentized_residuals, log = TRUE))
   )
 ```
 
@@ -147,7 +146,7 @@ wine_reviews |>
   geom_line(aes(y = fit), color = "#666666") +
   scale_y_log10() +
   guides(fill = "none", col = "none") +
-  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA")) 
+  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA"))
 ```
 
 The log-LOO-scores obtained from this model are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is below, within, or above, the 95% prediction interval.
@@ -179,7 +178,7 @@ fit_stats |>
   geom_hline(yintercept = 0, color = "#666666") +
   labs(x = "Points", y = "") +
   guides(fill = "none", col = "none") +
-  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA")) 
+  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA"))
 ```
 
 ```{r}
@@ -194,19 +193,35 @@ good_buy <- fit_stats |>
   filter(Studentized_residuals == min(Studentized_residuals))
 ```
 
-The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with Log LOO scores above 17, and studentized residuals close to 6. The largest Log LOO score is for the most over-priced wine, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`. The largest Log LOO score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the following wine:
+The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with Log LOO scores above 17, and studentized residuals close to 6. The largest Log LOO score is for the most over-priced wine (under this model), a 2009 Shiraz from the Henschke winery in the Eden Valley region of South Australia, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`.
 
 ```{r}
 #| code-fold: false
 wine_reviews |>
   filter(variety %in% c("Shiraz", "Syrah")) |>
-  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |> 
+  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |>
   mutate(
     stud_residual = .resid / (.sigma * sqrt(1 - .hat)),
     log_LOO_score = -dnorm(stud_residual, log = TRUE)
-  ) |> 
-  filter(points > 95) |> 
-  filter(stud_residual == min(stud_residual)) |> 
+  ) |>
+  filter(log_LOO_score == max(log_LOO_score)) |>
+  select(country:winery, year, points, price, stud_residual, log_LOO_score)
+```
+
+
+The largest Log LOO score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the 2007 Syrah from the Rulo winery in the Columbia Valley in Washington State, USA:
+
+```{r}
+#| code-fold: false
+wine_reviews |>
+  filter(variety %in% c("Shiraz", "Syrah")) |>
+  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |>
+  mutate(
+    stud_residual = .resid / (.sigma * sqrt(1 - .hat)),
+    log_LOO_score = -dnorm(stud_residual, log = TRUE)
+  ) |>
+  filter(points > 95) |>
+  filter(stud_residual == min(stud_residual)) |>
   select(country:winery, year, points, price, stud_residual, log_LOO_score)
 ```
 
