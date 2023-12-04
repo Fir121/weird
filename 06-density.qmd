@@ -8,18 +8,18 @@ source("before-each-chapter.R")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Log scores and log-loo scores
+## Log scores and log-LOO scores
 
 Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set.
 
 The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low log scores.
 
-If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-loo score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
+If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-LOO score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
 
 ## Regression log scores
 
-Suppose we want to find anomalies in a vector of $n$ observations $\bm{y}$, and we have $p$ variables that we think might be useful for predicting $\bm{y}$. Then we can write the conditional density as $f(\bm{y}\mid\bm{X})$, where $\bm{X}$ is an $n\times(p+1)$ matrix with the first column being a vector of 1s, and the other columns containing the predictor variables.  Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
+Suppose we want to find anomalies in a vector of $n$ univariate observations $\bm{y}$, and we have $p$ variables that we think might be useful for predicting $\bm{y}$. Then we can write the conditional density as $f(\bm{y}\mid\bm{X})$, where $\bm{X}$ is an $n\times(p+1)$ matrix with the first column being a vector of 1s, and the other columns containing the predictor variables.  Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
 
 ### Linear Gaussian regression
 
@@ -54,32 +54,54 @@ where
 $$
 \hat\sigma^2 = \frac{1}{n-p-1}\sum_{i=1}^n e_i^2
 $$ {#eq-residual-variance}
-is the estimated residual variance. These are also known as the "internally studentized" residuals [@seberlee2003, p267].
+is the estimated residual variance.
 
-The log-scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these internally studentized residuals, giving
+A linear model can be estimated in R using the `stats::lm()` function. The `broom::augment()` function will compute the residuals (named `.resid`), the standardized residuals (named `.std.resid`), and the leverage values (names `.hat`).
+
+The log-scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
 $$
-  s_i = -\log\phi(r_i) = -\log \phi\left(\frac{e_i}{(1-h_i)\hat\sigma}\right),
+  s_i = -\log\phi(r_i) = \frac{1}{2}\log(2\pi) + \frac{e_i^2}{2(1-h_i)\hat\sigma^2},
 $$ {#eq-regression-log-score}
-where $\phi(u) = (2\pi)^{-1/2}e^{u^2}$ is the standard normal density and
+where $\phi(u) = (2\pi)^{-1/2}e^{-u^2}$ is the standard normal density. This can be computed as follows, assuming that `fit` is the output from `stats::lm()`.
 
-The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the  predicted value obtained using a model that uses all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times. It can be shown (see [the Appendix](./06-density.html#appendix-fast-computation-of-leave-one-out-residuals-for-linear-regression)) that the leave-one-out (LOO) residuals are given by
+```r
+broom::augment(fit) |>
+  mutate(log_score = -dnorm(.std.resid, log = TRUE))
+```
+
+The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the predicted value obtained using a model fitted to all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times. It can be shown [@Montgomery2012, Appendix C.7] that the leave-one-out (LOO) residuals are given by
 $$
   e_{-i}  = e_{i}/(1-h_{i}),
 $$ {#eq-loo-residuals}
-where $e_{i}$ is the residual obtained from fitting the model to *all* observations. If we divide the LOO residuals by $\hat\sigma$ from @eq-residual-variance, we obtain the "internally studentized" residuals. Note that this is exactly the quantity we have used in computing the log scores in @eq-regression-log-score.
+where $e_{i}$ is the residual obtained from fitting the model to *all* observations. If we divide the LOO residuals by $\hat\sigma$ from @eq-residual-variance, we obtain the "standardized" residuals.
 
-In the context of anomaly detection, it often makes more sense to standardize each LOO residual by the variance estimated from the model fitted to all other observations. If we leave out the $i$th observation, and fit a regression model to the remaining observations, then the estimated variance of the residuals is given by [@seberlee2003, p268]
+In the context of anomaly detection, it often makes more sense to standardize each LOO residual by the standard deviation estimated from the model fitted to all other observations, rather than by $\hat\sigma$. If we leave out the $i$th observation, and fit a regression model to the remaining observations, then the estimated variance of the residuals is given by [@Montgomery2012, Appendix C.8]
 $$
-  \hat\sigma_{-i}^2 = \frac{1}{n-p-2}\left[(n-p-1)\hat\sigma^2 - e_{-i}^2\right].
-$$
-If we standardize each residual using this expression, we obtain the "externally studentized" residuals
+  \hat\sigma_{-i}^2 = \frac{1}{n-p-2}\left[(n-p-1)\hat\sigma^2 - e_{i}^2/(1-h_i)\right].
+$$ {#eq-loo-residual-variance}
+These are computed by `broom::augment()` and the values of $\hat\sigma_{-i}$ are returned in the column `.sigma`.
+
+If we standardize each residual using $\sigma_{-i}$, we obtain the "studentized" residuals
 $$
   r_{-i} = \frac{e_{i}}{\hat\sigma_{-i}\sqrt{1-h_i}},
+$$ {#eq-studentized-residuals}
+from which we obtain the log-LOO regression scores given by
 $$
-from which we obtain the log-loo regression scores given by
-$$
-  s_{-i} = -\log \phi\left(\frac{e_{i}}{(1-h_i)\hat\sigma_{-i}}\right) .
-$$ {#eq-regression-log-loo-score}
+  s_{-i} = -\log \phi(r_{-i})
+    = \frac{1}{2}\log(2\pi) + \frac{e_{i}^2}{2(1-h_i)\hat\sigma_{-i}^2}
+$$ {#eq-log-loo-regression-scores}
+
+If `fit` is the output from `stats::lm()`, then these quantities can be computed as follows.
+
+```r
+broom::augment(fit) |>
+  mutate(
+    studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
+    log_loo_scores = -log(dnorm(studentized_residuals))
+  )
+```
+
+For convenience, the `reg_scores()` function can also be used to compute the regression scores given by @eq-regression-log-score and those given @eq-log-loo-regression-scores.
 
 
 ### Example: wine reviews
@@ -104,7 +126,7 @@ and is depicted in @fig-shiraz-regression with 95% prediction intervals.
 ```{r}
 #| label: fig-shiraz-regression
 #| warning: false
-#| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting.
+#| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting. Points outside the prediction intervals are colored.
 pred <- fit |>
   predict(interval = "prediction", level = 0.95) |>
   suppressWarnings() |>
@@ -112,73 +134,89 @@ pred <- fit |>
 wine_reviews |>
   filter(variety %in% c("Shiraz", "Syrah")) |>
   bind_cols(pred) |>
-  mutate(within = (price > lwr & price < upr)) |>
-  ggplot(aes(y = price, x = points, col = within)) +
-  geom_jitter(height = 0, width = 0.1, alpha = 0.4) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "#0072B2", alpha = 0.2) +
-  geom_line(aes(y = fit), color = "#0072B2") +
+  mutate(
+    location = case_when(
+      price < lwr ~ "below",
+      price > upr ~ "above",
+      TRUE ~ "within"
+    )
+  ) |>
+  ggplot(aes(y = price, x = points, col = location)) +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "#cccccc", alpha = 0.25) +
+  geom_line(aes(y = fit), color = "#666666") +
   scale_y_log10() +
-  guides(fill = "none", col = "none")
+  guides(fill = "none", col = "none") +
+  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA")) 
 ```
 
-The log-scores obtained from this model are equivalent to finding the log-scores of the residuals using the density $N(0,`r sprintf("%.3f",sigma(fit))`^2)$. These are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is within the 95% prediction interval.
+The log-LOO-scores obtained from this model are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is below, within, or above, the 95% prediction interval.
 
 ```{r}
 #| label: fig-shiraz-regression-scores
 #| fig.cap: Residuals and log scores for the Shiraz data using a linear regression model. Points are colored to match the 95% prediction intervals in @fig-shiraz-regression.
 #| fig.height: 6
 #| fig.asp: 0.8
-sigma <- sigma(fit)
 fit_stats <- broom::augment(fit) |>
   bind_cols(pred) |>
   mutate(
     price = exp(`log(price)`),
-    within = (price > lwr & price < upr)
-  ) |>
-  rename(Residuals = .resid) |>
-  mutate(Log_scores = -log(dnorm(Residuals, sd = sigma)))
+    location = case_when(
+      price < lwr ~ "below",
+      price > upr ~ "above",
+      TRUE ~ "within"
+    ),
+    Studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
+    Log_LOO_scores = -dnorm(Studentized_residuals, log = TRUE)
+  )
 fit_stats |>
-  select(points, Residuals, Log_scores, within) |>
-  pivot_longer(c(Residuals, Log_scores), names_to = "variable", values_to = "value") |>
-  mutate(variable = factor(variable, levels = c("Residuals", "Log_scores"))) |>
-  ggplot(aes(x = points, y = value, col = within)) +
+  select(points, Studentized_residuals, Log_LOO_scores, location) |>
+  pivot_longer(c(Studentized_residuals, Log_LOO_scores), names_to = "variable", values_to = "value") |>
+  mutate(variable = factor(variable, levels = c("Studentized_residuals", "Log_LOO_scores"))) |>
+  ggplot(aes(x = points, y = value, col = location)) +
   facet_grid(variable ~ ., scales = "free_y") +
-  geom_jitter(height = 0, width = 0.1, alpha = 0.3) +
-  geom_hline(yintercept = 0, color = "#0072B2") +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "#666666") +
   labs(x = "Points", y = "") +
-  guides(fill = "none", col = "none")
+  guides(fill = "none", col = "none") +
+  scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA")) 
 ```
 
 ```{r}
 #| label: shiraz-regression-scores
 #| include: false
 most_anomalous <- fit_stats |>
-  filter(Log_scores > 15)
+  filter(Log_LOO_scores > 17)
 underpriced <- fit_stats |>
-  filter(Residuals == min(Residuals))
+  filter(Studentized_residuals == min(Studentized_residuals))
+good_buy <- fit_stats |>
+  filter(points > 95) |>
+  filter(Studentized_residuals == min(Studentized_residuals))
 ```
 
-This shows that the most anomalous observations are the two with Log scores above 15, and residuals above 2.5. The largest Log score is for the most over-priced wine, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`. The largest Log score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`.
-
-The following code shows how to compute the the regression log-loo scores.
+The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with Log LOO scores above 17, and studentized residuals close to 6. The largest Log LOO score is for the most over-priced wine, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`. The largest Log LOO score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the following wine:
 
 ```{r}
 #| code-fold: false
-hat_values <- hatvalues(fit)
-fit_stats |>
+wine_reviews |>
+  filter(variety %in% c("Shiraz", "Syrah")) |>
+  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |> 
   mutate(
-    Loo_residuals = Residuals / (1 - hat_values),
-    Log_Loo_scores = -log(dnorm(Loo_residuals, sd = sqrt(mean(Loo_residuals^2))))
-  ) |>
-  arrange(desc(Log_Loo_scores)) |>
-  select(points, price, Residuals, Log_scores, Loo_residuals, Log_Loo_scores)
+    stud_residual = .resid / (.sigma * sqrt(1 - .hat)),
+    log_LOO_score = -dnorm(stud_residual, log = TRUE)
+  ) |> 
+  filter(points > 95) |> 
+  filter(stud_residual == min(stud_residual)) |> 
+  select(country:winery, year, points, price, stud_residual, log_LOO_score)
 ```
 
-In this example, the log-loo scores and the log-scores are almost identical, because the leverage values are all small.
+This corresponds to the only orange point in @fig-shiraz-regression that has a point value above 95 and a price below the 95% prediction interval.
 
 ## GAM log scores
 
-d
+In some applications, it is not appropriate to assume the conditional density is Gaussian, or that the relationships are linear. One useful model that allows for non-Gaussian densities, and non-linear regionships, is a generalized additive model or GAM.
+
+
 
 ## KDE scores {#kdescores}
 
@@ -210,7 +248,7 @@ where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compu
 
 ### Example: Old Faithful eruption durations
 
-For the Old Faithful eruption duration data, we obtain the following kde log-loo scores.
+For the Old Faithful eruption duration data, we obtain the following kde log-LOO scores.
 
 ```{r}
 #| label: ofscores
