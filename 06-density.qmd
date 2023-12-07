@@ -19,15 +19,22 @@ If the density $f$ has been estimated from the data, then it is sometimes useful
 
 ## Regression log scores
 
-Suppose we want to find anomalies in a vector of $n$ univariate observations $\bm{y}$, and we have $p$ variables that we think might be useful for predicting $\bm{y}$. Then we can write the conditional density as $f(\bm{y}\mid\bm{X})$, where $\bm{X}$ is an $n\times(p+1)$ matrix with the first column being a vector of 1s, and the other columns containing the predictor variables.  Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
+Suppose we want to find anomalies amongst $n$ univariate observations $y_1,\dots,y_n$, and we have $p$ variables that we think might be useful for predicting $y$. Then we can write the conditional density as
+$f(y \mid \bm{x})$, where $\bm{x}$ is a $p$-dimensional vector of predictor variables. Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
 
 ### Linear Gaussian regression
 
 For a linear Gaussian regression model, with independent observations and homoscedastic errors, the conditional distribution is given by
 $$
-  \bm{y}\mid\bm{X} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}),
+  y \mid \bm{x} \sim N(\bm{x}_+'\bm{\beta}, \sigma^2),
 $$ {#eq-gaussian-regression}
-or equivalently as
+where $\bm{x}_+ = [1, \bm{x}]'$ is a $(p+1)$-dimensional vector containing a 1 in the first position, and $\bm{\beta}$ is a $(p+1)$-dimensional vector of regression coefficients.
+
+The model can be written in matrix form as
+$$
+  \bm{y} \sim N(\bm{X}\bm{\beta}, \sigma^2\bm{I}),
+$$
+where $\bm{X}$ is an $n\times(p+1)$ matrix with the first column being a vector of 1s, and the other columns containing the predictor variables, or equivalently as
 $$
   \bm{\varepsilon} = \bm{y} - \bm{X}\bm{\beta} \sim N(\bm{0}, \sigma^2\bm{I}).
 $$ {#eq-error-distribution}
