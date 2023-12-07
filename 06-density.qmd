@@ -236,8 +236,83 @@ This corresponds to the only orange point in @fig-shiraz-regression that has a p
 
 ## GAM log scores
 
-In some applications, it is not appropriate to assume the conditional density is Gaussian, or that the relationships are linear. One useful model that allows for non-Gaussian densities, and non-linear regionships, is a generalized additive model or GAM.
+In some applications, it is not appropriate to assume the conditional density is Gaussian, or that the relationships are linear. One useful model that allows for non-Gaussian densities, and non-linear relationships, is a generalized additive model or GAM. Under this model, the conditional density is given by [@Wood2017gam]
+$$
+  y\mid\bm{x} \sim f(\mu), \qquad \ell(\mu) = \sum_{k=1}^p g_k(x_{k}),
+$$
+where $\mu = \text{E}(y | \bm{x})$ denotes the conditional mean, $\ell()$ is a link function, and each $g_k$ function is smooth. If $f$ is Normal, $\ell$ is the identity, and $g_i(u) = \beta_i u$, then this reduces to the linear Gaussian model @eq-gaussian-regression.
 
+```{r}
+#| include: false
+df_no <- cricket_batting |>
+  filter(Innings > 0) |>
+  mutate(prop_no = NotOuts / Innings)
+p <- sum(df_no$NotOuts) / sum(df_no$Innings)
+```
+
+Consider the number of "not outs" for each batter in the `cricket_batting` data set. A "not out" occurs when a batsman has not been dismissed at the end of the team's innings. Let's consider if there are some batters who have an unusually high proportion of not outs. The data set contains results from `r sum(df_no$Innings)` innings, of which `r sum(df_no$NotOuts)` were not outs. So the overall proportion of not outs is `r sprintf("%.3f", p)`.
+
+@fig-notouts shows the proportion of not outs for each batter as a function of the number of innings they played. There is some overplotting that occurs due to batters having the same numbers of not-outs and innings, which results in the higher color density of the corresponding plotted points. The unusual structure on the left of each plot is due to the discrete nature of the data. Batters who have played only a smaller number of innings tend to have a higher proportion of not outs on average, and a higher variance, than those who have played a large number of innings.
+
+```{r}
+#| label: fig-notouts
+#| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played."
+#| message: false
+df_no <- cricket_batting |>
+  filter(Innings > 0) |>
+  mutate(prop_no = NotOuts / Innings)
+df_no |>
+  ggplot(aes(x = Innings, y = NotOuts/Innings)) +
+  geom_point(alpha = 0.15)
+```
+
+This suggests that we can construct a GAM for the number of not outs for each batter as a function of the number of innings they played. It is natural to use a Binomial distribution with a logit link function:
+$$
+  \text{NotOuts} \mid \text{Innings} \sim \text{Binomial}(n=\text{Innings}, p),
+$$
+where
+$$
+  \text{logit}(p) = g(\text{Innings})
+$$
+We can fit this model using the `mgcv` package.
+
+```{r}
+#| label: fig-notouts-gam
+#| message: false
+#| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played, with a GAM fit using a Binomial distribution."
+library(mgcv)
+fit <- gam(prop_no ~ s(Innings), data = df_no,
+           family = binomial, weights = Innings)
+df_no <- df_no |>
+  bind_cols(
+    broom::augment(fit, type.predict = "response") |>
+      select(-prop_no, -Innings)
+  )
+df_no |>
+  ggplot(aes(x = Innings, y = prop_no)) +
+  geom_point(alpha = 0.2) +
+  geom_line(aes(y = .fitted), color = "#0072B2") +
+  geom_ribbon(aes(ymin = .fitted - 2*.se.fit,
+                  ymax = .fitted + 2*.se.fit),
+              fill = "#0072B2", alpha = 0.2) +
+  labs(y = "Proportion of not outs")
+```
+
+Now we can use the fitted model to compute the log scores, and find the most anomalous batters.
+
+```{r}
+df_no <- df_no |>
+  mutate(
+    logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)
+  ) |>
+  select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
+  arrange(desc(logscore))
+df_no
+```
+
+The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest log score is for English batter Jimmy Anderson, who has had `r df_no$NotOuts[1]` not outs in `r df_no$Innings[1]` innings, which is much higher than the expected number of not outs of `r sprintf("%.2f", df_no$.fitted[1]*df_no$Innings[1])`. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data.
+
+We have identified an anomaly that is not anomalous in the number of notouts, or in the number of innings, and the difference between the actual proportion and the predicted proportion is not anomalous either. Because we have used a statistical model, we have been able to account for the particular features of this data set, such as the discrete nature of the data, and the relationship between the variance and the mean as a function of the number of innings played.
 
 
 ## KDE scores {#kdescores}
