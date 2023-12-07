@@ -284,7 +284,7 @@ We can fit this model using the `mgcv` package.
 #| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played, with a GAM fit using a Binomial distribution."
 fit <- mgcv::gam(prop_no ~ s(Innings), data = df_no,
            family = binomial(link = logit), weights = Innings)
-fit_aug <- broom::augment(fit, data = df_no, type.predict = "response") 
+fit_aug <- broom::augment(fit, data = df_no, type.predict = "response")
 fit_aug |>
   ggplot(aes(x = Innings, y = prop_no)) +
   geom_point(alpha = 0.2) +
@@ -300,9 +300,7 @@ Now we can use the fitted model to compute the log scores from the Binomial dist
 ```{r}
 #| code-fold: false
 fit_aug <- fit_aug |>
-  mutate(
-    logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)
-  ) |>
+  mutate(logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)) |>
   select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
   arrange(desc(logscore))
 fit_aug
@@ -505,50 +503,3 @@ The algorithm has found a small number of spurious anomalies in each case, out o
 
 
 ## Other density-based methods
-
-
-
-## Appendix: Fast computation of leave-one-out residuals for linear regression {-}
-
-For the linear regression model, $E[\bm{y}|\bm{X}] = \bm{X}\bm{\beta}$, the least-squares estimates are given by
-$$
-  \hat{\bm{\beta}} = (\bm{X}'\bm{X})^{-1}\bm{X}'\bm{y},
-$$
-and the residuals are given by
-$$
-  \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
-$$
-where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$. Then the leave-one-out residuals can be computed using
-$$
-  e_{-i} = \frac{e_i}{1 - h_{i}}
-$$
-where $\bm{h}_i$ is the $i$th diagonal of $\bm{H}$
-
-What follows is the simplest proof I know [adapted from @seberlee2003].
-
-### Proof
-
-Let $\bm{X}_{-i}$ and $\bm{y}_{-i}$ be similar to $\bm{X}$ and $\bm{y}$ but with the $i$th row deleted in each case. Let $\bm{x}'_i$ be the $i$th row of $\bm{X}$ and let
-$$
-\hat{\bm{\beta}}_{-i} = (\bm{X}_{-i}'\bm{X}_{-i})^{-1}\bm{X}_{-i}' \bm{y}_{-i}
-$$
-be the estimate of $\bm{\beta}$ without the $i$th case. Then $e_{-i} = y_i - \bm{x}_i'\hat{\bm{\beta}}_{-i}$.
-
-Now $\bm{X}_{-i}'\bm{X}_{-i} = (\bm{X}'\bm{X} - \bm{x}_i\bm{x}_i')$ and $\bm{x}_i'(\bm{X}'\bm{X})^{-1}\bm{x}_i = h_i$. So by the [Sherman--Morrison--Woodbury formula](http://en.wikipedia.org/wiki/Sherman%E2%80%93Morrison_formula),
-$$
-(\bm{X}_{-i}'\bm{X}_{-i})^{-1} = (\bm{X}'\bm{X})^{-1} + \frac{(\bm{X}'\bm{X})^{-1}\bm{x}_i\bm{x}_i'(\bm{X}'\bm{X})^{-1}}{1-h_i}.
-$$
-Also note that $\bm{X}_{-i}' \bm{y}_{-i} = \bm{X}'\bm{y} - \bm{x}_iy_i$. Therefore
-\begin{align*}
-\bm{\hat{\beta}}_{-i}
-&=  \left[ (\bm{X}'\bm{X})^{-1}  + \frac{ (\bm{X}'\bm{X})^{-1}\bm{x}_i\bm{x}_i'(\bm{X}'\bm{X})^{-1} }{1-h_i} \right] (\bm{X}'\bm{y} - \bm{x}_i y_i)\\
-&=  \hat{\bm{\beta}} - \left[ \frac{ (\bm{X}'\bm{X})^{-1}\bm{x}_i}{1-h_i}\right] \left[y_i(1-h_i) -  \bm{x}_i' \hat{\bm{\beta}} +h_i y_i \right]\\
-&=  \hat{\bm{\beta}} - (\bm{X}'\bm{X})^{-1}\bm{x}_i e_i / (1-h_i)
-\end{align*}
-Thus
-\begin{align*}
-e_{-i} &= y_i - \bm{x}_i'\hat{\bm{\beta}}_{-i} \\
-& = y_i - \bm{x}_i' \left[ \hat{\bm{\beta}} - (\bm{X}'\bm{X})^{-1}\bm{x}_ie_i/(1-h_i)\right] \\
-&= e_i + h_i e_i/(1-h_i) \\
-&= e_i/(1-h_i),
-\end{align*}
