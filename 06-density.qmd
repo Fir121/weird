@@ -258,6 +258,7 @@ Consider the number of "not outs" for each batter in the `cricket_batting` data 
 #| label: fig-notouts
 #| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played."
 #| message: false
+#| code-fold: false
 df_no <- cricket_batting |>
   filter(Innings > 0) |>
   mutate(prop_no = NotOuts / Innings)
@@ -268,27 +269,23 @@ df_no |>
 
 This suggests that we can construct a GAM for the number of not outs for each batter as a function of the number of innings they played. It is natural to use a Binomial distribution with a logit link function:
 $$
-  \text{NotOuts} \mid \text{Innings} \sim \text{Binomial}(n=\text{Innings}, p),
+  \text{NotOuts} \mid \text{Innings} \sim \text{Binomial}(n=\text{Innings},~ p),
 $$
 where
 $$
-  \text{logit}(p) = g(\text{Innings})
+  \log(p / (1- p)) = g(\text{Innings})
 $$
 We can fit this model using the `mgcv` package.
 
 ```{r}
 #| label: fig-notouts-gam
 #| message: false
+#| code-fold: false
 #| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played, with a GAM fit using a Binomial distribution."
-library(mgcv)
-fit <- gam(prop_no ~ s(Innings), data = df_no,
-           family = binomial, weights = Innings)
-df_no <- df_no |>
-  bind_cols(
-    broom::augment(fit, type.predict = "response") |>
-      select(-prop_no, -Innings)
-  )
-df_no |>
+fit <- mgcv::gam(prop_no ~ s(Innings), data = df_no,
+           family = binomial(link = logit), weights = Innings)
+fit_aug <- broom::augment(fit, data = df_no, type.predict = "response") 
+fit_aug |>
   ggplot(aes(x = Innings, y = prop_no)) +
   geom_point(alpha = 0.2) +
   geom_line(aes(y = .fitted), color = "#0072B2") +
@@ -298,21 +295,24 @@ df_no |>
   labs(y = "Proportion of not outs")
 ```
 
-Now we can use the fitted model to compute the log scores, and find the most anomalous batters.
+Now we can use the fitted model to compute the log scores from the Binomial distribution, and find the most anomalous batters.
 
 ```{r}
-df_no <- df_no |>
+#| code-fold: false
+fit_aug <- fit_aug |>
   mutate(
     logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)
   ) |>
   select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
   arrange(desc(logscore))
-df_no
+fit_aug
 ```
 
-The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest log score is for English batter Jimmy Anderson, who has had `r df_no$NotOuts[1]` not outs in `r df_no$Innings[1]` innings, which is much higher than the expected number of not outs of `r sprintf("%.2f", df_no$.fitted[1]*df_no$Innings[1])`. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data.
+The most anomalous batters are all "tail-enders" (i.e., not skilled batters) who played for a long time (so they have a large number of innings). Because they batted last, or nearly last, they are more likely to be not out at the end of the team's innings.
 
-We have identified an anomaly that is not anomalous in the number of notouts, or in the number of innings, and the difference between the actual proportion and the predicted proportion is not anomalous either. Because we have used a statistical model, we have been able to account for the particular features of this data set, such as the discrete nature of the data, and the relationship between the variance and the mean as a function of the number of innings played.
+The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest log score is for English batter Jimmy Anderson, who has had `r fit_aug$NotOuts[1]` not outs in `r fit_aug$Innings[1]` innings, which is much higher than the expected number of not outs of $`r fit_aug[["Innings"]][1]` \times `r sprintf("%.3f", fit_aug[[".fitted"]][1])` = `r sprintf("%.1f", fit_aug[[".fitted"]][1]*fit_aug[["Innings"]][1])`$. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data. Although Jimmy Anderson was not a great batter, he was good at defence, and was able to bat for a long time without being dismissed, leaving the other batter time to score runs.
+
+We have identified an anomaly that is not anomalous in the proportion of not-outs, or in the number of innings, and the difference between the actual proportion and the predicted proportion is not anomalous either compared to some of the other values. However, because we have used a statistical model, we have been able to account for the particular features of this data set, such as the discrete nature of the data, and the relationship between the variance and the mean as a function of the number of innings played.
 
 
 ## KDE scores {#kdescores}
