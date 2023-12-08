@@ -10,14 +10,13 @@ Anomalies are observations that are unlikely to have come from the same distribu
 
 ## Log scores and log-LOO scores
 
-Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set.
+Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
 
 The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low log scores.
 
 If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-LOO score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
-
-## Regression log scores
+## Regression log scores {#sec-regression-log-scores}
 
 Suppose we want to find anomalies amongst $n$ univariate observations $y_1,\dots,y_n$, and we have $p$ variables that we think might be useful for predicting $y$. Then we can write the conditional density as
 $f(y \mid \bm{x})$, where $\bm{x}$ is a $p$-dimensional vector of predictor variables. Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
@@ -110,17 +109,16 @@ broom::augment(fit) |>
 For convenience, the `reg_scores()` function can also be used to compute the regression scores given by @eq-regression-log-score and those given @eq-log-loo-regression-scores.
 
 
-### Example: wine reviews
+### Example: Shiraz reviews
 
-For example, consider the wine reviews of Syrah, plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate of price given the points awarded to each wine. Then, $\bm{X}$ contains just two columns: a column of 1s, and a column containing the points values. The vector $\bm{y}$ contains the log prices of the wines. The model can be fitted as follows.
+For example, consider the wine reviews of Shiraz (aka Syrah), plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate of price given the points awarded to each wine. Then, $\bm{X}$ contains just two columns: a column of 1s, and a column containing the points values. The vector $\bm{y}$ contains the log prices of the wines. The model can be fitted as follows.
 
 ```{r}
 #| label: shiraz-regression
 #| code-fold: false
-fit <- lm(log(price) ~ points,
-  data = wine_reviews |> filter(variety %in% c("Shiraz", "Syrah"))
-)
-summary(fit)
+shiraz <- wine_reviews |> filter(variety %in% c("Shiraz", "Syrah"))
+fit_wine <- lm(log(price) ~ points, data = shiraz)
+summary(fit_wine)
 ```
 
 The fitted model can be written as
@@ -133,24 +131,21 @@ and is depicted in @fig-shiraz-regression with 95% prediction intervals.
 #| label: fig-shiraz-regression
 #| warning: false
 #| fig.cap: Log price of Shiraz as a function of points, with 95% prediction intervals. The points are horizontally jitted to reduce overplotting. Points outside the prediction intervals are colored.
-pred <- fit |>
-  predict(interval = "prediction", level = 0.95) |>
-  suppressWarnings() |>
-  exp()
-wine_reviews |>
-  filter(variety %in% c("Shiraz", "Syrah")) |>
-  bind_cols(pred) |>
+wine_aug <- broom::augment(fit_wine, data = shiraz, interval = "prediction") |>
   mutate(
+    lwr = exp(.lower),
+    upr = exp(.upper),
     location = case_when(
       price < lwr ~ "below",
       price > upr ~ "above",
       TRUE ~ "within"
     )
-  ) |>
+  )
+wine_aug |>
   ggplot(aes(y = price, x = points, col = location)) +
   geom_jitter(height = 0, width = 0.1, alpha = 0.5) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "#cccccc", alpha = 0.25) +
-  geom_line(aes(y = fit), color = "#666666") +
+  geom_line(aes(y = exp(.fitted)), color = "#666666") +
   scale_y_log10() +
   guides(fill = "none", col = "none") +
   scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA"))
@@ -163,19 +158,13 @@ The log-LOO-scores obtained from this model are shown in @fig-shiraz-regression-
 #| fig.cap: Residuals and log scores for the Shiraz data using a linear regression model. Points are colored to match the 95% prediction intervals in @fig-shiraz-regression.
 #| fig.height: 6
 #| fig.asp: 0.8
-fit_stats <- broom::augment(fit) |>
-  bind_cols(pred) |>
+wine_aug <- wine_aug |>
   mutate(
-    price = exp(`log(price)`),
-    location = case_when(
-      price < lwr ~ "below",
-      price > upr ~ "above",
-      TRUE ~ "within"
-    ),
     Studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
+    Log_scores = -dnorm(.std.resid, log = TRUE),
     Log_LOO_scores = -dnorm(Studentized_residuals, log = TRUE)
   )
-fit_stats |>
+wine_aug |>
   select(points, Studentized_residuals, Log_LOO_scores, location) |>
   pivot_longer(c(Studentized_residuals, Log_LOO_scores), names_to = "variable", values_to = "value") |>
   mutate(variable = factor(variable, levels = c("Studentized_residuals", "Log_LOO_scores"))) |>
@@ -191,11 +180,11 @@ fit_stats |>
 ```{r}
 #| label: shiraz-regression-scores
 #| include: false
-most_anomalous <- fit_stats |>
+most_anomalous <- wine_aug |>
   filter(Log_LOO_scores > 17)
-underpriced <- fit_stats |>
+underpriced <- wine_aug |>
   filter(Studentized_residuals == min(Studentized_residuals))
-good_buy <- fit_stats |>
+good_buy <- wine_aug |>
   filter(points > 95) |>
   filter(Studentized_residuals == min(Studentized_residuals))
 ```
@@ -204,32 +193,19 @@ The over-priced wines under this model are shown in blue, while the under-priced
 
 ```{r}
 #| code-fold: false
-wine_reviews |>
-  filter(variety %in% c("Shiraz", "Syrah")) |>
-  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |>
-  mutate(
-    stud_residual = .resid / (.sigma * sqrt(1 - .hat)),
-    log_LOO_score = -dnorm(stud_residual, log = TRUE)
-  ) |>
-  filter(log_LOO_score == max(log_LOO_score)) |>
-  select(country:winery, year, points, price, stud_residual, log_LOO_score)
+wine_aug |>
+  filter(Log_LOO_scores == max(Log_LOO_scores)) |>
+  select(country:winery, year, points, price, Studentized_residuals, Log_LOO_scores)
 ```
-
 
 The largest Log LOO score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the 2007 Syrah from the Rulo winery in the Columbia Valley in Washington State, USA:
 
 ```{r}
 #| code-fold: false
-wine_reviews |>
-  filter(variety %in% c("Shiraz", "Syrah")) |>
-  bind_cols(broom::augment(fit) |> select(-points, -`log(price)`)) |>
-  mutate(
-    stud_residual = .resid / (.sigma * sqrt(1 - .hat)),
-    log_LOO_score = -dnorm(stud_residual, log = TRUE)
-  ) |>
+wine_aug |>
   filter(points > 95) |>
-  filter(stud_residual == min(stud_residual)) |>
-  select(country:winery, year, points, price, stud_residual, log_LOO_score)
+  filter(Studentized_residuals == min(Studentized_residuals)) |>
+  select(country:winery, year, points, price, Studentized_residuals, Log_LOO_scores)
 ```
 
 This corresponds to the only orange point in @fig-shiraz-regression that has a point value above 95 and a price below the 95% prediction interval.
@@ -282,10 +258,10 @@ We can fit this model using the `mgcv` package.
 #| message: false
 #| code-fold: false
 #| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played, with a GAM fit using a Binomial distribution."
-fit <- mgcv::gam(prop_no ~ s(Innings), data = df_no,
+fit_notouts <- mgcv::gam(prop_no ~ s(Innings), data = df_no,
            family = binomial(link = logit), weights = Innings)
-fit_aug <- broom::augment(fit, data = df_no, type.predict = "response")
-fit_aug |>
+notouts_aug <- broom::augment(fit_notouts, data = df_no, type.predict = "response")
+notouts_aug |>
   ggplot(aes(x = Innings, y = prop_no)) +
   geom_point(alpha = 0.2) +
   geom_line(aes(y = .fitted), color = "#0072B2") +
@@ -295,15 +271,15 @@ fit_aug |>
   labs(y = "Proportion of not outs")
 ```
 
-Now we can use the fitted model to compute the log scores from the Binomial distribution, and find the most anomalous batters.
+Now we can use the fitted model to compute the log scores from the Binomial distribution, and find the most anomalous batters. Unfortunately, there is not a convenient way to compute log-loo scores for GAM models, so we will only consider log scores in this example.
 
 ```{r}
 #| code-fold: false
-fit_aug <- fit_aug |>
+notouts_aug <- notouts_aug |>
   mutate(logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)) |>
   select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
   arrange(desc(logscore))
-fit_aug
+notouts_aug
 ```
 
 The most anomalous batters are all "tail-enders" (i.e., not skilled batters) who played for a long time (so they have a large number of innings). Because they batted last, or nearly last, they are more likely to be not out at the end of the team's innings.
@@ -315,7 +291,7 @@ We have identified an anomaly that is not anomalous in the proportion of not-out
 
 ## KDE scores {#kdescores}
 
-Suppose, instead of a regression, we estimate $f$ using a kernel density estimate. Then we call the resulting log-scores "kde scores". The kernel density estimate at each observation is (@eq-mkde)
+Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. Then we call the resulting log-scores "kde scores". The kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
@@ -339,7 +315,6 @@ $$
   f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
 $$ {#eq-lookout}
 where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the the leave-one-out kernel density scores without needing to re-estimate the density many times.
-
 
 ### Example: Old Faithful eruption durations
 
@@ -370,14 +345,13 @@ of_scores |>
   geom_point()
 ```
 
-
 ## Lookout algorithm
 
 The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses leave-one-out scores to find the probability of each observation being an anomaly. Although it was proposed using kernel density estimates, it can be applied to scores obtained using any density.
 
 In this procedure, we fit a Generalized Pareto Distribution to the log scores using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the *leave-one-out* scores to obtain the probability of each observation based on the distribution of the remaining observations.
 
-Let's consider an example using the Old Faithful eruption durations.
+Let's consider the kernel scores for the Old Faithful eruption data.
 
 ### Example: Old Faithful eruption durations
 
@@ -500,6 +474,27 @@ tibble(y = rchisq(1000, df = 4)) |>
 ```
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
+
+### Example: Shiraz reviews
+
+Let's return to the regression example from @sec-regression-log-scores. We will use the `lookout_prob` function to identify outliers in the residuals.
+
+```{r}
+threshold <- quantile(wine_aug$Log_scores, prob = 0.95, type = 8)
+gpd <- evd::fpot(wine_aug$Log_scores, threshold = threshold)$estimate
+of_lookout <- wine_aug |>
+  mutate(
+    pval = evd::pgpd(loo_score, loc = threshold,
+      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
+    )
+  ) |>
+  arrange(pval)
+of_lookout |>
+  filter(pval < 0.05)
+wine_aug
+```
+
+### Example: Not outs in cricket batting
 
 
 ## Other density-based methods
