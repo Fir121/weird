@@ -8,7 +8,7 @@ source("before-each-chapter.R")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Log scores and log-LOO scores
+## Log scores and the lookout algorithm
 
 Any density-based method of anomaly detection first requires that we have a density estimate of each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
 
@@ -16,18 +16,24 @@ The log score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_
 
 If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then we will call the associated log score, a "log-LOO score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
 
-## Regression log scores {#sec-regression-log-scores}
+The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses log scores to find the probability of each observation being an anomaly. Although it was proposed using log scores from kernel density estimates, it can be applied to scores obtained using any density.
+
+The underlying idea of the lookout algorithm is to use extreme value theory applied to the log scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the log scores using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the log loo scores to obtain the probability of each observation. In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the log scores.
+
+In the following sections, we will discuss how to compute log scores for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
+
+## Linear regression {#sec-regression-log-scores}
 
 Suppose we want to find anomalies amongst $n$ univariate observations $y_1,\dots,y_n$, and we have $p$ variables that we think might be useful for predicting $y$. Then we can write the conditional density as
 $f(y \mid \bm{x})$, where $\bm{x}$ is a $p$-dimensional vector of predictor variables. Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$.
-
-### Linear Gaussian regression
 
 For a linear Gaussian regression model, with independent observations and homoscedastic errors, the conditional distribution is given by
 $$
   y \mid \bm{x} \sim N(\bm{x}_+'\bm{\beta}, \sigma^2),
 $$ {#eq-gaussian-regression}
 where $\bm{x}_+ = [1, \bm{x}]'$ is a $(p+1)$-dimensional vector containing a 1 in the first position, and $\bm{\beta}$ is a $(p+1)$-dimensional vector of regression coefficients.
+
+### Model estimation
 
 The model can be written in matrix form as
 $$
@@ -48,6 +54,8 @@ $$
 where $\bm{H} = \bm{X}(\bm{X}'\bm{X})^{-1}\bm{X}'$ is known as the "hat"-matrix because it creates the "y-hat" values $\hat{\bm{y}}$ from the data $\bm{y}$.
 
 The diagonals of $\bm{H}$, given by $h_1,\dots,h_n$, take values between 0 and 1. These are known as the "leverage" values [@faraway2004linear, p69], and measure how much each observation influences the corresponding fitted value. High leverage values (close to 1) correspond to observations that have a large influence on the estimated coefficients, and so leaving those observations out will lead to very different values for the fitted values and residuals. On the other hand, small leverage values (close to 0) correspond to observations that have little influence on the estimated coefficients, and so leaving those observations out will lead to similar values for the fitted values and residuals.
+
+### Residuals
 
 The residuals from the model are given by
 $$
@@ -74,6 +82,8 @@ where $\phi(u) = (2\pi)^{-1/2}e^{-u^2}$ is the standard normal density. This can
 broom::augment(fit) |>
   mutate(log_score = -dnorm(.std.resid, log = TRUE))
 ```
+
+### LOO residuals
 
 The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the predicted value obtained using a model fitted to all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times. It can be shown [@Montgomery2012, Appendix C.7] that the leave-one-out (LOO) residuals are given by
 $$
@@ -108,7 +118,6 @@ broom::augment(fit) |>
 
 For convenience, the `reg_scores()` function can also be used to compute the regression scores given by @eq-regression-log-score and those given @eq-log-loo-regression-scores.
 
-
 ### Example: Shiraz reviews
 
 For example, consider the wine reviews of Shiraz (aka Syrah), plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate of price given the points awarded to each wine. Then, $\bm{X}$ contains just two columns: a column of 1s, and a column containing the points values. The vector $\bm{y}$ contains the log prices of the wines. The model can be fitted as follows.
@@ -123,7 +132,7 @@ summary(fit_wine)
 
 The fitted model can be written as
 $$
-  \log(\text{Price}) \sim N(`r sprintf("%.3f",coef(fit)[1])` + `r sprintf("%.3f",coef(fit)[2])` \times \text{Points}, `r sprintf("%.3f",sigma(fit))`^2),
+  \log(\text{Price}) \sim N(`r sprintf("%.3f",coef(fit_wine)[1])` + `r sprintf("%.3f",coef(fit_wine)[2])` \times \text{Points}, `r sprintf("%.3f",sigma(fit_wine))`^2),
 $$
 and is depicted in @fig-shiraz-regression with 95% prediction intervals.
 
@@ -205,10 +214,59 @@ The largest Log LOO score corresponding to an under-priced wine is for the wine 
 wine_aug |>
   filter(points > 95) |>
   filter(Studentized_residuals == min(Studentized_residuals)) |>
-  select(country:winery, year, points, price, Studentized_residuals, Log_LOO_scores)
+  select(country:winery, year, points:price, Studentized_residuals, Log_LOO_scores)
 ```
 
 This corresponds to the only orange point in @fig-shiraz-regression that has a point value above 95 and a price below the 95% prediction interval.
+
+### Lookout probabilities
+
+We will apply the lookout algorithm to these scores. First we compute the threshold value equal to the 95th percentile of the log scores, and then fit a generalized Pareto distribution to the scores above this threshold.
+
+```{r}
+#| code-fold: false
+threshold <- quantile(wine_aug$Log_scores, prob = 0.95, type = 8)
+gpd <- evd::fpot(wine_aug$Log_scores, threshold = threshold)$estimate
+```
+
+Now we use the fitted model to compute the lookout probabilities from the LOO scores for each observation.
+
+```{r}
+#| code-fold: false
+wine_aug |>
+  mutate(
+    pval = evd::pgpd(Log_LOO_scores, loc = threshold,
+      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
+    )
+  ) |>
+  filter(pval < 0.05) |> 
+  select(country:winery, year, points, price, Log_LOO_scores, pval) |> 
+  arrange(pval)
+```
+
+These are all wines that appear to be over-priced given their points values.
+
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function. This can be applied directly to the fitted model object, as follows.
+
+```{r}
+#| code-fold: false
+shiraz <- shiraz |>
+  mutate(lookout_prob = lookout(fit_wine)) |> 
+  arrange(lookout_prob)
+shiraz
+```
+
+@fig-shiraz-lookout shows the relationship between points and price, with the points colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
+
+```{r}
+#| label: fig-shiraz-lookout
+#| fig.cap: Price vs points for Shiraz wines. Points are colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
+shiraz |> 
+  ggplot(aes(x = points, y = price, color = lookout_prob < 0.02)) +
+   geom_jitter(height = 0, width = 0.2) +
+   scale_y_log10()
+```
+
 
 ## GAM log scores
 
@@ -276,7 +334,10 @@ Now we can use the fitted model to compute the log scores from the Binomial dist
 ```{r}
 #| code-fold: false
 notouts_aug <- notouts_aug |>
-  mutate(logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE)) |>
+  mutate(
+    logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE),
+    lookout = lookout(fit_notouts)
+  ) |>
   select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
   arrange(desc(logscore))
 notouts_aug
@@ -284,7 +345,7 @@ notouts_aug
 
 The most anomalous batters are all "tail-enders" (i.e., not skilled batters) who played for a long time (so they have a large number of innings). Because they batted last, or nearly last, they are more likely to be not out at the end of the team's innings.
 
-The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest log score is for English batter Jimmy Anderson, who has had `r fit_aug$NotOuts[1]` not outs in `r fit_aug$Innings[1]` innings, which is much higher than the expected number of not outs of $`r fit_aug[["Innings"]][1]` \times `r sprintf("%.3f", fit_aug[[".fitted"]][1])` = `r sprintf("%.1f", fit_aug[[".fitted"]][1]*fit_aug[["Innings"]][1])`$. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data. Although Jimmy Anderson was not a great batter, he was good at defence, and was able to bat for a long time without being dismissed, leaving the other batter time to score runs.
+The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest log score is for English batter Jimmy Anderson, who has had `r notouts_aug$NotOuts[1]` not outs in `r notouts_aug$Innings[1]` innings, which is much higher than the expected number of not outs of $`r notouts_aug[["Innings"]][1]` \times `r sprintf("%.3f", notouts_aug[[".fitted"]][1])` = `r sprintf("%.1f", notouts_aug[[".fitted"]][1]*notouts_aug[["Innings"]][1])`$. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data. Although Jimmy Anderson was not a great batter, he was good at defence, and was able to bat for a long time without being dismissed, leaving the other batter time to score runs.
 
 We have identified an anomaly that is not anomalous in the proportion of not-outs, or in the number of innings, and the difference between the actual proportion and the predicted proportion is not anomalous either compared to some of the other values. However, because we have used a statistical model, we have been able to account for the particular features of this data set, such as the discrete nature of the data, and the relationship between the variance and the mean as a function of the number of innings played.
 
@@ -345,43 +406,6 @@ of_scores |>
   geom_point()
 ```
 
-## Lookout algorithm
-
-The "lookout" algorithm (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses leave-one-out scores to find the probability of each observation being an anomaly. Although it was proposed using kernel density estimates, it can be applied to scores obtained using any density.
-
-In this procedure, we fit a Generalized Pareto Distribution to the log scores using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the *leave-one-out* scores to obtain the probability of each observation based on the distribution of the remaining observations.
-
-Let's consider the kernel scores for the Old Faithful eruption data.
-
-### Example: Old Faithful eruption durations
-
-First, let's estimate the Generalized Pareto Distribution using the points with the top 5% of score values.
-
-```{r}
-#| label: ofpot
-#| code-fold: false
-threshold <- quantile(of_scores$score, prob = 0.95, type = 8)
-gpd <- evd::fpot(of_scores$score, threshold = threshold)$estimate
-```
-
-Now we apply the fitted GPD distribution to the leave-one-out scores to obtain the probability of each observation based on the distribution of the remaining observations.
-
-```{r}
-#| label: ofpot2
-#| code-fold: false
-#| dependson: ofpot
-of_lookout <- of_scores |>
-  mutate(
-    pval = evd::pgpd(loo_score, loc = threshold,
-      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
-    )
-  ) |>
-  arrange(pval)
-of_lookout |>
-  filter(pval < 0.05)
-```
-
-The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function.
 
 ```{r}
 #| label: lookout
@@ -475,24 +499,6 @@ tibble(y = rchisq(1000, df = 4)) |>
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
 
-### Example: Shiraz reviews
-
-Let's return to the regression example from @sec-regression-log-scores. We will use the `lookout_prob` function to identify outliers in the residuals.
-
-```{r}
-threshold <- quantile(wine_aug$Log_scores, prob = 0.95, type = 8)
-gpd <- evd::fpot(wine_aug$Log_scores, threshold = threshold)$estimate
-of_lookout <- wine_aug |>
-  mutate(
-    pval = evd::pgpd(loo_score, loc = threshold,
-      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
-    )
-  ) |>
-  arrange(pval)
-of_lookout |>
-  filter(pval < 0.05)
-wine_aug
-```
 
 ### Example: Not outs in cricket batting
 
