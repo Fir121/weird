@@ -239,19 +239,19 @@ wine_aug |>
       scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
     )
   ) |>
-  filter(pval < 0.05) |> 
-  select(country:winery, year, points, price, Log_LOO_scores, pval) |> 
+  filter(pval < 0.05) |>
+  select(country:winery, year, points, price, Log_LOO_scores, pval) |>
   arrange(pval)
 ```
 
 These are all wines that appear to be over-priced given their points values.
 
-The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout_prob` function. This can be applied directly to the fitted model object, as follows.
+The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout` function. This can be applied directly to the fitted model object, as follows.
 
 ```{r}
 #| code-fold: false
 shiraz <- shiraz |>
-  mutate(lookout_prob = lookout(fit_wine)) |> 
+  mutate(lookout_prob = lookout(fit_wine)) |>
   arrange(lookout_prob)
 shiraz
 ```
@@ -261,7 +261,7 @@ shiraz
 ```{r}
 #| label: fig-shiraz-lookout
 #| fig.cap: Price vs points for Shiraz wines. Points are colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
-shiraz |> 
+shiraz |>
   ggplot(aes(x = points, y = price, color = lookout_prob < 0.02)) +
    geom_jitter(height = 0, width = 0.2) +
    scale_y_log10()
@@ -338,7 +338,7 @@ notouts_aug <- notouts_aug |>
     logscore = -dbinom(NotOuts, Innings, prob = .fitted, log = TRUE),
     lookout = lookout(fit_notouts)
   ) |>
-  select(Player, Country, Innings, NotOuts, prop_no, .fitted, logscore) |>
+  select(Player:Country, Innings:NotOuts, prop_no:.fitted, logscore:lookout) |>
   arrange(desc(logscore))
 notouts_aug
 ```
@@ -412,7 +412,7 @@ of_scores |>
 #| code-fold: false
 #| dependson: ofpot
 oldfaithful |>
-  mutate(lookout_pval = lookout_prob(duration)) |>
+  mutate(lookout_pval = lookout(duration)) |>
   filter(lookout_pval < 0.05) |>
   arrange(lookout_pval)
 ```
@@ -438,7 +438,7 @@ Let's apply it to the six examples introduced in @sec-examples.
 #| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
-  mutate(lookout = lookout_prob(Average)) |>
+  mutate(lookout = lookout(Average)) |>
   filter(lookout < 0.05) |>
   select(Player, Average, lookout)  |>
   arrange(lookout)
@@ -455,21 +455,21 @@ of <- oldfaithful  |>
   select(duration, waiting) |>
   filter(duration < 7200, waiting < 7200)
 of |>
-  mutate(lookout = lookout_prob(duration)) |>
+  mutate(lookout = lookout(duration)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, duration)
 ```
 
 Again, only the two anomalies are identified: the 1 second eruption, and the 90 second eruption.
 
-Next we consider some artificial examples. Because the lookout algorithm uses the tail of the distribution, it requires a reasonably large sample size to work effectively. The `lookout_prob` function will return a warning if there are fewer than 25 observations. Here we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
+Next we consider some artificial examples. Because the lookout algorithm uses the tail of the distribution, it requires a reasonably large sample size to work effectively. The `lookout` function will return a warning if there are fewer than 25 observations. Here we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
 
 ```{r}
 #| label: lookout3
 #| code-fold: false
 n01b <- tibble(y = c(n01$v2[1:48], 4, 4.5))
 n01b |>
-  mutate(lookout = lookout_prob(y)) |>
+  mutate(lookout = lookout(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout)
 ```
@@ -483,16 +483,16 @@ Finally, we consider simulated data from each of the distributions, N(0,1), $\te
 #| code-fold: false
 n01 |>
   select(v1) |>
-  mutate(lookout = lookout_prob(v1)) |>
+  mutate(lookout = lookout(v1)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, v1)
 set.seed(1)
 tibble(y = rt(1000, df = 3)) |>
-  mutate(lookout = lookout_prob(y)) |>
+  mutate(lookout = lookout(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
 tibble(y = rchisq(1000, df = 4)) |>
-  mutate(lookout = lookout_prob(y)) |>
+  mutate(lookout = lookout(y)) |>
   filter(lookout < 0.05) |>
   arrange(lookout, y)
 ```
