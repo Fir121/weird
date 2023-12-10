@@ -400,7 +400,8 @@ For the Old Faithful eruption duration data, we obtain the following LOO kde sco
 of_scores <- oldfaithful |>
   mutate(
     score = density_scores(duration, loo = FALSE),
-    loo_score = density_scores(duration, loo = TRUE)
+    loo_score = density_scores(duration, loo = TRUE),
+    lookout = lookout(duration)
   )
 of_scores |> arrange(desc(loo_score))
 ```
@@ -419,18 +420,7 @@ of_scores |>
   geom_point()
 ```
 
-
-```{r}
-#| label: lookout
-#| code-fold: false
-#| dependson: ofpot
-of_scores |>
-  mutate(lookout_pval = lookout(duration)) |>
-  filter(lookout_pval < 0.05) |>
-  arrange(lookout_pval)
-```
-
-Low probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, one other observation has a slightly low lookout probability (at `r sort(lookout(of_scores$score, of_scores$loo_score))[3]`).  @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
+Low lookout probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, one other observation has a slightly low lookout probability (at `r sort(of_scores$lookout)[3]`).  @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
 
 ```{r}
 #| label: fig-ofpot
@@ -454,8 +444,7 @@ cricket_batting |>
   filter(Innings > 20) |> 
   mutate(lookout = lookout(Average)) |>
   filter(lookout < 0.05) |>
-  select(Player, Average, lookout)  |>
-  arrange(lookout)
+  select(Player, Average, lookout)
 ```
 
 Here Bradman is a clear anomaly (with a very low lookout probability), and no-one else is identified as a possible anomaly.
@@ -467,16 +456,26 @@ The same algorithm is easily applied in two dimensions. Here we use the `oldfait
 #| code-fold: false
 of <- oldfaithful  |>
   select(duration, waiting) |>
-  filter(duration < 7200, waiting < 7200)
+  filter(duration < 7200, waiting < 7200) 
 of |>
-  mutate(lookout = lookout(cbind(duration,waiting))) |> 
+  mutate(
+    loo_scores = density_scores(of, loo = TRUE),
+    lookout = lookout(of)
+  ) |> 
   filter(lookout < 0.05) |>
   arrange(lookout, duration)
 ```
 
-Again, only the two anomalies are identified: the 1 second eruption, and the 90 second eruption.
+Now, `r sum(lookout(of) < 0.05)` anomalies are identified, with four of them having infinite LOO density scores. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
 
-Next we consider some artificial examples. Because the lookout algorithm uses the tail of the distribution, it requires a reasonably large sample size to work effectively. The `lookout` function will return a warning if there are fewer than 25 observations. Here we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
+```{r}
+#| label: fig-ofpot2
+#| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the lookout anomalies highlighted in red."
+of |> 
+  gg_hdrboxplot(duration, waiting, scatterplot = TRUE, show_lookout = TRUE)
+```
+
+Next we consider some artificial examples. First, we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
 
 ```{r}
 #| label: lookout3
@@ -490,7 +489,7 @@ n01b |>
 
 As expected, only the two genuine anomalies have been identified.
 
-Finally, we consider simulated data from each of the distributions, N(0,1), $\text{t}_3$ and $\chi^2_4$.
+Finally, we consider 1000 simulated observations from each of the distributions, N(0,1), $\text{t}_3$ and $\chi^2_4$.
 
 ```{r}
 #| label: lookout4
@@ -512,9 +511,5 @@ tibble(y = rchisq(1000, df = 4)) |>
 ```
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
-
-
-### Example: Not outs in cricket batting
-
 
 ## Other density-based methods
