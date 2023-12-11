@@ -388,7 +388,7 @@ The contribution of the $i$th point to the kernel density estimate at that point
 $$
   f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
 $$ {#eq-lookout}
-where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the the leave-one-out kernel density scores without needing to re-estimate the density many times.
+where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the leave-one-out kernel density scores without needing to re-estimate the density many times.
 
 ### Example: Old Faithful eruption durations
 
@@ -420,7 +420,7 @@ of_scores |>
   geom_point()
 ```
 
-Low lookout probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, one other observation has a slightly low lookout probability (at `r sort(of_scores$lookout)[3]`).  @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
+Low lookout probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, one other observation has a slightly low lookout probability (at `r sort(of_scores$lookout)[3]`). @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
 
 ```{r}
 #| label: fig-ofpot
@@ -440,8 +440,8 @@ Let's apply the lookout algorithm to the six examples introduced in @sec-example
 ```{r}
 #| label: cricket-lookout
 #| code-fold: false
-cricket_batting |> 
-  filter(Innings > 20) |> 
+cricket_batting |>
+  filter(Innings > 20) |>
   mutate(lookout = lookout(Average)) |>
   filter(lookout < 0.05) |>
   select(Player, Average, lookout)
@@ -456,12 +456,12 @@ The same algorithm is easily applied in two dimensions. Here we use the `oldfait
 #| code-fold: false
 of <- oldfaithful  |>
   select(duration, waiting) |>
-  filter(duration < 7200, waiting < 7200) 
+  filter(duration < 7200, waiting < 7200)
 of |>
   mutate(
     loo_scores = density_scores(of, loo = TRUE),
     lookout = lookout(of)
-  ) |> 
+  ) |>
   filter(lookout < 0.05) |>
   arrange(lookout, duration)
 ```
@@ -471,7 +471,7 @@ Now, `r sum(lookout(of) < 0.05)` anomalies are identified, with four of them hav
 ```{r}
 #| label: fig-ofpot2
 #| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the lookout anomalies highlighted in red."
-of |> 
+of |>
   gg_hdrboxplot(duration, waiting, scatterplot = TRUE, show_lookout = TRUE)
 ```
 

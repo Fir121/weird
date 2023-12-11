@@ -147,7 +147,7 @@ patchwork::wrap_plots(bcd, pst, nrow = 1)
 
 If there are $n$ observations, then there are $n$ 0-dimensional features, each born at diameter 0, and which die when the corresponding observation is connected to one or more other observations. The first death occurs when the closest two points merge, so the corresponding two features have the same birth and the same death diameters. Rather than have a repeated bar, only $n-1$ bars are shown. As $\varepsilon$ increases, the 0-dimensional features disappear one by one, as they merge with neighbouring features, and eventually the number of connected components decreases to 1 when all observations are connected.
 
-The 1-dimensional features are born when a hole appears in the point cloud, and die when the hole disappears. The long blue line in @fig-barcodeandpersistence is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, and corresponds to the hole at the center of the point cloud in @fig-annulus.
+The 1-dimensional features are born when a hole appears in the point cloud, and die when the hole disappears. The long blue line in @fig-barcodeandpersistence is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, and corresponds to the hole at the centre of the point cloud in @fig-annulus.
 
 Features that continue for a large range of $\varepsilon$ represent structural properties of the data that are of interest to us. These points lie well above the diagonal in the persistence diagram, while points closer to the diagonal are probably perturbations related to noise. In this plot, the triangle near the top represents the same feature as the long blue line in the left plot.
 

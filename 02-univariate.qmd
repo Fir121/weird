@@ -308,7 +308,7 @@ For any value of $a$, if $p=0.5$ then $k^+ = (n+1)/2$, and we obtain the sample 
   * When $n$ is even, then $k=n/2$ and $\gamma = 1/2$, so $\hat{Q}(0.5)$ is the average of the middle two observations.
   * When $n$ is odd, then $k=(n+1)/2$ and $\gamma = 0$, so $\hat{Q}(0.5)$ is the middle observation.
 
-For large $n$, the sample quantile should provide a good estimate of the true quantile, so that $\hat{Q}(p) \approx Q(p)$.  We can study the bias of the estimator by simulating from a known distribution, and comparing the sample quantiles to the true quantiles. In @fig-quantile-bias, we do this for samples drawn from a N(0,1) distribution. The estimated bias is based on repeating the exercise 10,000 times and averaging the results.
+For large $n$, the sample quantile should provide a good estimate of the true quantile, so that $\hat{Q}(p) \approx Q(p)$. We can study the bias of the estimator by simulating from a known distribution, and comparing the sample quantiles to the true quantiles. In @fig-quantile-bias, we do this for samples drawn from a N(0,1) distribution. The estimated bias is based on repeating the exercise 10,000 times and averaging the results.
 
 ```{r}
 #| label: fig-quantile-bias
@@ -415,7 +415,7 @@ where $P(Y \in R_\alpha) = 1-\alpha$.
 
 A useful property of the HDR is that it is the smallest region containing $1-\alpha$ of the probability mass.
 
-For a symmetric unimodal distribution such as the Normal or t distributions, the HDR is an interval centered on the mean (or median), with the ends given by the $\alpha/2$ and $1-\alpha/2$ quantiles. For a skewed unimodal distribution such as the $\chi^2$ or Gamma distributions, the HDR is also an interval, but it is not centered on the mean (or median), and the ends are not given by symmetric quantiles. For example, @fig-hdr shows two 90% regions for a $\chi^2_5$ distribution. The one shown in blue is based on the 0.05 and 0.95 quantiles, while the orange region is the 90% HDR. Notice that both are intervals, and that the orange interval is smaller than the blue interval. The value of the density at the ends of the HDR is the same, and is given by $f_\alpha$.
+For a symmetric unimodal distribution such as the Normal or t distributions, the HDR is an interval centred on the mean (or median), with the ends given by the $\alpha/2$ and $1-\alpha/2$ quantiles. For a skewed unimodal distribution such as the $\chi^2$ or Gamma distributions, the HDR is also an interval, but it is not centred on the mean (or median), and the ends are not given by symmetric quantiles. For example, @fig-hdr shows two 90% regions for a $\chi^2_5$ distribution. The one shown in blue is based on the 0.05 and 0.95 quantiles, while the orange region is the 90% HDR. Notice that both are intervals, and that the orange interval is smaller than the blue interval. The value of the density at the ends of the HDR is the same, and is given by $f_\alpha$.
 
 ```{r}
 #| label: fig-hdr
@@ -530,7 +530,7 @@ of2021 <- oldfaithful |>
 h <- kde_bandwidth(of2021$duration)
 ```
 
-Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centered over each observation with width determined by $h$, and height given by $K_h(0)/n$.
+Now we will apply @eq-kde to the first ten Old Faithful eruption durations from 2021 that are in the `oldfaithful` data set. The kernel density estimate can be visualized as a sum of kernel functions centred over each observation with width determined by $h$, and height given by $K_h(0)/n$.
 
 Let's suppose $K_h$ is a Gaussian kernel and let $h = `r round(h, 1)`$ (I will explain this choice below). Then we get the following set of kernel functions.
 
@@ -539,7 +539,7 @@ Let's suppose $K_h$ is a Gaussian kernel and let $h = `r round(h, 1)`$ (I will e
 #| fig.asp: 0.2
 #| depends: of2021
 #| echo: false
-#| fig-cap: Kernel functions centered over the observations.
+#| fig-cap: Kernel functions centred over the observations.
 k <- tibble(x = seq(-3 * h, 3 * h, l = 1000)) |>
   mutate(y = dnorm(x, 0, h) / 10)
 of2021kde <- of2021 |>
@@ -564,7 +564,7 @@ These functions are then added together, as in @eq-kde, to give the density esti
 #| fig.asp: 0.5
 #| dependson: kde1
 #| echo: false
-#| fig-cap: Density estimate formed by summing the kernel functions centered on the observations.
+#| fig-cap: Density estimate formed by summing the kernel functions centred on the observations.
 ggplot() +
   geom_line(data = of2021kde, aes(x = x, y = y, group = eruption), col = "gray") +
   geom_rug(data = of2021, mapping = aes(x = duration, y = 0), sides = "b", linewidth = 1) +

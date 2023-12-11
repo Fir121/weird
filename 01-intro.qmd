@@ -12,7 +12,7 @@ Anomalies are often a nuisance. For example, they may be simply recording errors
 
 ## Definitions
 
-An anomaly is an observation that behaves differently from the bulk of the data. Anomalies are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants".  I prefer to use "anomalies" as it is a more general term than outliers, and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set. Some papers use the term "inlier" to denote any point that is not an outlier. We shall use the earlier definition of "inlier", meaning an observation that is an anomaly but which is surrounded by genuine observations.
+An anomaly is an observation that behaves differently from the bulk of the data. Anomalies are also called "outliers", "novelties", "deviants", "abnormalities" or "discordants". I prefer to use "anomalies" as it is a more general term than outliers, and it is more widely used than the other options. An outlier, by definition, must lie at the outer edges of the data set. However, some anomalies are actually "inliers", and lie well within the data set. Some papers use the term "inlier" to denote any point that is not an outlier. We shall use the earlier definition of "inlier", meaning an observation that is an anomaly but which is surrounded by genuine observations.
 
 An old definition due to @Barnett1978 states
 
@@ -207,7 +207,7 @@ cricket_batting |>
   labs(y = "", x = "Career batting average")
 ```
 
-The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r scales::number(donave, 0.01)` over his career.  Clearly, Don Bradman was much better than any of the other men and women who have played cricket.
+The points are "jittered" vertically to reduce overplotting, and made slightly transparent to show where overplotting occurs. There is an obvious anomaly on the right of the plot; this point is Don Bradman who averaged `r scales::number(donave, 0.01)` over his career. Clearly, Don Bradman was much better than any of the other men and women who have played cricket.
 
 ### Example: Old Faithful eruption durations {-}
 

@@ -168,7 +168,7 @@ tibble(d = seq(10)) |>
   scale_x_continuous(breaks = seq(10), minor_breaks = NULL)
 ```
 
-Remarkably, by 10 dimensions, almost all points lie outside the unit sphere, and live in the corners of the space. Almost no points are in the center of the space. This occurs because, with enough variables, at least one of the univariate observations is going to lie in the tails of the distribution, and so the multivariate observation will not lie near the center of the space.
+Remarkably, by 10 dimensions, almost all points lie outside the unit sphere, and live in the corners of the space. Almost no points are in the centre of the space. This occurs because, with enough variables, at least one of the univariate observations is going to lie in the tails of the distribution, and so the multivariate observation will not lie near the centre of the space.
 
 Another way to think about this is to consider hypercubes that contain 50% of the observations. These must have sides of length $2^{1-1/d}$, in order for the volume of the hypercube to be $2^{d-1}$, exactly half of the entire space. For $d=1$, the hypercube is a unit interval. For $d=2$, it is a square of side length $\sqrt{2} \approx 1.41$ as shown in @fig-hypercube. For $d=3$, the central cube must have side length $2^{2/3} \approx 1.59$, and so on.
 
@@ -384,7 +384,7 @@ To illustrate the idea, consider a simple bivariate example of 10 observations: 
 #| dependson: bivariatebandwidths
 #| echo: false
 #| warning: false
-#| fig-cap: Contours of bivariate kernels centered over the first ten observations in 2021 from the `oldfaithful` data set.
+#| fig-cap: Contours of bivariate kernels centred over the first ten observations in 2021 from the `oldfaithful` data set.
 h <- sqrt(diag(H))
 k <- expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
@@ -457,7 +457,7 @@ Replacing $\bm{\Sigma}$ by the sample covariance $\bm{S}$ (@eq-cov), we obtain t
 
 A more data-driven approach, is the "plug-in" estimator [@chacon2018multivariate] implemented by `Hpi()`, which is a generalization of the plug-in bandwidths popular for univariate kernel density estimation [@sec-kde]. While this typically leads to better estimates of the density as a whole, it can lead to worse estimates in the tails of the distribution where anomalies tend to lie.
 
-A common approach is to specify $\bm{H}$ to be diagonal, with elements equal to the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel. Hence, the univariate bandwidths need to be squared if used in a bandwith matrix.) That is, if $h_1,\dots,h_d$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1^2,\dots,h_d^2)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator. Additionally, any diagonal bandwidth matrix implicitly assumes that the variables are uncorrelated, and leads to more biased estimators.
+A common approach is to specify $\bm{H}$ to be diagonal, with elements equal to the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel. Hence, the univariate bandwidths need to be squared if used in a bandwidth matrix.) That is, if $h_1,\dots,h_d$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1^2,\dots,h_d^2)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator. Additionally, any diagonal bandwidth matrix implicitly assumes that the variables are uncorrelated, and leads to more biased estimators.
 
 In general, we will use the robust normal reference rule, as implemented by `kde_bandwidth()`, unless otherwise stated.
 
