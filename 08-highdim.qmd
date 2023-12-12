@@ -12,7 +12,7 @@ source("before-each-chapter.R")
 
 ## PCout
 
-@Filzmoser2008-qa
+@Filzmoser2008-qa, @Filzmoser2013-tc
 
 * mvoutlier::pcout
 
