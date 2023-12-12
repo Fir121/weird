@@ -133,6 +133,10 @@ In this book, we will use data sets of each type when testing different anomaly 
 
 Spurious anomalies occur when a true observation is identified as anomalous, while undetected anomalies occur when an anomalous observation is not detected. Thus, when our purpose is anomaly detection, an undetected anomaly is a "false negative" while a spurious anomaly is a "false positive". We can only really be sure about which observations are spurious or undetected anomalies when the data are synthetic. However, in some real data examples, there are such extreme anomalies that we will proceed under the assumption that we know that these are true anomalies.
 
+In some applications, we will be less interested in detecting anomalies than in ranking observations according to their degree of anomalousness. For example, we may have a limited team of human analysts who can investigate a small number of observations, and we want to make sure that they investigate the most anomalous observations. Then it is important to compute an anomaly score, so we can rank the observations according to their scores, and our analysts can look at the observations with the highest scores.
+
+In fact, anomaly scores often underpin the algorithms that are used to detect anomalies. The algorithms compute a score for each observation, and then identify the observations with scores above some threshold as the anomalies. So we will often be talking about anomaly scores, even when we are really interested in detecting anomalies.
+
 ## Data sets
 
 ### Test cricket batting data
