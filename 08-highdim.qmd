@@ -12,4 +12,19 @@ source("before-each-chapter.R")
 
 ## PCout
 
-* Filzmoser, Maronna and Werner (CSDA, 2008) -- mvoutlier::pcout
+@Filzmoser2008-qa
+
+* mvoutlier::pcout
+
+## FastPCS
+
+@Vakili2014-yc
+
+* FastPCS::FastPCS
+
+## DOBIN
+
+@Kandanaarachchi2020-lo
+
+
+## Comparisons using the O3 plot

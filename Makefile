@@ -1,7 +1,7 @@
 qmd_files := $(patsubst %.qmd, _book/%.html, $(wildcard *.qmd))
 rds_files := $(wildcard *.rds)
 
-default: $(qmd_files)
+default: all
 
 all:
 	quarto render

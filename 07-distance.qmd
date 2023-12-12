@@ -204,7 +204,27 @@ of_scores |>
 Again, the two large scores correspond to the extreme 2 hour duration and the tiny 1 second duration. The value of $k=150$ has been chosen after experimenting with various values.
 
 
+## Stahel-Donoho outlyingness
+
+The Stahel-Donoho outlyingness is a robust measure of outlyingness
+
+@Stahel81, @Donoho81, @Brys2005-pc
+
+robustbase::adjOutlyingness
+
+## CovMCD
+
+@Rousseeuw1999-jt
+
+robustbase::covMcd
+
+## Detect deviating cells algorithm
+
+@Rousseeuw2016-wm
+
+
 ## Stray and HDoutliers algorithms
+
 
 ```{r}
 #| label: fig-stray
@@ -216,5 +236,28 @@ of_scores |>
   ggplot(aes(x = duration, y = stray)) +
   geom_point()
 ```
+
+@Talagala2019-zv, @Wilkinson2017-rb
+
+## Bacon algorithm
+
+blocked adaptive computationally efficient outlier nominators
+
+@Billor2000
+
+robustX::mvBACON
+
+## Isolation forest
+
+Isolation tree: Randomly partition data until every point is isolated or some depth is reached.
+
+Combine many isolation trees to form an isolation forest.
+
+Anomaly score inversely proportional to average depth of isolation trees.
+
+solitude::isolationForest
+
+@Liu2008-dp
+
 
 ## Clustering methods
