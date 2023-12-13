@@ -531,14 +531,14 @@
     },
     "cli": {
       "Package": "cli",
-      "Version": "3.6.1",
+      "Version": "3.6.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "utils"
       ],
-      "Hash": "89e6d8219950eac806ae0c489052048a"
+      "Hash": "1216ac65ac55ec0058a6f75d7ca0fd52"
     },
     "clipr": {
       "Package": "clipr",
@@ -2091,14 +2091,14 @@
     },
     "ragg": {
       "Package": "ragg",
-      "Version": "1.2.6",
+      "Version": "1.2.7",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "systemfonts",
         "textshaping"
       ],
-      "Hash": "6ba2fa8740abdc2cc148407836509901"
+      "Hash": "90a1b8b7e518d7f90480d56453b4d062"
     },
     "rappdirs": {
       "Package": "rappdirs",
@@ -2465,7 +2465,7 @@
     },
     "stringi": {
       "Package": "stringi",
-      "Version": "1.8.2",
+      "Version": "1.8.3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2474,7 +2474,7 @@
         "tools",
         "utils"
       ],
-      "Hash": "e68c45f81639001af5f1b15cd3599bbd"
+      "Hash": "058aebddea264f4c99401515182e656a"
     },
     "stringr": {
       "Package": "stringr",
@@ -2856,11 +2856,11 @@
       "Version": "0.0.0.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteUsername": "robjhyndman",
-      "RemoteRepo": "weird-package",
-      "RemoteRef": "bandwidth-multiplier",
-      "RemoteSha": "90e3a3be5c70830d72f3c84acb807ad7cf6a5b36",
       "RemoteHost": "api.github.com",
+      "RemoteRepo": "weird-package",
+      "RemoteUsername": "robjhyndman",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "fc2787ef1a59b69d54f982270670866e89bd21b5",
       "Requirements": [
         "R",
         "aplpack",
@@ -2881,7 +2881,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "3f1eeb9d67c5663bd0bcc2cde30aa74d"
+      "Hash": "6001d2f1495d9464dcd15f6eaea96c3c"
     },
     "whisker": {
       "Package": "whisker",
@@ -2939,10 +2939,10 @@
     },
     "yaml": {
       "Package": "yaml",
-      "Version": "2.3.7",
+      "Version": "2.3.8",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "0d0056cc5383fbc240ccd0cb584bf436"
+      "Hash": "29240487a071f535f5e5d5a323b7afbd"
     },
     "zip": {
       "Package": "zip",
