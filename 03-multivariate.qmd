@@ -731,13 +731,32 @@ $$ {#eq-lookoutH}
 
 @fig-kdetda shows the resulting kernel density estimate using this bandwidth. This has effectively captured the annulus structure of the data.
 
-  ```{r}
-  #| label: fig-kdetda
-  #| code-fold: false
-  #| fig.cap: "Bivariate kernel density estimate with bandwidth chosen using TDA"
-  annulus_density <- X |>
-    kde(H = kde_bandwidth(X, method = "lookout"))
-  annulus_density |>
-    autoplot() +
-    geom_point(aes(x, y), data = X, alpha=0.15)
-  ```
+```{r}
+#| label: fig-kdetda
+#| code-fold: false
+#| fig.cap: "Bivariate kernel density estimate with bandwidth chosen using TDA"
+annulus_density <- X |>
+  kde(H = kde_bandwidth(X, method = "lookout"))
+annulus_density |>
+  autoplot() +
+  geom_point(aes(x, y), data = X, alpha=0.15)
+```
+
+We can repeat the bivariate kde for the Old Faithful data, shown in @fig-ofbivariate2, but this time using the bandwidth matrix given by @eq-lookoutH. The resulting density estimate is shown in @fig-kdeogktda. This has captured the two modes of the data, and makes it clear that one is much larger the other; it also highlights the outliers.
+
+```{r}
+#| label: fig-kdeogktda
+#| code-fold: false
+#| fig.cap: "Bivariate kernel density estimate with bandwidth chosen using TDA"
+of <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000) |>
+  select(duration, waiting)
+of_density <- of |>
+  kde(H = kde_bandwidth(of, method = "lookout"))
+of_density |>
+  autoplot(prob = c(0.5, 0.90, 0.99), fill = TRUE, 
+           show_points = TRUE, show_mode = TRUE, show_lookout = TRUE) +
+  labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
+```
+
+The code above also demonstrates some of the arguments of the `autoplot()` function for `kde` objects. The `prob` argument specifies the probability contours to be drawn, while `fill` determines whether the contours are filled or not. The `show_points`, `show_mode` and `show_lookout` arguments determine whether the data points, mode and anomalies are shown on the plot. We will discuss how the `lookout` anomalies are determined in @sec-lookout.
