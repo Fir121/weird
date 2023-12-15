@@ -670,9 +670,9 @@ pst <- plot_persist(ph1) + xlab("Birth") + ylab("Death")
 patchwork::wrap_plots(bcd, pst, nrow = 1)
 ```
 
-@fig-barcodeandpersistence shows the barcode and the persistence diagram of the point cloud shown in @fig-annulus. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in @fig-barcodeandpersistence denote the 0-dimensional features (i.e., connected components), and the blue lines denote 1-dimensional features (or holes). The same information is shown in the persistence diagram, where each point corresponds to one line, with the coordinates of the point equal to the birth and death diameters of the feature.
+@fig-barcodeandpersistence shows the barcode and the persistence diagram of the point cloud shown in @fig-annulus. The barcode comprises a set of horizontal line segments, each denoting a feature that starts at its birth diameter and ends at its death diameter. These line segments are grouped by their dimension. The orange lines in @fig-barcodeandpersistence denote the connected components, and the blue lines denote holes. The same information is shown in the persistence diagram, where each point corresponds to one line, with the coordinates of the point equal to the birth and death diameters of the feature.
 
-If there are $n$ observations, then there are $n$ 0-dimensional features, each born at diameter 0, and which die when the corresponding observation is connected to one or more other observations. The first death occurs when the closest two points merge, so the corresponding two features have the same birth and the same death diameters. Rather than have a repeated bar, only $n-1$ bars are shown. As $\varepsilon$ increases, the 0-dimensional features disappear one by one, as they merge with neighbouring features, and eventually the number of connected components decreases to 1 when all observations are connected.
+If there are $n$ observations, then there are $n$ connected components (or 0-dimensional features), each born at diameter 0, and which die when the corresponding observation is connected to one or more other observations. The first death occurs when the closest two points merge, so the corresponding two features have the same birth and the same death diameters. Rather than have a repeated bar, only $n-1$ bars are shown. As $\varepsilon$ increases, the connected components disappear one by one, as they merge with neighbouring features, and eventually the number of connected components decreases to 1 when all observations are connected.
 
 The 1-dimensional features are born when a hole appears in the point cloud, and die when the hole disappears. The long blue line in @fig-barcodeandpersistence is born at `r sprintf("%.2f",longblueline$birth)` and dies at `r sprintf("%.2f",longblueline$death)`, and corresponds to the hole at the centre of the point cloud in @fig-annulus.
 
@@ -682,11 +682,11 @@ Features that continue for a large range of $\varepsilon$ represent structural p
 
 These topological concepts can be used to determine a bandwidth for a kernel density estimate designed for anomaly detection. First we construct the barcode of the data cloud for dimension zero using Vietoris-Rips complexes with increasing diameter $\varepsilon$. From the barcode we obtain the sequence of death diameters $\{d_i\}_{i=1}^n$ for the connected components.
 
-Consider the example shown in @fig-tdaknn, comprising $n=1000$ observations where most points lie on an annulus, with a few points near the centre. The left panel shows a scatterplot of the data, while the barcodes for dimension 0 are shown in the centre. The right panel displays only the first 20 barcodes, with the dashed line drawn at the second largest death diameter.
+Consider the example shown in @fig-tdaknn, comprising $n=1000$ observations where most points lie on an annulus, with a few points near the centre. The left panel shows a scatterplot of the data, while the barcodes for the connected components are shown in the centre. The right panel displays only the first 20 barcodes, with the dashed line drawn at the second largest death diameter.
 
 ```{r}
 #| label: fig-tdaknn
-#| fig-cap: "Left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the centre. The other panels show the barcodes for dimension 0, with the dashed line drawn at the second largest death diameter. The right panel is a zoomed-in version of the top few barcodes from the centre panel."
+#| fig-cap: "Left: A scatterplot of 1000 observations with most points falling on an annulus and some points near the centre. The other panels show the barcodes for the connected components, with the dashed line drawn at the second largest death diameter. The right panel is a zoomed-in version of the top few barcodes from the centre panel."
 #| fig-height: 3
 #| fig-width: 8
 #| fig-asp: 0.35
