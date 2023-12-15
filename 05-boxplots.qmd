@@ -519,7 +519,7 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 #| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015. Below the density estimate is shown an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions, and observations outside the 99% region shown as individual points."
 of <- oldfaithful |>
   filter(duration < 7000)
-kde(of$duration, h = kde_bandwidth(of$duration)) |>
+kde(of$duration, h = kde_bandwidth(of$duration, method = "lookout")) |>
   autoplot(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
 ```
 
@@ -535,7 +535,7 @@ of |> gg_hdrboxplot(duration) +
 
 Points outside the 99% region are shown separately and indicate possible outliers. These points are jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
-Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space.
+Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space. The red point corresponds to an observation that has been identified as an anomaly under the "lookout" algorithm (discussed in @sec-lookout).
 
 The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bivariate HDR boxplot of the duration and waiting times for the Old Faithful data. Here we have filtered out very long durations and waiting times first.
 
