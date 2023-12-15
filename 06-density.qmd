@@ -8,7 +8,7 @@ source("before-each-chapter.R")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to first estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Density scores and the lookout algorithm
+## Density scores and the lookout algorithm {#sec-lookout}
 
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
 
@@ -408,21 +408,9 @@ of_scores <- oldfaithful |>
 of_scores |> arrange(desc(loo_score))
 ```
 
-The two infinite LOO scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values. @fig-ofscores shows the kde scores for each observation. This has the shape of $-\log(f)$, and so we can see that the lowest score corresponds to the mode of the estimated density.
+Low lookout probabilities indicate likely anomalies and high probabilities indicate normal points. This procedure has identified the maximum and minimum eruptions as clear anomalies. These are highly improbable given the rest of the data. 
 
-
-```{r}
-#| label: fig-ofscores
-#| fig.cap: "KDE scores for the Old Faithful eruption durations."
-#| dependson: ofscores
-#| code-fold: false
-of_scores |>
-  filter(duration < 7000) |>
-  ggplot(aes(x = duration, y = score)) +
-  geom_point()
-```
-
-Low lookout probabilities indicate likely outliers and high probabilities indicate normal points. This procedure has identified the minimum and maximum eruptions as clear outliers. In addition, one other observation has a slightly low lookout probability (at `r sort(of_scores$lookout)[3]`). @fig-ofpot shows an HDR boxplot of the data, with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
+@fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
 
 ```{r}
 #| label: fig-ofpot
