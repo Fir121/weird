@@ -2630,7 +2630,7 @@
     },
     "tidytuesdayR": {
       "Package": "tidytuesdayR",
-      "Version": "1.0.2",
+      "Version": "1.0.3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2648,7 +2648,7 @@
         "usethis",
         "xml2"
       ],
-      "Hash": "a4d0be55cd1dae117000d040df8ebcc0"
+      "Hash": "927fabc1e4f863f9c18098e119f6db82"
     },
     "tidyverse": {
       "Package": "tidyverse",
@@ -2856,11 +2856,11 @@
       "Version": "0.0.0.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
+      "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "fc2787ef1a59b69d54f982270670866e89bd21b5",
+      "RemoteSha": "c761b5f524c4f8edd3c6c09008f0432844c4edc5",
+      "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
         "aplpack",
@@ -2876,12 +2876,13 @@
         "ks",
         "lookout",
         "purrr",
+        "rlang",
         "robustbase",
         "rstudioapi",
         "stray",
         "tibble"
       ],
-      "Hash": "6001d2f1495d9464dcd15f6eaea96c3c"
+      "Hash": "32d45c1214b56ffcabac9bf219b8e12a"
     },
     "whisker": {
       "Package": "whisker",

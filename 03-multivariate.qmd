@@ -459,7 +459,7 @@ A more data-driven approach, is the "plug-in" estimator [@chacon2018multivariate
 
 A common approach is to specify $\bm{H}$ to be diagonal, with elements equal to the squares of univariate bandwidth rules. (The univariate bandwidths are usually defined as the standard deviation of the kernel, while multivariate bandwidth matrices correspond to the covariance matrix of the kernel. Hence, the univariate bandwidths need to be squared if used in a bandwidth matrix.) That is, if $h_1,\dots,h_d$ are the univariate bandwidths for each of the variables, then the corresponding diagonal bandwidth matrix is given by $\bm{H} = \text{diag}(h_1^2,\dots,h_d^2)$. For example, `geom_density_2d()` uses a bivariate Gaussian kernel with diagonal bandwidth matrix where the diagonal values are given by the squares of @eq-nrd. However, this approach leads to bandwidths that are too small, as it ignores the convergence properties of the multivariate estimator. Additionally, any diagonal bandwidth matrix implicitly assumes that the variables are uncorrelated, and leads to more biased estimators.
 
-In general, we will use the robust normal reference rule, as implemented by `kde_bandwidth()`, unless otherwise stated.
+As with univariate density estimation, when estimating the density in the tails of the distribution, it is usually better to have a larger bandwidth than those given by the rules above. By default, the `kde_bandwidth()` function will return the bandwidth matrix given by the robust normal reference rule (@eq-gaussianH) with $\bm{\Sigma}$ estimated using @eq-ogk. When `method = "double"`, it will return the same matrix multiplied by 4 (because it is a variance, doubling the scale increases the matrix by a factor of four).
 
 ### Further reading
 

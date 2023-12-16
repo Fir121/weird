@@ -408,7 +408,7 @@ of_scores <- oldfaithful |>
 of_scores |> arrange(desc(loo_score))
 ```
 
-Low lookout probabilities indicate likely anomalies and high probabilities indicate normal points. This procedure has identified the maximum and minimum eruptions as clear anomalies. These are highly improbable given the rest of the data. 
+Low lookout probabilities indicate likely anomalies and high probabilities indicate normal points. This procedure has identified the maximum and minimum eruptions as clear anomalies. These are highly improbable given the rest of the data.
 
 @fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
 
