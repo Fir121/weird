@@ -408,7 +408,7 @@ of_scores <- oldfaithful |>
 of_scores |> arrange(desc(loo_score))
 ```
 
-Low lookout probabilities indicate likely anomalies and high probabilities indicate normal points. This procedure has identified the maximum and minimum eruptions as clear anomalies. These are highly improbable given the rest of the data.
+The two infinite LOO scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values.
 
 @fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points identified as lookout anomalies highlighted in red. Notice that we can simply add the argument `show_lookout = TRUE` in order to highlight points with lookout probabilities less than 0.05.
 
@@ -456,7 +456,7 @@ of |>
   arrange(lookout, duration)
 ```
 
-Now, `r sum(lookout(of) < 0.05)` anomalies are identified, with four of them having infinite LOO density scores. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
+Now, `r english::words(sum(lookout(of) < 0.05))` anomalies are identified, with `r english::words(sum(density_scores(of, loo = TRUE) == Inf))` of them having infinite LOO density scores. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
 
 ```{r}
 #| label: fig-ofpot2
@@ -500,6 +500,6 @@ tibble(y = rchisq(1000, df = 4)) |>
   arrange(lookout, y)
 ```
 
-The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not deteriorate with the heavier-tailed or skewed distributions.
+The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not appear to deteriorate with the heavier-tailed or skewed distributions.
 
 ## Other density-based methods
