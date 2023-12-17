@@ -28,7 +28,7 @@ Here is an example using only the first five observations of the `old_faithful` 
 #| label: dist-1
 #| code-fold: false
 head(oldfaithful, 5)
-of <- head(oldfaithful, 5) |> select(-time) 
+of <- head(oldfaithful, 5) |> select(-time)
 of |> dist()
 ```
 
@@ -79,41 +79,24 @@ Notice that all four of the distances introduced so far are equal to the absolut
 
 When the variables have different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
 
-We could just scale each variable separately, by subtracting the means and dividing by the standard deviations. However, this does not take into account the relationships between variables. To account for correlations as well as scale, we can use Mahalanobis distances, named after the Indian statistician Prasanta Chandra Mahalanobis. If our observations are from a probability distribution with covariance given by $\bm{\Sigma}$, then the Mahalanobis distance between $\bm{y}_i$ and $\bm{y}_j$ is given by
+Suppose we scale the data using the approach described in @sec-scaling, so that the scaled data are given by
+$\bm{z}_i = \bm{U} \bm{y}_i$, where $\bm{U}'\bm{U} = \bm{\Sigma}^{-1}$ is the Cholesky decomposition of the inverse of the covariance matrix of the data. Then the Euclidean distance between $\bm{z}_i$ and $\bm{z}_j$ is given by
 $$
-  \|\bm{y}_i - \bm{y}_j\|_{\bm{\Sigma}} = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{\Sigma}^{-1} (\bm{y}_i - \bm{y}_j)}.
+  \| \bm{z}_i - \bm{z}_j\|_2 = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{U}' \bm{U} (\bm{y}_i - \bm{y}_j)} = \|\bm{y}_i - \bm{y}_j\|_{\bm{\Sigma}}
 $$
-This is a multivariate generalization of the number of standard deviations between any two observations. Let $\bm{\Sigma}^{-1} = \bm{U}' \bm{U}$ be the Cholesky decomposition of $\bm{\Sigma}^{-1}$. Then the data can be scaled by $\bm{U}$, giving $\bm{z}_i = \bm{U} \bm{y}_i$, so that the covariance matrix of the scaled data is the identity matrix. Then the Mahalanobis distances can be written as the Euclidian distances between the scaled observations
-$$
-  \|\bm{y}_i - \bm{y}_j\|_{\bm{\Sigma}} = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{U}' \bm{U} (\bm{y}_i - \bm{y}_j)} = \| \bm{z}_i - \bm{z}_j\|_2.
-$$
+This is known as the Mahalanobis distance, named after the Indian statistician Prasanta Chandra Mahalanobis.  It is a multivariate generalization of the number of standard deviations between any two observations.
 
-Mahalanobis distance is not an option provided by the `dist()` function, so we will need to compute the scaled data first. Because there are anomalies in the data set, we will use the robust method given by @eq-ogk for estimating the covariance matrix.
-
-```{r}
-#| label: dist-6
-#| code-fold: false
-# Mahalanobis distance calculation
-library(robustbase)
-of <- oldfaithful |> select(-time) 
-S <- covOGK(of, sigmamu = s_IQR)
-U <- chol(solve(S$cov))
-z <- as.matrix(of) %*% t(U)
-z |> head(5) |> dist()
-```
-
-Because we will often scale the data before computing distances, the weird package contains a `mvscale()` function to do this for us.
+Mahalanobis distance is not an option provided by the `dist()` function, so we will need to compute the scaled data first.
 
 ```{r}
 #| label: dist-7
 #| code-fold: false
-oldfaithful |> 
-  select(-time) |> 
-  mvscale() |> 
-  head(5) |> 
+oldfaithful |>
+  select(-time) |>
+  mvscale() |>
+  head(5) |>
   dist()
 ```
-
 
 For more information about pairwise distances, see @Borg2005.
 
@@ -149,7 +132,7 @@ kann <- dbscan::kNN(z, k = 5, approx = 2)
 oldfaithful[kann$id[1, ], ]
 ```
 
-In this case, the same five observations have been found. 
+In this case, the same five observations have been found.
 
 ## Local outlier factors
 

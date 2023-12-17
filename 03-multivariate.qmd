@@ -524,3 +524,21 @@ patchwork::wrap_plots(plot1, plot2, nrow = 1)
 ```
 
 Another neat property of Normal distributions is that the conditional distribution of a subset of variables is also Normal. For example, suppose $\bm{Y} = (Y_1,Y_2,Y_3)$ is a multivariate Normal random variable. Then the conditional distribution of $Y_1$ given $Y_2$ and $Y_3$ is also Normally distributed.
+
+## Multivariate scaling {#sec-scaling}
+
+Some anomaly detection methods will require the data to have been scaled first, to prevent the variables with the largest ranges from dominating. One common scaling approach is to apply univariate scaling on each variable by subtracting its mean and dividing by its standard deviation. But there are two problems with this approach. First, the mean and standard deviation are affected by anomalies, and it would be better to use an approach that was robust to anomalies. Second, this approach does not take into account the relationships between the variables. It will be be useful to have a multivariate scaling approach that takes into account the relationships between variables.
+
+Suppose our data set consists of $n$ observations of $d$ variables, $\bm{y}_1,\dots,\bm{y}_n$, with most observations coming from a distribution with mean $\bm{\mu}$ and covariance matrix $\bm{\Sigma}$. Let $\bm{\Sigma}^{-1} = \bm{U}' \bm{U}$ be the Cholesky decomposition of $\bm{\Sigma}^{-1}$. Then the data can be scaled by $\bm{U}$, giving $\bm{z}_i = \bm{U} (\bm{y}_i - \bm{\mu})$, so that the covariance matrix of the scaled data is the identity matrix. This can be thought of as both scaling and rotating the data, so that the variables are uncorrelated with mean zero and unit variance. It is the multivariate equivalent of calculating z-scores.
+
+Because there may be anomalies in the data set, we will estimate $\bm{\mu}$ using the pointwise median, and $\bm{\Sigma}$ using the robust covariance matrix $\bm{S}_{\text{OGK}}$ (@eq-ogk). The `mvscale()` function in the `weird` package will do this for us.
+
+In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours.
+
+```{r}
+#| label: dist-7
+#| code-fold: false
+oldfaithful |>
+  select(-time) |>
+  mvscale()
+```
