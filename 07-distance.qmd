@@ -6,89 +6,132 @@
 source("before-each-chapter.R")
 ```
 
-## Multivariate distances {#sec-distances}
+Distance-based anomaly detection methods are based on the distance between observations. The pairwise distances between observations are computed, and anomalies are identified as those observations that are far from other observations.
 
-Euclidean distance
+Before we discuss some of the methods that fall into this class of algorithms, we will first discuss some of the different ways of measuring distances between observations.
 
-Mahalanobis distance
+## Multivariate pairwise distances {#sec-distances}
 
-Manhattan:
-: Absolute distance between the two vectors:
-$$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
-This is also known as the $L_1$ distance. It is called the Manhattan distance as it gives the shortest path  between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
+Many anomaly detection algorithms are based on pairwise distances between observations. Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. In univariate data, the distance between any two observations is simply the absolute difference between the points. But in multivariate data, there are many different ways of measuring distances between observations.
 
-Minkowski:
-: This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
-$$\|\bm{y}_i - \bm{y}_j\| = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
-The value of $p$ is specified using the `p` argument. It is named after the German mathematician Hermann Minkowski.
+### Euclidean distance
 
-Maximum:
-: Maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$:
-$$\|\bm{y}_i - \bm{y}_j\| = \max_k |y_{ik}-y_{jk}|.$$
+Perhaps the most obvious way to define the distance between any two points $\bm{y}_i$ and $\bm{y}_j$ is to measure the length of the straight line between the points. This is commonly known as Euclidean distance, named after the famous Greek mathematician Euclid, and can be defined as
+$$\|\bm{y}_i - \bm{y}_j\|_2 = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
+This is also known as the $L_2$ distance. For $d=1$ or $d=2$, this is the physical distance between the points when plotted on a strip plot or a scatterplot (provided there is no jittering used).
 
-Canberra:
-: $$\|\bm{y}_i - \bm{y}_j\| = \sum_{k=1}^d \frac{|y_{ik}-y_{jk}|}{|y_{ik}|+|y_{jk}|}.$$
-Terms with zero numerator and denominator are omitted from the sum. This distance was introduced by two Australian scientists, Godfrey Lance and Bill Williams, who named it after their home city of Canberra. It scales the distances between components by the size of the components, so there is an inbuilt scaling which avoids problems with variables on different units. However, if there are components which are close to zero, but not identical to zero, the measure is numerically unstable. So it is better to scale the data explicitly before computing a distance, unless the variables cannot take small values.
+The `dist()` function will return a distance matrix containing all pairwise distances between observations. The argument `method` specifies the type of distance to compute, with the default being Euclidean distance.
 
-Binary:
-: This is designed for binary vectors where each element is either 0 or 1. The vectors are regarded as binary bits, so non-zero elements are ‘on’ and zero elements are ‘off’. The distance is the proportion of bits in which only one is on amongst those in which at least one is on. This may be useful for distances between logical variables.
-
-
-## Pairwise distances
-
-Many anomaly detection algorithms are based on pairwise distances between observations. If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a long time for large $n$.
-
-Suppose our observations are denoted by $\bm{y}_1,\dots,\bm{y}_n$. When we have numerical data, we will usually want to use a Euclidean distance, named after the famous Greek mathematician Euclid. That is, the distance between points $\bm{y}_i = (y_{i1},\dots,y_{id})'$ and $\bm{y}_j=(y_{j1},\dots,y_{jd})'$ is given by
-$$\|\bm{y}_i - \bm{y}_j\| = \sqrt{\sum_{k=1}^d (y_{ik}-y_{jk})^2}.$$
-This is also known as the $L_2$ distance.
-
-For $d=1$ or $d=2$, this is the physical distance between the points when plotted on a strip plot or a scatterplot (provided there is no jittering used).
-
-The `dist()` function will return a distance matrix containing all pairwise distances computed in this way. Here is an example using only the first five observations of the `old_faithful` data set (omitting the time stamp). Because the distances are symmetric, only the lower triangle of the matrix is computed.
+Here is an example using only the first five observations of the `old_faithful` data set (omitting the time stamp). Because the distances are symmetric, only the lower triangle of the matrix is computed.
 
 ```{r}
 #| label: dist-1
 #| code-fold: false
-oldfaithful |>
-  select(-time) |>
-  head(5) |>
-  dist()
+head(oldfaithful, 5)
+of <- head(oldfaithful, 5) |> select(-time) 
+of |> dist()
 ```
 
-When the variables have different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
+### Manhattan distance
+
+The Manhattan distance (or absolute distance) between two observations is given by
+$$\|\bm{y}_i - \bm{y}_j\|_1 = \sum_{k=1}^d |y_{ik}-y_{jk}|.$$
+This is also known as the $L_1$ distance. It is called the Manhattan distance as it gives the shortest path between the corners of city blocks (denoted as points on a grid) when those blocks are rectangular, as they mostly are in Manhattan. For the same reason, it is also sometimes called the "taxicab" distance or the "city block" distance.
+
+Let's compute the Manhattan distances for the same five observations from the `oldfaithful` data set.
 
 ```{r}
 #| label: dist-2
 #| code-fold: false
-oldfaithful |>
-  select(-time) |>
-  scale() |>
-  head(5) |>
+of |> dist(method = "manhattan")
+```
+
+### Minkowski distance
+
+This generalizes the Manhattan and Euclidean distances to use powers of $p$ to define the $L_p$ distance:
+$$\|\bm{y}_i - \bm{y}_j\|_p = \left(\sum_{k=1}^d (y_{ik}-y_{jk})^p\right)^{1/p}.$$
+It is named after the German mathematician, Hermann Minkowski.
+
+For example, here is the Minkowsi distance with $p = 3$ for the same five observations.
+
+```{r}
+#| label: dist-3
+#| code-fold: false
+of |> dist(method = "minkowski", p = 3)
+```
+
+### Chebyshev Distance
+
+The maximum distance between any components of $\bm{y}_i$ and $\bm{y}_j$ is known as the Chebyshev distance (after the Russian mathematician, Pafnuty Chebyshev), given by
+$$\|\bm{y}_i - \bm{y}_j\|_{\text{max}} = \max_k |y_{ik}-y_{jk}|.$$
+
+```{r}
+#| label: dist-4
+#| code-fold: false
+of |> dist(method = "maximum")
+```
+
+This is also known as chessboard distance, as it is the number of moves a king would have to travel on a chessboard to move between two squares. The Chebyshev distance is equivalent to the Minkowski distance with $p=\infty$.
+
+Notice that all four of the distances introduced so far are equal to the absolute difference between observations when $d=1$. The next distance does not have this property.
+
+### Mahalanobis distance
+
+When the variables have different scales, the variables with the largest ranges will dominate the distance measures. In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours. Consequently, it is often preferable to scale the data before computing distances.
+
+We could just scale each variable separately, by subtracting the means and dividing by the standard deviations. However, this does not take into account the relationships between variables. To account for correlations as well as scale, we can use Mahalanobis distances, named after the Indian statistician Prasanta Chandra Mahalanobis. If our observations are from a probability distribution with covariance given by $\bm{\Sigma}$, then the Mahalanobis distance between $\bm{y}_i$ and $\bm{y}_j$ is given by
+$$
+  \|\bm{y}_i - \bm{y}_j\|_{\bm{\Sigma}} = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{\Sigma}^{-1} (\bm{y}_i - \bm{y}_j)}.
+$$
+This is a multivariate generalization of the number of standard deviations between any two observations. Let $\bm{\Sigma}^{-1} = \bm{U}' \bm{U}$ be the Cholesky decomposition of $\bm{\Sigma}^{-1}$. Then the data can be scaled by $\bm{U}$, giving $\bm{z}_i = \bm{U} \bm{y}_i$, so that the covariance matrix of the scaled data is the identity matrix. Then the Mahalanobis distances can be written as the Euclidian distances between the scaled observations
+$$
+  \|\bm{y}_i - \bm{y}_j\|_{\bm{\Sigma}} = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{U}' \bm{U} (\bm{y}_i - \bm{y}_j)} = \| \bm{z}_i - \bm{z}_j\|_2.
+$$
+
+Mahalanobis distance is not an option provided by the `dist()` function, so we will need to compute the scaled data first. Because there are anomalies in the data set, we will use the robust method given by @eq-ogk for estimating the covariance matrix.
+
+```{r}
+#| label: dist-6
+#| code-fold: false
+# Mahalanobis distance calculation
+library(robustbase)
+of <- oldfaithful |> select(-time) 
+S <- covOGK(of, sigmamu = s_IQR)
+U <- chol(solve(S$cov))
+z <- as.matrix(of) %*% t(U)
+z |> head(5) |> dist()
+```
+
+Because we will often scale the data before computing distances, the weird package contains a `mvscale()` function to do this for us.
+
+```{r}
+#| label: dist-7
+#| code-fold: false
+oldfaithful |> 
+  select(-time) |> 
+  mvscale() |> 
+  head(5) |> 
   dist()
 ```
 
-The `scale()` function subtracts the mean and divides by the standard deviation for each column of data. Therefore, all variables in the resulting scaled data have mean zero and standard deviation equal to 1.
-
-The `dist()` function will also compute other types of distances (discussed in @sec-distances) which may be more appropriate for some kinds of data. These are specified using the `method` argument.
 
 For more information about pairwise distances, see @Borg2005.
 
 ## Nearest neighbours
 
+If there are $n$ observations, then there are $n(n-1)/2$ pairwise distances to compute, so this is an $O(n^2)$ operation which can take a long time for large $n$.
+
 Some algorithms only compute the pairwise distances of the $k$ nearest observations, although finding those observations requires some additional distances to be computed. For some types of distances, efficient solutions are available using kd trees [@Bentley1975;@Arya1998] that find the $k$ nearest neighbours to each observation in $O(n\log(n))$ time.
 
 The calculation of $k$ nearest neighbours is useful for more than anomaly detection problems. It is also the basis of a popular classification method due to the Berkeley statisticians Evelyn Fix and Joe Hodges [@knn] which is often known as the "kNN algorithm".
 
-Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `dbscan` package uses kd trees to quickly identify the $k$ nearest observations to each eruption. As noted earlier, we will scale the data before computing any distances.
+Suppose we use the Old Faithful data to find eruptions that are neighbours in the (duration, waiting) space. The `dbscan` package uses kd trees to quickly identify the $k$ nearest observations to each eruption. We will use the scaled data computed in the last section to find the 5 nearest neighbours to each eruption.
 
 ```{r}
 #| label: knn
 #| code-fold: false
 # Find 5 nearest neighbours to each eruption
-knn <- oldfaithful |>
-  select(duration, waiting) |>
-  scale() |>
-  dbscan::kNN(k = 5)
+knn <- dbscan::kNN(z, k = 5)
 # First eruption in the data set
 oldfaithful[1, ]
 # Five closest observations
@@ -101,15 +144,12 @@ For large data sets, approximations are available which speed up the computation
 #| label: ann
 #| code-fold: false
 # Find 5 approximate nearest neighbours to each eruption
-kann <- oldfaithful |>
-  select(duration, waiting) |>
-  scale() |>
-  dbscan::kNN(k = 5, approx = 2)
+kann <- dbscan::kNN(z, k = 5, approx = 2)
 # Five closest observations
 oldfaithful[kann$id[1, ], ]
 ```
 
-Here the fifth closest observation has been omitted, and another nearby observation has been included instead, but otherwise the approximation has identified four of the five nearest observations.
+In this case, the same five observations have been found. 
 
 ## Local outlier factors
 

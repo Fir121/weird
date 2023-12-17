@@ -2866,7 +2866,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "c761b5f524c4f8edd3c6c09008f0432844c4edc5",
+      "RemoteSha": "563627b09f275297139803f17322305d1a9de7e4",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -2889,7 +2889,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "32d45c1214b56ffcabac9bf219b8e12a"
+      "Hash": "771d90986bbd8956ca4440a1416ec2bb"
     },
     "whisker": {
       "Package": "whisker",
