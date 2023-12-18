@@ -24,7 +24,9 @@ book:
     - "13-text.qmd"
     - "14-distributions.qmd"
     - "15-cybersecurity.qmd"
-    - "99-refs.qmd"
+    - "references.qmd"
+  appendices:
+    - "appendix.qmd"
   page-footer:
     left: "Published by OTexts using [Quarto](https://quarto.org). {{< fa copyright >}} [Rob J Hyndman](https://robjhyndman.com)"
     border: false

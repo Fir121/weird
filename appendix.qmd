@@ -1,0 +1,45 @@
+# Matrix algebra {#sec-appendix}
+
+Working with multivariate data inevitably involves writing some of the ideas using matrix expressions and matrix algebra. In this appendix, a few of the results that we need are collected for convenient reference. Readers who have not previously studied matrix algebra are recommended to do some self-study using a good introductory textbook such as @Gentle07 or @Searle06.
+
+## Identity matrix
+
+The identity matrix is like the number 1: multiplying a matrix by the identity matrix leaves the matrix unchanged. The identity matrix is a square matrix with ones on the diagonal and zeros elsewhere. The identity matrix is often denoted by $\bm{I}$. Sometimes we will use subscripts to denote the size of the identity matrix; e.g. $\bm{I}_n$ is an $n \times n$ identity matrix.
+
+## Matrix inverse
+
+For a square matrix $\bm{A}$, the inverse $\bm{A}^{-1}$ is defined such that $\bm{A}^{-1}\bm{A} = \bm{I}$, where $\bm{I}$ is the identity matrix. The inverse of a matrix can be computed using the `solve` function in R. Matrices that are not square do not have inverses. Matrices that are square but are not invertible are called singular matrices.
+
+## Determinants
+
+The determinant of a square matrix $\bm{A}$ is a scalar value denoted by $|\bm{A}|$ or $\text{det}(\bm{A})$. It describes the "scale" of the matrix, and is used when computing the inverse of a matrix, and in some other operations. The formula for a determinant is usually computed recursively, using the Laplace expansion, as follows:
+$$
+|\bm{A}| = \sum_{j=1}^n (-1)^{i+j} a_{ij} |\bm{A}_{ij}|,
+$$
+where $a_{ij}$ is the element in the $i$th row and $j$th column of $\bm{A}$, and $\bm{A}_{ij}$ is the matrix obtained by deleting the $i$th row and $j$th column of $\bm{A}$. The determinant of a $1 \times 1$ matrix is just the value of the element. The determinant of a $2 \times 2$ matrix is computed as
+$$
+|\bm{A}| = a_{11}a_{22} - a_{12}a_{21}.
+$$
+Singular matrices have a determinant of zero.
+
+The determinant of a matrix can be computed using the `det` function in R.
+
+## Eigenvalues and eigenvectors
+
+A matrix $\bm{A}$ has an eigenvector $\bm{v}$ and eigenvalue $\lambda$ if $\bm{A}\bm{v} = \lambda \bm{v}$. Thus, eigenvectors can be thought of as "directions" that remain unchanged when the matrix is applied, and the eigenvalues is the amount by which the eigenvector is scaled.
+
+The eigenvalues and eigenvectors of a matrix can be computed using the `eigen` function in R.
+
+## Positive definite matrices
+
+A **positive-definite** matrix is a special type of symmetric matrix where all the eigenvalues are positive. A positive-definite matrix is invertible and its inverse is also positive definite.
+
+A **positive semi-definite** matrix is a symmetric matrix where all the eigenvalues are non-negative. A positive semi-definite matrix is invertible if and only if it is positive definite.
+
+## Cholesky decomposition {#sec-cholesky}
+
+A Cholesky decomposition is like a square root for a matrix. It is a decomposition of a positive semi-definite matrix $\bm{A}$ into a product $\bm{A} = \bm{L}\bm{L}^T$, where $\bm{L}$ is a lower triangular matrix with non-negative diagonal entries. If $\bm{A}$ is positive definite, then the diagonal elements of $\bm{L}$ are positive.
+
+## Multivariate random variables
+
+Random variables in multivariate space are usually written as vectors. The mean of a random vector is the vector of means of the components, and the covariance matrix is the matrix of covariances between the components. The covariance matrix is always symmetric and positive semi-definite.
