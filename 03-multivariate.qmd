@@ -533,12 +533,20 @@ Suppose our data set consists of $n$ observations of $d$ variables, $\bm{y}_1,\d
 
 Because there may be anomalies in the data set, we will estimate $\bm{\mu}$ using the pointwise median, and $\bm{\Sigma}$ using the robust covariance matrix $\bm{S}_{\text{OGK}}$ (@eq-ogk). The `mvscale()` function in the `weird` package will do this for us.
 
-In this example, durations are much longer than waiting times, and so the duration variable is dominating the calculation of neighbours.
+Let's consider the `oldfaithful` data again, where durations are much longer than waiting times. @fig-scaling shows the data before and after scaling. The scaling has rotated the data a little, and the variables are now less correlated, and centered on zero. The right plot still appears to show some positive relationship between the variables, because the covariance matrix used for scaling was computed robustly, and so was largely based on the upper cluster of points.
 
 ```{r}
-#| label: dist-7
+#| label: fig-scaling
 #| code-fold: false
-oldfaithful |>
-  select(-time) |>
-  mvscale()
+#| warning: false
+p1 <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000) |>
+  ggplot(aes(x = duration, y = waiting)) +
+  geom_point(alpha = 0.2)
+p2 <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000) |>
+  mvscale() |>
+  ggplot(aes(x = duration, y = waiting)) +
+  geom_point(alpha = 0.2)
+patchwork::wrap_plots(p1, p2, nrow=1)
 ```
