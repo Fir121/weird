@@ -527,11 +527,31 @@ Another neat property of Normal distributions is that the conditional distributi
 
 ## Multivariate scaling {#sec-scaling}
 
-Some anomaly detection methods will require the data to have been scaled first, to prevent the variables with the largest ranges from dominating. One common scaling approach is to apply univariate scaling on each variable by subtracting its mean and dividing by its standard deviation. But there are two problems with this approach. First, the mean and standard deviation are affected by anomalies, and it would be better to use an approach that was robust to anomalies. Second, this approach does not take into account the relationships between the variables. It will be be useful to have a multivariate scaling approach that results in scaled variables that are uncorrelated, and have mean zero and unit variance.
+Some anomaly detection methods will require the data to have been scaled first, to prevent the variables with the largest ranges from dominating.
 
-Suppose our data set consists of $n$ observations of $d$ variables, $\bm{y}_1,\dots,\bm{y}_n$, with most observations coming from a distribution with mean $\bm{\mu}$ and covariance matrix $\bm{\Sigma}$. Let $\bm{\Sigma}^{-1} = \bm{U}' \bm{U}$ be the Cholesky decomposition (see @sec-cholesky) of $\bm{\Sigma}^{-1}$. Then the data can be scaled by $\bm{U}$, giving $\bm{z}_i = \bm{U} (\bm{y}_i - \bm{\mu})$, so that the covariance matrix of the scaled data is the identity matrix. This can be thought of as both scaling and rotating the data, so that the variables are uncorrelated with mean zero and unit variance. It is the multivariate equivalent of calculating z-scores.
+### Z-scores
 
-Because there may be anomalies in the data set, we will estimate $\bm{\mu}$ using the pointwise median (i.e., the vector of medians for each variable), and $\bm{\Sigma}$ using the robust covariance matrix $\bm{S}_{\text{OGK}}$ (@eq-ogk). The `mvscale()` function in the `weird` package will do this for us.
+One common approach is to apply univariate scaling on each variable, by subtracting its mean and dividing by its standard deviation. This gives $z$-scores.
+
+If our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
+$$z_i = (y_i - \bar{y})/s_y$$
+where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observations. These are easily computed using the `scale()` function.
+
+However, the mean and standard deviation may be affected by anomalies, and it would be better to use an approach that was robust to anomalies.
+
+### Robust z-scores
+
+The simplest way to make the scaling robust to anomalies is to use the median instead of the mean, and to use a robust estimate of the standard deviation such as $s_{\text{IQR}} = 0.7413\text{IQR}$ (@sec-robust-univariate). Robust z-scores computed in this way can be obtained using the `mvscale()` function with the argument `cov = NULL`.
+
+### Multivariate z-scores
+
+It is sometimes useful to scale a set of multivariate data, so that the scaled variables are uncorrelated with each other, and have mean zero and unit variance.
+
+Suppose each observation is a vector $\bm{y}$, with most observations coming from a distribution with mean $\bm{\mu}$ and covariance matrix $\bm{\Sigma}$. Let $\bm{\Sigma}^{-1} = \bm{U}' \bm{U}$ be the Cholesky decomposition (see @sec-cholesky) of $\bm{\Sigma}^{-1}$. Then the data can be scaled by $\bm{U}$, giving $\bm{z} = \bm{U} (\bm{y} - \bm{\mu})$, so that the covariance matrix of the scaled data is the identity matrix. This can be thought of as both scaling and rotating the data, so that the variables are uncorrelated with mean zero and unit variance. It is the multivariate equivalent of calculating z-scores. They can be computed using the `mvscale()` function with the arguments `center = mean` and `cov = stats::cov`.
+
+### Robust multivariate z-scores
+
+When there may be anomalies in the data set, we can replace the mean by the pointwise median (i.e., the vector of medians for each variable), and estimate $\bm{\Sigma}$ using the robust covariance matrix $\bm{S}_{\text{OGK}}$ (@eq-ogk). The `mvscale()` function in the `weird` package will do this for us, by default.
 
 Let's consider the `oldfaithful` data again, where durations are much longer than waiting times. @fig-scaling shows the data before and after scaling. The scaling has rotated the data a little, and the variables are now less correlated, and centered on zero. The right plot still appears to show some positive relationship between the variables, because the covariance matrix used for scaling was computed robustly, and so was largely based on the upper cluster of points.
 
@@ -540,14 +560,18 @@ Let's consider the `oldfaithful` data again, where durations are much longer tha
 #| code-fold: false
 #| warning: false
 #| fig.cap: "Old Faithful duration and waiting time data, before and after scaling."
-oldfaithful |> 
-  filter(duration < 7000, waiting < 7000) |> 
-  mutate(scale = "Original") %>%
-  bind_rows(mvscale(.) |> mutate(scale = "Scaled")) |> 
+of <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000)
+p1 <- of |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.2) +
-  facet_wrap(. ~ scale, scales = "free") +
-  labs(title = "Old Faithful data", 
-       x = "Duration of eruption", 
-       y = "Waiting time to next eruption")
+  labs(title = "Original data",
+       x = "Duration of eruption (seconds)",
+       y = "Waiting time to next eruption (seconds)")
+p2 <- mvscale(of, warning = FALSE) |>
+  ggplot(aes(x = z1, y = z2)) +
+  geom_point(alpha = 0.2) +
+  labs(title = "Scaled data",
+       x = latex2exp::TeX("$z_1$"), y = latex2exp::TeX("$z_2$"))
+patchwork::wrap_plots(p1, p2, nrow=1)
 ```
