@@ -104,13 +104,13 @@ nanomalies <- tibble(
   )
 ```
 
-## Z scores
+## Z scores {#sec-zscores}
 
-Many parametric methods are based on $z$-scores which assume the data come from a normal distribution. If our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
+Many parametric methods are based on $z$-scores (@sec-scaling) and assume that the data come from a normal distribution. Recall that if our data are given by $y_1,\dots,y_n$, then their $z$ scores are given by
 $$z_i = (y_i - \bar{y})/s_y$$
 where $\bar{y}$ is the mean and $s_y$ is the standard deviation of the observations.
 
-Some books recommend that observations where the absolute value of $z$ is above some threshold (usually 3) be identified as anomalies. This is a bad idea for several reasons.
+Some books recommend that observations be identified as anomalies when the absolute value of the corresponding $z$ is above some threshold (usually 3). This is a bad idea for several reasons.
 
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
 2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size.
