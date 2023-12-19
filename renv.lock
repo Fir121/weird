@@ -415,10 +415,10 @@
     },
     "brew": {
       "Package": "brew",
-      "Version": "1.0-8",
+      "Version": "1.0-10",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "d69a786e85775b126bddbee185ae6084"
+      "Hash": "8f4a384e19dccd8c65356dc096847b76"
     },
     "brio": {
       "Package": "brio",
@@ -2866,7 +2866,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "563627b09f275297139803f17322305d1a9de7e4",
+      "RemoteSha": "cb0f3a2dd2a423029f3f1e6fbff953f35634d83d",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -2889,7 +2889,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "771d90986bbd8956ca4440a1416ec2bb"
+      "Hash": "cc75bbfad90294defd9cb68bea273964"
     },
     "whisker": {
       "Package": "whisker",
