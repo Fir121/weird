@@ -1,1 +1,54 @@
 # Functional data {#sec-noneuclidean}
+
+```{r}
+#| include: false
+#| cache: false
+source("before-each-chapter.R")
+```
+
+```{r}
+#| echo: true
+#| code-fold: false
+#| message: false
+# Construct French male mortality data set
+frmort <- vital::as_vital(demography::fr.mort) |>
+  vital::collapse_ages(max_age = 100) |>
+  filter(Sex == "male") |>
+  as_tibble() |>
+  transmute(Year, Age, logmx = log(Mortality))
+
+# Wide version with ages on columns
+frmort_wide <- frmort |>
+  tidyr::pivot_wider(names_from = Age, values_from = logmx, names_prefix = "Age")
+
+# Compute first four principal components
+pca <- frmort_wide |>
+  select(-Year) |>
+  prcomp(center = TRUE, scale = FALSE, rank = 4) |>
+  broom::augment(frmort_wide[, "Year"]) |>
+  select(-.rownames)
+
+# Time series of first four PCs
+pca |>
+  tidyr::pivot_longer(starts_with(".fittedPC"),
+    names_to = "PC", values_to = "value", names_prefix = ".fittedPC"
+  ) |>
+  ggplot(aes(x = Year, y = value)) +
+  geom_line(aes(colour = PC))
+
+# Scatterplot of first two PCs
+pca |>
+  ggplot(aes(x = .fittedPC1, y = .fittedPC2)) +
+  geom_point()
+
+# Find outliers in the PCs
+pca_no_year <- pca |> select(-Year)
+pca <- pca |>
+  mutate(lookout = lookout(pca_no_year))
+outliers <- pca |> filter(lookout < 0.05)
+pca |>
+  ggplot(aes(x = .fittedPC1, y = .fittedPC2)) +
+  geom_point() +
+  geom_point(data = outliers, color = "red") +
+  ggrepel::geom_label_repel(data = outliers, aes(label = Year), )
+```
