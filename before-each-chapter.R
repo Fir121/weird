@@ -29,3 +29,6 @@ ggplot2::theme_update(text = element_text(family = 'Fira Sans'))
 # Avoid some conflicts
 conflicted::conflict_prefer("select", "dplyr")
 conflicted::conflict_prefer("filter", "dplyr")
+
+# Download data
+wine_reviews <- fetch_wine_reviews()

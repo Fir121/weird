@@ -168,6 +168,7 @@ The `wine_reviews` data set contains data on `r scales::comma(NROW(wine_reviews)
 ```{r}
 #| label: winedata
 #| code-fold: false
+#wine_reviews <- fetch_wine_reviews()
 wine_reviews
 ```
 
