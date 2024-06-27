@@ -145,7 +145,7 @@ pbs_fit <- pbs_stretch |> model(ets = ETS(Scripts))
 #| echo: false
 pbs_fit <- pbs_stretch |>
   model(ets = ETS(Scripts)) |>
-  poor_cache("pbs_fit")
+  cache("pbs_fit")
 ```
 
 ```{r}

@@ -230,7 +230,7 @@ breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 #| fig-cap: The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
 zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
     mutate(pmax = pspurious(n, rnorm, c = c)) |>
-    poor_cache("zspuriousdf")
+    cache("zspuriousdf")
 labels <- zspuriousdf |>
   group_by(c) |>
   filter(abs(pmax - 0.75) == min(abs(pmax - 0.75))) |>
@@ -263,7 +263,7 @@ zspurious2df <- tibble(n = n, c = 3) |>
     ) |>
     select(-c) |>
     pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
-    poor_cache("zspurious2df")
+    cache("zspurious2df")
 zspurious2df |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -435,7 +435,7 @@ From these, we can compute the probability of a spurious anomaly in a normal dis
 #| fig-cap: True size of the tests (i.e., the probability of a spurious anomaly) for normally distributed data with $\alpha=0.05$.
   pzscoredf <- df |>
     mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6)) |>
-    poor_cache("pzscoredf")
+    cache("pzscoredf")
 pzscoredf |>
   ggplot(aes(x = n, y = pmax, group = test, col = test)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
@@ -475,7 +475,7 @@ pgrubbsdf <- pzscoredf |>
     ) |>
     select(-c, -test, -pmax) |>
     pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
-    poor_cache("pgrubbsdf")
+    cache("pgrubbsdf")
 pgrubbsdf |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -584,7 +584,7 @@ pspuriousdixon <- function(n, dist, rep = 1e6, ...) {
       `t(3)` = pspuriousdixon(n, rt, df = 3),
       `Chi-squared(4)` = pspuriousdixon(n, rchisq, df = 4)
     ) |>
-    poor_cache("dixondf")
+    cache("dixondf")
 dixondf |>
   pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
