@@ -4,6 +4,7 @@
 #| include: false
 #| cache: false
 source("before-each-chapter.R")
+wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 ```
 
 Data analysis is about finding the stories hidden in the mass of information that make up a data set. Usually we are interested in understanding the major patterns --- the relationships that hold true for most of the data. But sometimes we need to look at the weird observations --- those that don't follow the crowd and behave differently. We call these weird observations "anomalies". They are the mavericks in the data, and in this book, they are what we find interesting.
@@ -166,9 +167,15 @@ Other than the time stamp, the variables here give the duration of each eruption
 The `wine_reviews` data set contains data on `r scales::comma(NROW(wine_reviews))` wines from 44 countries, taken from the *Wine Enthusiast Magazine* during the week of 15 June 2017.
 
 ```{r}
+#| label: winedata0
+#| code-fold: false
+#| eval: false
+wine_reviews <- fetch_wine_reviews()
+```
+
+```{r}
 #| label: winedata
 #| code-fold: false
-#wine_reviews <- fetch_wine_reviews()
 wine_reviews
 ```
 

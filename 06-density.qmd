@@ -4,6 +4,7 @@
 #| include: false
 #| cache: false
 source("before-each-chapter.R")
+wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 ```
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to first estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
@@ -135,6 +136,13 @@ density_scores(fit, type = "loo")
 ### Example: Shiraz reviews
 
 For example, consider the wine reviews of Shiraz (aka Syrah), plotted in @fig-shiraz. We can fit a linear regression model to these data to obtain a conditional density estimate of price given the points awarded to each wine. Then, $\bm{X}$ contains just two columns: a column of 1s, and a column containing the points values. The vector $\bm{y}$ contains the log prices of the wines. The model can be fitted as follows.
+
+```{r}
+#| label: shiraz-data
+#| eval: false
+#| code-fold: false
+wine_reviews <- fetch_wine_reviews()
+```
 
 ```{r}
 #| label: shiraz-regression

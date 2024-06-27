@@ -30,10 +30,7 @@ ggplot2::theme_update(text = element_text(family = 'Fira Sans'))
 conflicted::conflict_prefer("select", "dplyr")
 conflicted::conflict_prefer("filter", "dplyr")
 
-# Download data
-wine_reviews <- fetch_wine_reviews()
-
-# Poor mans cache
+# Simple cache function
 cache <- function(command, name) {
   file <- here::here(paste0("rds/",name,".rds"))
   if(fs::file_exists(file)) {
