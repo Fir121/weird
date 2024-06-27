@@ -1,8 +1,324 @@
 # Time series data {#sec-noneuclidean}
 
+```{r}
+#| include: false
+#| cache: false
+source("before-each-chapter.R")
+tscv_plot <- function(.init, .step, h = 1) {
+  expand.grid(
+    time = seq(26),
+    .id = seq(trunc(11 / .step))
+  ) |>
+    group_by(.id) |>
+    mutate(
+      observation = case_when(
+        time <= ((min(.id) - 1) * .step + .init) ~ "train",
+        time %in% c((min(.id) - 1) * .step + .init + h) ~ "test",
+        TRUE ~ "unused"
+      )
+    ) |>
+    ungroup() |>
+    filter(.id <= 26 - .init) |>
+    ggplot(aes(x = time, y = .id)) +
+    geom_segment(
+      aes(x = 0, xend = 27, y = .id, yend = .id),
+      arrow = arrow(length = unit(0.015, "npc")),
+      col = "black", linewidth = .25
+    ) +
+    geom_point(aes(col = observation), size = 2) +
+    scale_y_reverse() +
+    scale_color_manual(values = c(train = "#0072B2", test = "#c14b14", unused = "gray")) +
+    guides(col = "none") +
+    labs(x = "time", y = "") +
+    theme_void() +
+    theme(axis.title.x = element_text(margin = margin(t = 2))) +
+    theme(text = ggplot2::element_text(family = "Fira Sans"))
+}
+
+pbs_plot <- function(pbs, anomalies, series) {
+  dates <- anomalies |>
+    dplyr::filter(ATC2 == series) |>
+    dplyr::pull(Month) |>
+    as.Date()
+  pbs |>
+    dplyr::filter(ATC2 == series) |>
+    ggplot2::ggplot(ggplot2::aes(x = Month, y = Scripts)) +
+    tsibble::scale_x_yearmonth(date_breaks = "2 years", date_labels = "%Y") +
+    ggplot2::geom_vline(xintercept = dates, color = "red", alpha = 0.4) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = paste("Scripts for ATC group", series))
+}
+```
 
 * Historical anomalies vs current anomaly
 * AO vs IO
 * tsoutliers package and tsoutliers() function
 * smooth() function
 *
+
+```{r}
+library(fpp3)
+library(distributional)
+```
+
+## Time series anomaly detection paradigms
+
+1. Identify anomalies within a time series in real time: use one-step forecast distributions
+2. Identify anomalies within a time series in historical data: use residual distributions from smoothing method.
+3. Identify an anomalous time series in a collection of time series: use feature-based approach.
+
+## Australian PBS data
+
+```{r}
+#| label: pbs
+pbs <- tsibbledata::PBS |>
+  group_by(ATC2) |>
+  summarise(Scripts = sum(Scripts) / 1e3) |>
+  ungroup()
+```
+
+```{r}
+#| label: pbs2
+pbs |>
+  filter(ATC2 == "A12") |>
+  autoplot(Scripts) +
+  labs(title = "Scripts for ATC group A12 (Mineral supplements)")
+```
+
+## Anomaly detection algorithm
+
+For each $t$:
+
+* Estimate one-step forecast density: $f(y_t | y_1,\dots,y_{t-1})$.
+* Anomaly score: $s_{t} = -\log\hat{f}(y_{t}| y_1,\dots,y_{t-1})$.
+* High anomaly score indicates potential anomaly.
+* Fit a Generalized Pareto Distribution to the top 10% of anomaly scores seen so far.
+* $y_t$ is anomaly if $P(S > s_t) < 0.05$ under GPD.
+
+```{r}
+#| label: a12
+#| fig-height: 3.6
+a12 <- pbs |> filter(ATC2 == "A12", Month <= yearmonth("2006 Jan"))
+a12plus <- pbs |> filter(ATC2 == "A12", Month <= yearmonth("2006 Feb"))
+fc_a12 <- a12 |>
+  model(ets = ETS(Scripts)) |>
+  forecast(h = 1)
+```
+
+```{r}
+#| label: a12plot0
+fc_a12 |>
+  autoplot(a12plus) +
+  labs(
+    y = "Scripts (thousands)",
+    title = "Forecast of A12 scripts: Feb 2006"
+  ) +
+  theme(legend.position = "none") +
+  ylim(35, 145)
+```
+
+## Rolling origin forecasts
+
+```{r}
+#| label: tscvplots
+tscv_plot(.init = 8, .step = 1, h = 1) +
+  annotate("text",
+    x = 9, y = 0, label = "h = 1",
+    color = "#c14b14", family = "Fira Sans"
+  )
+```
+
+```{r}
+#| label: pbsstretch
+pbs_stretch <- stretch_tsibble(pbs, .step = 1, .init = 36)
+pbs_stretch
+```
+
+```{r}
+#| label: pbsfit
+#| eval: false
+pbs_fit <- pbs_stretch |> model(ets = ETS(Scripts))
+```
+
+```{r}
+#| label: pbsfitcache
+#| echo: false
+pbs_fit <- pbs_stretch |>
+  model(ets = ETS(Scripts)) |>
+  poor_cache("pbs_fit")
+```
+
+```{r}
+#| label: pbsfitshow
+pbs_fit
+```
+
+```{r}
+#| label: pbsfc
+pbs_fc <- forecast(pbs_fit, h = 1)
+pbs_fc
+```
+
+```{r}
+#| label: pbs_scores
+pbs_scores <- pbs_fc |>
+  left_join(pbs |> rename(actual = Scripts), by = c("ATC2", "Month")) |>
+  group_by(.id) |>
+  mutate(
+    s = -log_likelihood(Scripts, actual),
+    prob = lookout(density_scores = s, threshold = 0.9)
+  ) |>
+  ungroup()
+pbs_scores
+```
+
+```{r}
+#| label: pbs_scores3
+pbs_anomalies <- pbs_scores |> filter(prob < 0.05)
+pbs_anomalies
+```
+
+## Example: Pharmaceutical sales
+
+```{r}
+#| label: pbs_scores4
+pbs_plot(pbs, pbs_anomalies, "L03")
+```
+
+```{r}
+#| label: pbs_scores5
+pbs_plot(pbs, pbs_anomalies, "N07")
+```
+
+Consecutive anomalies are hard to identify because the preceding anomalies corrupt the model.
+
+```{r}
+#| label: pbs_scores6
+#| echo: false
+pbs_plot(pbs, pbs_anomalies, "R06")
+```
+
+A sequence of near anomalies makes it hard to spot a true anomaly.
+
+## Example: French mortality
+
+```{r}
+#| label: fr_mortality
+fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
+  filter(Sex != "Total", Year < 2000) |>
+  vital::collapse_ages(max_age = 85) |>
+  as_tsibble() |>
+  select(Year, Age, Sex, Mortality)
+fr_mortality
+```
+
+```{r}
+#| label: fr_mortality_time_plots
+fr_mortality |>
+  ggplot(aes(
+    x = Year, y = Mortality,
+    color = as.factor(Age), group = Age
+  )) +
+  geom_line() +
+  facet_grid(. ~ Sex) +
+  scale_y_log10() +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| label: fr_fit
+fr_fit <- fr_mortality |>
+  model(stl = STL(log(Mortality)))
+
+fr_sigma <- augment(fr_fit) |>
+  as_tibble() |>
+  group_by(Age, Sex) |>
+  summarise(sigma = IQR(.innov) / 1.349, .groups = "drop")
+
+fr_scores <- augment(fr_fit) |>
+  as_tibble() |>
+  left_join(fr_sigma) |>
+  mutate(
+    s = -log(dnorm(.innov / sigma)),
+    prob = lookout(density_scores = s, threshold_probability = 0.9)
+  ) |>
+  select(-.model, -.resid, -.fitted, -sigma)
+```
+
+```{r}
+#| label: fr_scores3
+fr_scores |> arrange(prob)
+
+fr_anomalies <- fr_scores |>
+  filter(prob < 0.05) |>
+  as_tibble() |>
+  select(Year, Sex, Age) |>
+  distinct() |>
+  left_join(fr_mortality)
+yrs <- fr_anomalies |>
+  select(Year, Sex) |>
+  distinct()
+```
+
+
+* 1870--1872: Franco-Prussian war and repression of the ‘Commune de Paris’
+* 1914--1918: World War I
+* 1918: Spanish flu
+* 1939--1945: World War II
+
+```{r}
+#| label: fr_25
+fr_anomalies_plot_male2 <- fr_anomalies |>
+  filter(Sex == "Male") |>
+  ggplot(aes(x = Year, y = Age)) +
+  facet_grid(. ~ Sex) +
+  scale_x_continuous(
+    breaks = seq(1820, 2000, by = 20),
+    limits = range(yrs$Year)
+  ) +
+  geom_vline(
+    xintercept = unique(yrs$Year[yrs$Sex == "Male"]),
+    alpha = 0.5, color = "grey"
+  ) +
+  geom_point(col = "#478cb2") +
+  ggrepel::geom_text_repel(
+    data = yrs[yrs$Sex == "Male", ],
+    aes(y = 75, label = Year), col = "#478cb2", size = 3, seed = 1967
+  ) +
+  ylim(4, 85)
+fr_anomalies_plot_female2 <- fr_anomalies |>
+  filter(Sex == "Female") |>
+  ggplot(aes(x = Year, y = Age)) +
+  facet_grid(. ~ Sex) +
+  scale_x_continuous(
+    breaks = seq(1820, 2000, by = 20),
+    limits = range(yrs$Year)
+  ) +
+  geom_vline(
+    xintercept = unique(yrs$Year[yrs$Sex == "Female"]),
+    alpha = 0.5, color = "grey"
+  ) +
+  labs(title = "French mortality anomalies") +
+  geom_point(col = "#c1653a") +
+  ggrepel::geom_text_repel(
+    data = yrs[yrs$Sex == "Female", ],
+    aes(y = 75, label = Year), col = "#c1653a", size = 3, seed = 1967
+  ) +
+  ylim(4, 85)
+patchwork::wrap_plots(
+  fr_anomalies_plot_female2 +
+    geom_hline(yintercept = 25, color = "gray"),
+  fr_anomalies_plot_male2 +
+    geom_hline(yintercept = 25, color = "gray") +
+    annotate("text", x = 1890, y = 27, label = "Age 25", family = "Fira Sans"),
+  nrow = 1
+)
+
+fr_mortality |>
+  filter(Age == 25) |>
+  ggplot(aes(x = Year, y = Mortality, color = Sex)) +
+  geom_line() +
+  facet_grid(Sex ~ ., scales = "free_y") +
+  geom_point(data = fr_anomalies |> filter(Age == 25)) +
+  labs(title = "French mortality: Age 25")
+```
