@@ -228,13 +228,9 @@ breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 #| echo: false
 #| dependson: pspurious
 #| fig-cap: The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
-if (file.exists("zspuriousdf.rds")) {
-  zspuriousdf <- readRDS("zspuriousdf.rds")
-} else {
-  zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
-    mutate(pmax = pspurious(n, rnorm, c = c))
-  saveRDS(zspuriousdf, "zspuriousdf.rds")
-}
+zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
+    mutate(pmax = pspurious(n, rnorm, c = c)) |>
+    poor_cache("zspuriousdf")
 labels <- zspuriousdf |>
   group_by(c) |>
   filter(abs(pmax - 0.75) == min(abs(pmax - 0.75))) |>
@@ -258,10 +254,7 @@ Let's also compute the probability of spurious anomalies for different data dist
 #| echo: false
 #| dependson: ["pspurious", "zspurious"]
 #| fig-cap: The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
-if (file.exists("zspurious2df.rds")) {
-  zspurious2df <- readRDS("zspurious2df.rds")
-} else {
-  zspurious2df <- tibble(n = n, c = 3) |>
+zspurious2df <- tibble(n = n, c = 3) |>
     mutate(
       ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
       Normal = pspurious(n, rnorm, c = c),
@@ -269,9 +262,8 @@ if (file.exists("zspurious2df.rds")) {
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
     ) |>
     select(-c) |>
-    pivot_longer(-n, values_to = "Probability", names_to = "Distribution")
-  saveRDS(zspurious2df, "zspurious2df.rds")
-}
+    pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
+    poor_cache("zspurious2df")
 zspurious2df |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -441,13 +433,9 @@ From these, we can compute the probability of a spurious anomaly in a normal dis
 #| echo: false
 #| dependson: ["pspurious", "zscoretests"]
 #| fig-cap: True size of the tests (i.e., the probability of a spurious anomaly) for normally distributed data with $\alpha=0.05$.
-if (file.exists("pzscoredf.rds")) {
-  pzscoredf <- readRDS("pzscoredf.rds")
-} else {
   pzscoredf <- df |>
-    mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6))
-  saveRDS(pzscoredf, "pzscoredf.rds")
-}
+    mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6)) |>
+    poor_cache("pzscoredf")
 pzscoredf |>
   ggplot(aes(x = n, y = pmax, group = test, col = test)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
@@ -477,10 +465,7 @@ However, when we allow for different data distributions, Grubbs' test also gives
 #| echo: false
 #| dependson: ["pspurious","zscoretests"]
 #| fig-cap: True size of Grubbs' tests (i.e., the probability of a false positive) for different data distributions with $\alpha=0.05$.
-if (file.exists("pgrubbsdf.rds")) {
-  pgrubbsdf <- readRDS("pgrubbsdf.rds")
-} else {
-  pgrubbsdf <- pzscoredf |>
+pgrubbsdf <- pzscoredf |>
     filter(test == "grubbs") |>
     mutate(
       Normal = pmax,
@@ -489,9 +474,8 @@ if (file.exists("pgrubbsdf.rds")) {
       `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
     ) |>
     select(-c, -test, -pmax) |>
-    pivot_longer(-n, values_to = "Probability", names_to = "Distribution")
-  saveRDS(pgrubbsdf, "pgrubbsdf.rds")
-}
+    pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
+    poor_cache("pgrubbsdf")
 pgrubbsdf |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -594,17 +578,13 @@ pspuriousdixon <- function(n, dist, rep = 1e6, ...) {
     return(pv)
   }
 }
-if (file.exists("dixondf.rds")) {
-  dixondf <- readRDS("dixondf.rds")
-} else {
-  dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
+ dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
     mutate(
       Normal = pspuriousdixon(n, rnorm),
       `t(3)` = pspuriousdixon(n, rt, df = 3),
       `Chi-squared(4)` = pspuriousdixon(n, rchisq, df = 4)
-    )
-  saveRDS(dixondf, "dixondf.rds")
-}
+    ) |>
+    poor_cache("dixondf")
 dixondf |>
   pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +

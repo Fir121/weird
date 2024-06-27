@@ -32,3 +32,15 @@ conflicted::conflict_prefer("filter", "dplyr")
 
 # Download data
 wine_reviews <- fetch_wine_reviews()
+
+# Poor mans cache
+poor_cache <- function(command, name) {
+  file <- here::here(paste0("rds/",name,".rds"))
+  if(fs::file_exists(file)) {
+    object <- readRDS(file)
+  } else {
+    object <- command
+    saveRDS(object, file)
+  }
+  return(object)
+}
