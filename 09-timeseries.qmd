@@ -74,39 +74,61 @@ fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
 
 When considering time series data, we can distinguish between three different anomaly detection paradigms:
 
-1. Identify anomalies within a time series in real time: use one-step forecast distributions
-2. Identify anomalies within a time series in historical data: use residual distributions from smoothing method.
-3. Identify an anomalous time series in a collection of time series: use feature-based approach.
+1. **Surveillance**: Identifying anomalies within a time series in real time
+2. **Weird times**: Identifying anomalies within a time series in historical data.
+3. **Weird series**: Identifying an anomalous time series within a collection of time series.
 
-These can be illustrated using the following examples
+These can be illustrated using the following examples.
 
 ```{r}
-#| label: tsparadigms
+#| label: fig-tsparadigms
 #| echo: false
-p1 <- pbs |>
+#| fig-cap: The three main anomaly detection paradigms. In the top panel, we aim to identify an unusual observation in the next time period. In the middle panel, we aim to identify unusual observations within historical data. In the bottom panel, we aim to identify an unusual time series within a collection of time series.
+a12 <- pbs |>
   filter(ATC2 == "A12", Month <= yearmonth("2006 Feb")) |>
+  mutate(paradigm = "Surveillance")
+p1 <- a12 |>
   autoplot(Scripts) +
-  theme_void()
+  geom_point(data = tail(a12,1)) +
+  facet_grid(paradigm ~ .) +
+  theme(axis.title = element_blank()) +
+  scale_x_yearmonth(breaks = NULL) +
+  scale_y_continuous(breaks = NULL)
 p2 <- fr_mortality |>
   filter(Age == 25, Sex == "Male") |>
+  mutate(paradigm = "Weird times") |>
   autoplot(Mortality) +
-  theme_void()
+  facet_grid(paradigm ~ .) +
+  theme(axis.title = element_blank()) +
+  scale_x_yearmonth(breaks = NULL) +
+  scale_y_log10(breaks = NULL)
 p3 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
+  mutate(paradigm = "Weird series") |>
   autoplot(Mortality) +
   guides(col = "none") +
-  theme_void() +
-  scale_y_log10()
+  facet_grid(paradigm ~ .) +
+  theme(axis.title = element_blank()) +
+  scale_x_yearmonth(breaks = NULL) +
+  scale_y_log10(breaks = NULL)
+
 patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 ```
 
 **Surveillance**: In the top plot, we are looking for an anomaly in the next observation in the time series. This is commonly done in surveillance, when a time is monitored in real time to identify an unusual observation, and appropriate action taken. An anomaly in this context, is an observation that is very different from what was forecast. Although only a single time series is shown in this plot, the idea easily extends to multivariate time series, where we look for something unusual occurring in the next time period across a set of time series.
 
-**Weird times**: In the middle plot, we are looking for anomalies in historical time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations
+**Weird times**: In the middle plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations
 
 **Weird series**: In the bottom plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
 
-## Australian PBS data
+We will discuss each of these paradigms in turn.
+
+## Surveillance
+
+In surveillance, we are interested in identifying anomalies in real time. This is common in monitoring systems, where we want to identify unusual behaviour as soon as it occurs. For example, in a manufacturing plant, we may want to identify when a machine is not operating as expected, and take action to prevent further problems. In retail, we may want to identify when sales are unusually high or low, and adjust stock levels if necessary.
+
+To illustrate the ideas we will use a data set of monthly observations on
+the Australian Pharmaceutical Benefits Scheme (PBS), from July 1991 to June 2008. The PBS involves the Australian government subsidising certain pharmaceutical products, to allow more equitable access to essential medicines. The data set contains monthly sales volumes of those products being subsidised, classified according to the Anatomical Therapeutic Chemical (ATC) classification system. For our purposes, we will combine the data into ATC level 2 groups, and look at total sales volumes (measured in thousands of scripts).
 
 ```{r}
 #| label: pbs
@@ -114,25 +136,51 @@ pbs <- tsibbledata::PBS |>
   group_by(ATC2) |>
   summarise(Scripts = sum(Scripts) / 1e3) |>
   ungroup()
+pbs
 ```
 
+The data set is a `tsibble` object, which is a special type of tibble designed for time series data. This data set contains 84 separate time series, one for each `ATC2` value.
+
+Let's first look at the time series for just one ATC group: A12 (Mineral supplements). In fact, this is the same series as was shown in the top panel of @fig-tsparadigms.
+
 ```{r}
-#| label: pbs2
+#| label: fig-a12
+#| fig-asp: 0.3
+#| fig-cap: The monthly script volume for mineral supplements (ATC group A12) on the Australian PBS.
 pbs |>
   filter(ATC2 == "A12") |>
   autoplot(Scripts) +
   labs(title = "Scripts for ATC group A12 (Mineral supplements)")
 ```
 
-## Anomaly detection algorithm
+Here there has been a sudden drop in sales at the end of 2005, most likely because of some products no longer being eligible for subsidy. There can also be sudden jumps in sales when a new product becomes available, or a new class of drugs is added to the scheme.
 
-For each $t$:
+The goal of surveillance is to identify these anomalies as soon as they occur. We can do this by fitting a model to the data, and then comparing the observed values to the model's forecasts. If the observed values are very different from the forecast, then we have an anomaly.
 
-* Estimate one-step forecast density: $f(y_t | y_1,\dots,y_{t-1})$.
-* Anomaly score: $s_{t} = -\log\hat{f}(y_{t}| y_1,\dots,y_{t-1})$.
-* High anomaly score indicates potential anomaly.
-* Fit a Generalized Pareto Distribution to the top 10% of anomaly scores seen so far.
-* $y_t$ is anomaly if $P(S > s_t) < 0.05$ under GPD.
+Statistical forecasting models provide forecasts in the form of probability distributions. Let $y_t$ denote the observation of a time series at time $t$. Then a forecast can be expressed as a conditional distribution
+$$
+  f(y_{t+h} | y_1, \dots, y_{t}, \bm{x}_t),
+$$
+where $\bm{x}_t$ contains any exogenous information available at time $t$ that is used in the model. The forecast "horizon" is given by $h$, denoting the number of time periods into the future that we wish to forecast. Different forecasting methods use different conditioning information, and result in a different form of the forecast distribution. See @fpp3 for a detailed discussion of forecasting methods.
+
+Once we observe the value of $y_{t+h}$, we can calculate the corresponding density scores in the same way as we discussed in @sec-lookout. Because we are interested in real-time surveillance, we are only interested in the one-step-ahead forecast density, $f(y_{t+1} | y_1, \dots, y_{t})$. We can then calculate the density score as
+$$
+  s_{t+1} = -\log \hat{f}(y_{t+1} | y_1, \dots, y_{t}, \bm{x}_t).
+$$
+This needs to be done iteratively for each time period, updating the model as new data becomes available. Since we need some observations with which to fit a model, we can't begin the process at time $t=1$. Instead, we'll begin at time $t=I$, where $I$ is the smallest number of observations with which we can reasonably estimate the time series model. The value of $I$ will depend on the complexity of the model being used. For very simple models with few parameters, we may be able to set $I$ to around 20, but for complex models with many parameters, $I$ may need to be much larger.
+
+We also can't estimate the Generalized Pareto Distribution until we have computed sufficient density scores. Fortunately, we are often working with many time series, not just one, and we can use the density scores from all series when computing the GPD. Suppose we have $m$ series we are monitoring, then at time $t=J$, we will have computed $m(J-I)$ anomaly scores. Usually we would need at least a few hundred anomaly scores before we could reasonably estimate a GPD from the top 10% of the available scores.
+
+We can summarise the anomaly detection algorithm for surveillance as follows. First, we'll change the notation slightly to allow for more than one series. Let $y_{i,t}$ denote the observation of the $i$th series at time $t$.
+
+For each $t = I,I+1,\dots,$, and for all series $i=1,\dots,m$:
+
+* Fit a time series model to each series, and estimate the one-step forecast density, $f_i(y_{i,t+1} | y_{i,1},\dots,y_{i,t}, \bm{x}_t)$.
+* Compute the anomaly score: $s_{i,t+1} = -\log\hat{f}_i(y_{i,t+1}| y_{i,1},\dots,y_{i,t}, \bm{x}_t)$.
+* Fit a Generalized Pareto Distribution $S$ to the top 10% of anomaly scores \{s_{i,t}\}, $i=1,\dots,m$, $t=I+1,I+2,\dots,t$.
+* Designate $y_{i,t}$ as an anomaly if $P(S > s_{i,t+1}) < 0.05$ under the GPD.
+
+To illustrate, let's apply this to the February 2006 observation in the A12 series.
 
 ```{r}
 #| label: a12
@@ -156,7 +204,7 @@ fc_a12 |>
   ylim(35, 145)
 ```
 
-## Rolling origin forecasts
+### Rolling origin forecasts
 
 ```{r}
 #| label: tscvplots
@@ -217,7 +265,7 @@ pbs_anomalies <- pbs_scores |> filter(prob < 0.05)
 pbs_anomalies
 ```
 
-## Example: Pharmaceutical sales
+### Example: Australian pharmaceutical sales
 
 ```{r}
 #| label: pbs_scores4
