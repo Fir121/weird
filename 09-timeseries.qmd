@@ -50,22 +50,61 @@ pbs_plot <- function(pbs, anomalies, series) {
 }
 ```
 
-* Historical anomalies vs current anomaly
-* AO vs IO
-* tsoutliers package and tsoutliers() function
-* smooth() function
-*
-
 ```{r}
 library(fpp3)
 library(distributional)
 ```
 
+```{r}
+#| label: egdata
+#| include: false
+# Loaded again later, but needed here for the paradigm examples
+pbs <- tsibbledata::PBS |>
+  group_by(ATC2) |>
+  summarise(Scripts = sum(Scripts) / 1e3) |>
+  ungroup()
+fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
+  filter(Sex != "Total", Year < 2000) |>
+  vital::collapse_ages(max_age = 85) |>
+  as_tsibble() |>
+  select(Year, Age, Sex, Mortality)
+```
+
 ## Time series anomaly detection paradigms
+
+When considering time series data, we can distinguish between three different anomaly detection paradigms:
 
 1. Identify anomalies within a time series in real time: use one-step forecast distributions
 2. Identify anomalies within a time series in historical data: use residual distributions from smoothing method.
 3. Identify an anomalous time series in a collection of time series: use feature-based approach.
+
+These can be illustrated using the following examples
+
+```{r}
+#| label: tsparadigms
+#| echo: false
+p1 <- pbs |>
+  filter(ATC2 == "A12", Month <= yearmonth("2006 Feb")) |>
+  autoplot(Scripts) +
+  theme_void()
+p2 <- fr_mortality |>
+  filter(Age == 25, Sex == "Male") |>
+  autoplot(Mortality) +
+  theme_void()
+p3 <- fr_mortality |>
+  filter(Age %in% c(2:6, 60), Sex == "Female") |>
+  autoplot(Mortality) +
+  guides(col = "none") +
+  theme_void() +
+  scale_y_log10()
+patchwork::wrap_plots(p1, p2, p3, ncol = 1)
+```
+
+**Surveillance**: In the top plot, we are looking for an anomaly in the next observation in the time series. This is commonly done in surveillance, when a time is monitored in real time to identify an unusual observation, and appropriate action taken. An anomaly in this context, is an observation that is very different from what was forecast. Although only a single time series is shown in this plot, the idea easily extends to multivariate time series, where we look for something unusual occurring in the next time period across a set of time series.
+
+**Weird times**: In the middle plot, we are looking for anomalies in historical time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations
+
+**Weird series**: In the bottom plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
 
 ## Australian PBS data
 
@@ -322,3 +361,10 @@ fr_mortality |>
   geom_point(data = fr_anomalies |> filter(Age == 25)) +
   labs(title = "French mortality: Age 25")
 ```
+
+# Somewhere
+
+* AO vs IO
+* tsoutliers package and tsoutliers() function
+* smooth() function
+*
