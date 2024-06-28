@@ -72,6 +72,8 @@ fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
 
 ## Time series anomaly detection paradigms
 
+Time series data are observations that are collected over time. In this book, we will only consider time series which are observed at regular intervals, such as annually, monthly, or hourly.
+
 When considering time series data, we can distinguish between three different anomaly detection paradigms:
 
 1. **Surveillance**: Identifying anomalies within a time series in real time
@@ -136,16 +138,21 @@ pbs <- tsibbledata::PBS |>
   group_by(ATC2) |>
   summarise(Scripts = sum(Scripts) / 1e3) |>
   ungroup()
+```
+
+```{r}
+#| label: pbsdata
+#| code-fold: false
 pbs
 ```
 
-The data set is a `tsibble` object, which is a special type of tibble designed for time series data. This data set contains 84 separate time series, one for each `ATC2` value.
+The data set is a `tsibble` object, which is a special type of tibble designed for time series data. Two columns have special purposes: the `Month` column is the time index, defining when each observation was made; and the `ATC2` column is a key variable, defining the separate time series in the data set. This data set contains 84 separate time series, one for each `ATC2` value.
 
 Let's first look at the time series for just one ATC group: A12 (Mineral supplements). In fact, this is the same series as was shown in the top panel of @fig-tsparadigms.
 
 ```{r}
 #| label: fig-a12
-#| fig-asp: 0.3
+#| fig-asp: 0.36
 #| fig-cap: The monthly script volume for mineral supplements (ATC group A12) on the Australian PBS.
 pbs |>
   filter(ATC2 == "A12") |>
@@ -161,15 +168,15 @@ Statistical forecasting models provide forecasts in the form of probability dist
 $$
   f(y_{t+h} | y_1, \dots, y_{t}, \bm{x}_t),
 $$
-where $\bm{x}_t$ contains any exogenous information available at time $t$ that is used in the model. The forecast "horizon" is given by $h$, denoting the number of time periods into the future that we wish to forecast. Different forecasting methods use different conditioning information, and result in a different form of the forecast distribution. See @fpp3 for a detailed discussion of forecasting methods.
+where $y_1,\dots,y_t$ denotes the observed history of the series, and $\bm{x}_t$ contains any other information available at time $t$ that is used in the model. The forecast "horizon" is given by $h$, denoting the number of time periods into the future that we wish to forecast. Different forecasting methods use different conditioning information, and result in a different form of the forecast distribution. See @fpp3 for a detailed discussion of forecasting methods.
 
-Once we observe the value of $y_{t+h}$, we can calculate the corresponding density scores in the same way as we discussed in @sec-lookout. Because we are interested in real-time surveillance, we are only interested in the one-step-ahead forecast density, $f(y_{t+1} | y_1, \dots, y_{t})$. We can then calculate the density score as
+Once we observe the value of $y_{t+h}$, we can calculate the corresponding density scores in the same way as we discussed in @sec-lookout. Because we are interested in real-time surveillance, we need only consider the one-step-ahead forecast density, $f(y_{t+1} | y_1, \dots, y_{t})$. We can then calculate the density score as
 $$
   s_{t+1} = -\log \hat{f}(y_{t+1} | y_1, \dots, y_{t}, \bm{x}_t).
 $$
 This needs to be done iteratively for each time period, updating the model as new data becomes available. Since we need some observations with which to fit a model, we can't begin the process at time $t=1$. Instead, we'll begin at time $t=I$, where $I$ is the smallest number of observations with which we can reasonably estimate the time series model. The value of $I$ will depend on the complexity of the model being used. For very simple models with few parameters, we may be able to set $I$ to around 20, but for complex models with many parameters, $I$ may need to be much larger.
 
-We also can't estimate the Generalized Pareto Distribution until we have computed sufficient density scores. Fortunately, we are often working with many time series, not just one, and we can use the density scores from all series when computing the GPD. Suppose we have $m$ series we are monitoring, then at time $t=J$, we will have computed $m(J-I)$ anomaly scores. Usually we would need at least a few hundred anomaly scores before we could reasonably estimate a GPD from the top 10% of the available scores.
+We also can't estimate the Generalized Pareto Distribution until we have computed sufficient density scores. Fortunately, we are often working with many time series, not just one, and we can use the density scores from all series when computing the GPD. Suppose we have $m$ series we are monitoring, then at time $t=J$, we will have computed $m(J-I)$ anomaly scores. Usually we would need at least a few hundred anomaly scores before we could reasonably estimate a GPD from the top 10% of the available scores. Suppose we required at least 200 scores, then we could only compute a GPD once $m(J-I) \ge 200$, so that $J \ge 200/m+I$.
 
 We can summarise the anomaly detection algorithm for surveillance as follows. First, we'll change the notation slightly to allow for more than one series. Let $y_{i,t}$ denote the observation of the $i$th series at time $t$.
 
@@ -177,37 +184,15 @@ For each $t = I,I+1,\dots,$, and for all series $i=1,\dots,m$:
 
 * Fit a time series model to each series, and estimate the one-step forecast density, $f_i(y_{i,t+1} | y_{i,1},\dots,y_{i,t}, \bm{x}_t)$.
 * Compute the anomaly score: $s_{i,t+1} = -\log\hat{f}_i(y_{i,t+1}| y_{i,1},\dots,y_{i,t}, \bm{x}_t)$.
-* Fit a Generalized Pareto Distribution $S$ to the top 10% of anomaly scores \{s_{i,t}\}, $i=1,\dots,m$, $t=I+1,I+2,\dots,t$.
-* Designate $y_{i,t}$ as an anomaly if $P(S > s_{i,t+1}) < 0.05$ under the GPD.
+* If $t>J$, fit a Generalized Pareto Distribution $S$ to the top 10% of anomaly scores $\{s_{i,t}\}$, $i=1,\dots,m$, $t=I+1,I+2,\dots,t$.
+* Designate $y_{i,t+1}$ as an anomaly if $P(S > s_{i,t+1}) < 0.05$ under the GPD.
 
-To illustrate, let's apply this to the February 2006 observation in the A12 series.
-
-```{r}
-#| label: a12
-#| fig-height: 3.6
-a12 <- pbs |> filter(ATC2 == "A12", Month <= yearmonth("2006 Jan"))
-a12plus <- pbs |> filter(ATC2 == "A12", Month <= yearmonth("2006 Feb"))
-fc_a12 <- a12 |>
-  model(ets = ETS(Scripts)) |>
-  forecast(h = 1)
-```
+To illustrate, let's apply this to the pbs data. Starting with $I=36$ (3 years of data), we will fit ETS models to all available series [Ch 8, @fpp3], and forecast one step ahead in each case. Then we repeat the exercise using 37 observations, then 38 observations, and so on. This is known as a "rolling origin forecast" because the forecast rolls forward by one period each iteration. The process can be illustrated as in @fig-tscvplots.
 
 ```{r}
-#| label: a12plot0
-fc_a12 |>
-  autoplot(a12plus) +
-  labs(
-    y = "Scripts (thousands)",
-    title = "Forecast of A12 scripts: Feb 2006"
-  ) +
-  theme(legend.position = "none") +
-  ylim(35, 145)
-```
-
-### Rolling origin forecasts
-
-```{r}
-#| label: tscvplots
+#| label: fig-tscvplots
+#| fig-cap: Rolling origin forecasts, with the training sets expanding by one observation at each iteration, and one-step forecasts computed for each training set.
+#| echo: false
 tscv_plot(.init = 8, .step = 1, h = 1) +
   annotate("text",
     x = 9, y = 0, label = "h = 1",
@@ -215,17 +200,25 @@ tscv_plot(.init = 8, .step = 1, h = 1) +
   )
 ```
 
+In practice, a new iteration of the process must be done each time a new observation is recorded. But to simplify the process for this illustration, we will use the `stretch_tsibble()` function which constructs all the training sets at once. The `.id` column is an additional key variable, to allow the time series to be distinguished.
+
 ```{r}
 #| label: pbsstretch
-pbs_stretch <- stretch_tsibble(pbs, .step = 1, .init = 36)
+#| code-fold: false
+pbs_stretch <- pbs |>
+  stretch_tsibble(.step = 1, .init = 36)
 pbs_stretch
 ```
 
 ```{r}
 #| label: pbsfit
 #| eval: false
-pbs_fit <- pbs_stretch |> model(ets = ETS(Scripts))
+#| code-fold: false
+pbs_fit <- pbs_stretch |>
+   model(ets = ETS(Scripts))
 ```
+
+Next we fit ETS models to each of the time series, with the specific ETS model selected according to the characteristics of the series. See [Ch8, @fpp3] for details of how this is done.
 
 ```{r}
 #| label: pbsfitcache
@@ -237,27 +230,64 @@ pbs_fit <- pbs_stretch |>
 
 ```{r}
 #| label: pbsfitshow
+#| code-fold: false
 pbs_fit
 ```
 
+Forecasts are produced from all fitted models by applying the `forecast()` function to the model table.
+
 ```{r}
 #| label: pbsfc
+#| code-fold: false
 pbs_fc <- forecast(pbs_fit, h = 1)
 pbs_fc
 ```
 
+The forecasts are in the `Scripts` column. Note that each of them is a normal distribution where the mean and variance has been estimated using the ETS model. The mean of the forecast distribution is given as `.mean`. 
+
+The next state is to compute the density scores, which is easily done since they are equivalent to -log likelihood values, and the `log_likelihood()` function from the `distributional` package provides a convenient tool for computing them.
+
 ```{r}
 #| label: pbs_scores
+#| code-fold: false
 pbs_scores <- pbs_fc |>
   left_join(pbs |> rename(actual = Scripts), by = c("ATC2", "Month")) |>
-  group_by(.id) |>
-  mutate(
-    s = -log_likelihood(Scripts, actual),
-    prob = lookout(density_scores = s, threshold = 0.9)
-  ) |>
-  ungroup()
+  mutate(s = -log_likelihood(Scripts, actual))
 pbs_scores
 ```
+
+
+Finally, we compute the lookout probabilities using all density scores available at the time of each forecast.
+
+```{r}
+#| label: pbs_anomalies
+#| code-fold: false
+#| warning: false
+pbs_scores <- pbs_scores |>
+  filter(!is.na(s)) |>
+  group_by(.id) |> # Need to make this < = .id
+  mutate(prob = lookout(density_scores = s, threshold = 0.9)) |>
+  ungroup()
+```
+
+
+ We compare the distribution against the observation for Feburary 2006.
+
+```{r}
+#| label: a12plot0
+#| eval: false
+observed <- pbs |> filter(ATC2 == "A12", Month == yearmonth("2006 Feb")) 
+fc_a12 |>
+  autoplot(a12) +
+  geom_point(data = observed, aes(x = Month, y = Scripts)) +
+  labs(
+    y = "Scripts (thousands)",
+    title = "Forecast of A12 scripts: Feb 2006"
+  ) +
+  theme(legend.position = "none") +
+  ylim(35, 145)
+```
+
 
 ```{r}
 #| label: pbs_scores3
@@ -287,7 +317,9 @@ pbs_plot(pbs, pbs_anomalies, "R06")
 
 A sequence of near anomalies makes it hard to spot a true anomaly.
 
-## Example: French mortality
+## Weird times
+
+### Example: French mortality
 
 ```{r}
 #| label: fr_mortality
@@ -410,7 +442,11 @@ fr_mortality |>
   labs(title = "French mortality: Age 25")
 ```
 
-# Somewhere
+## Weird series
+
+Use PBS again
+
+## Somewhere
 
 * AO vs IO
 * tsoutliers package and tsoutliers() function
