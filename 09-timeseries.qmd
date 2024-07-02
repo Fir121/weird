@@ -89,7 +89,7 @@ These can be illustrated using the following examples.
 ```{r}
 #| label: fig-tsparadigms
 #| echo: false
-#| fig-cap: The four main anomaly detection paradigms. In the top panel, we aim to identify an unusual observation in the next time period. In the middle panel, we aim to identify unusual observations within historical data. In the bottom panel, we aim to identify an unusual time series within a collection of time series.
+#| fig-cap: The three main anomaly detection paradigms.In the top panel, we aim to identify unusual observations within historical data. In the middle panel, we aim to identify an unusual time series within a collection of time series. In the bottom panel, we aim to identify an unusual observation in the next time period. 
 a12 <- tsibbledata::PBS |>
   group_by(ATC2) |>
   summarise(Scripts = sum(Scripts) / 1e3) |>
@@ -104,11 +104,7 @@ p1 <- fr_mortality |>
   theme(axis.title = element_blank()) +
   scale_x_yearmonth(breaks = NULL) +
   scale_y_log10(breaks = NULL)
-p2 <- tibble(x = 0, y = 0) |>
-  mutate(paradigm = "Weird subseries") |>
-  ggplot() +
-  facet_grid(paradigm ~ .)
-p3 <- fr_mortality |>
+p2 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
   mutate(paradigm = "Weird series") |>
   autoplot(Mortality) +
@@ -117,7 +113,7 @@ p3 <- fr_mortality |>
   theme(axis.title = element_blank()) +
   scale_x_yearmonth(breaks = NULL) +
   scale_y_log10(breaks = NULL)
-p4 <- a12 |>
+p3 <- a12 |>
   autoplot(Scripts) +
   geom_point(data = tail(a12, 1)) +
   facet_grid(paradigm ~ .) +
@@ -128,11 +124,9 @@ p4 <- a12 |>
 patchwork::wrap_plots(p1, p2, p3, p4, ncol = 1)
 ```
 
-**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations
+**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations. There may be an unusual sequence of observations within the time series, forming an anomalous subseries. This could happen, for example, when there is an event that affects multiple consecutive time periods. We will also consider this within the paradigm of weird times.
 
-**Weird subseries**: In the second plot, we illustrate the case of anomalous subseries, which is similar to identifying anomalous times, but where the anomalous period spans several times. Here, we are looking for sections of a time series that appear very different from the rest of the series. This could happen, for example, when there is an event that affects multiple consecutive time periods
-
-**Weird series**: In the third plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
+**Weird series**: In the middle plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
 
 **Surveillance**: In the bottom plot, we are looking for an anomaly in the next observation in the time series. This is commonly done in surveillance, when a time is monitored in real time to identify an unusual observation, and appropriate action taken. An anomaly in this context, is an observation that is very different from what was forecast. Although only a single time series is shown in this plot, the idea easily extends to multivariate time series, where we look for something unusual occurring in the next time period across a set of time series.
 
@@ -141,6 +135,7 @@ We will discuss each of these paradigms in turn.
 
 ## Weird times
 
+As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to 1999. In fact, the top plot in @fig-tsparadigms shows the male log mortality rates for 25 year olds over this time period.
 
 ```{r}
 #| label: fr_mortality
@@ -154,19 +149,24 @@ fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
 fr_mortality
 ```
 
+@fig-fr_mortality_time_plots shows the data for both sexes and all ages as time series. The mortality rates have improved over time for all ages, especially since 1950. Infant mortality (age 0) is much higher than the rest of childhood, with mortality rates at a minimum at about age 10 in all years. The highest mortality rates are for the oldest age groups. The effect of the two wars are particularly evident in the male mortality rates.
+
 ```{r}
-#| label: fr_mortality_time_plots
+#| label: fig-fr_mortality_time_plots
 #| code-fold: false
+#| fig-cap: French mortality rates by sex and age from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)`. We use a log scale because the rates are vastly different for different age groups.
 fr_mortality |>
   ggplot(aes(
     x = Year, y = Mortality,
-    color = as.factor(Age), group = Age
+    color = Age, group = Age
   )) +
   geom_line() +
   facet_grid(. ~ Sex) +
-  scale_y_log10() +
-  theme(legend.position = "none")
+  scale_y_log10() 
 ```
+
+To identify the anomalous time periods within each series, we first fit a smooth trend line to each series, and calculate the residuals. Then we standardize the residuals so they are all on the same scale. Because we don't want the anomalies to affect the standardization, we will use the IQR to estimate the standard deviation of the residuals within each series.
+
 
 ```{r}
 #| label: fr_fit
@@ -178,7 +178,13 @@ fr_sigma <- augment(fr_fit) |>
   as_tibble() |>
   group_by(Age, Sex) |>
   summarise(sigma = IQR(.innov) / 1.349, .groups = "drop")
+```
 
+Next we compute the density scores and corresponding lookout probabilities assuming the residuals follow a normal distribution.
+
+```{r}
+#| label: fr_scores
+#| code-fold: false
 fr_scores <- augment(fr_fit) |>
   as_tibble() |>
   left_join(fr_sigma) |>
@@ -188,6 +194,8 @@ fr_scores <- augment(fr_fit) |>
   ) |>
   select(-.model, -.resid, -.fitted, -sigma)
 ```
+
+Finally, we identify anomalies as observations with lookout probability less than 0.05.
 
 ```{r}
 #| label: fr_scores3
@@ -205,6 +213,7 @@ yrs <- fr_anomalies |>
   distinct()
 ```
 
+The most extreme anomalies all correspond to 1944, towards the end of World War II. Other anomalies also correspond to wars and other important events in French history. In particular, the following events are important.
 
 * 1870--1872: Franco-Prussian war and repression of the ‘Commune de Paris’
 * 1914--1918: World War I
@@ -268,10 +277,14 @@ fr_mortality |>
   labs(title = "French mortality: Age 25")
 ```
 
-## Weird subseries
+### Hampel filter
+
+### Weird subseries
 
 
 ## Weird series
+
+Next we consider unusual series within a large collection of time series.
 
 To illustrate the ideas we will use a data set of monthly observations on
 the Australian Pharmaceutical Benefits Scheme (PBS), from July 1991 to June 2008. The PBS involves the Australian government subsidising certain pharmaceutical products, to allow more equitable access to essential medicines. The data set contains monthly sales volumes of those products being subsidised, classified according to the Anatomical Therapeutic Chemical (ATC) classification system. 
