@@ -40,13 +40,13 @@ pbs_plot <- function(pbs, anomalies, series) {
     dplyr::filter(ATC2 == series) |>
     dplyr::pull(Month) |>
     as.Date()
-    pbs |>
-      dplyr::filter(ATC2 == series) |>
-      ggplot2::ggplot(ggplot2::aes(x = Month, y = Scripts)) +
-      tsibble::scale_x_yearmonth(date_breaks = "2 years", date_labels = "%Y") +
-      ggplot2::geom_vline(xintercept = dates, color = "red", alpha = 0.4) +
-      ggplot2::geom_line() +
-      ggplot2::labs(title = paste("Scripts for ATC group", series))
+  pbs |>
+    dplyr::filter(ATC2 == series) |>
+    ggplot2::ggplot(ggplot2::aes(x = Month, y = Scripts)) +
+    tsibble::scale_x_yearmonth(date_breaks = "2 years", date_labels = "%Y") +
+    ggplot2::geom_vline(xintercept = dates, color = "red", alpha = 0.4) +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = paste("Scripts for ATC group", series))
 }
 ```
 
@@ -58,6 +58,8 @@ For this chapter, we will load some additional packages designed to work with ti
 library(tsibble)
 library(fable)
 library(feasts)
+library(broom)
+library(tsibbledata)
 ```
 
 ```{r}
@@ -87,7 +89,7 @@ These can be illustrated using the following examples.
 ```{r}
 #| label: fig-tsparadigms
 #| echo: false
-#| fig-cap: The three main anomaly detection paradigms. In the top panel, we aim to identify an unusual observation in the next time period. In the middle panel, we aim to identify unusual observations within historical data. In the bottom panel, we aim to identify an unusual time series within a collection of time series.
+#| fig-cap: The four main anomaly detection paradigms. In the top panel, we aim to identify an unusual observation in the next time period. In the middle panel, we aim to identify unusual observations within historical data. In the bottom panel, we aim to identify an unusual time series within a collection of time series.
 a12 <- tsibbledata::PBS |>
   group_by(ATC2) |>
   summarise(Scripts = sum(Scripts) / 1e3) |>
@@ -102,10 +104,10 @@ p1 <- fr_mortality |>
   theme(axis.title = element_blank()) +
   scale_x_yearmonth(breaks = NULL) +
   scale_y_log10(breaks = NULL)
-p2 <- tibble(x = 0, y=0) |> 
+p2 <- tibble(x = 0, y = 0) |>
   mutate(paradigm = "Weird subseries") |>
   ggplot() +
-  facet_grid(paradigm ~ .) 
+  facet_grid(paradigm ~ .)
 p3 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
   mutate(paradigm = "Weird series") |>
@@ -142,6 +144,8 @@ We will discuss each of these paradigms in turn.
 
 ```{r}
 #| label: fr_mortality
+#| warning: false
+#| code-fold: false
 fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
   filter(Sex != "Total", Year < 2000) |>
   vital::collapse_ages(max_age = 85) |>
@@ -152,6 +156,7 @@ fr_mortality
 
 ```{r}
 #| label: fr_mortality_time_plots
+#| code-fold: false
 fr_mortality |>
   ggplot(aes(
     x = Year, y = Mortality,
@@ -165,6 +170,7 @@ fr_mortality |>
 
 ```{r}
 #| label: fr_fit
+#| code-fold: false
 fr_fit <- fr_mortality |>
   model(stl = STL(log(Mortality)))
 
@@ -185,6 +191,7 @@ fr_scores <- augment(fr_fit) |>
 
 ```{r}
 #| label: fr_scores3
+#| code-fold: false
 fr_scores |> arrange(prob)
 
 fr_anomalies <- fr_scores |>
@@ -274,9 +281,7 @@ the Australian Pharmaceutical Benefits Scheme (PBS), from July 1991 to June 2008
 #| label: weirdseries
 #| message: false
 #| warning: false
-library(broom)
-library(tsibbledata)
-
+#| code-fold: false
 ## Compute features (and omit series with missing features)
 PBS_feat <- PBS |>
   features(Cost, feature_set(pkgs = "feasts")) |>
@@ -428,40 +433,43 @@ This process is repeated as we increase the size of the training set. The follow
 ```{r}
 #| label: pbsloop
 #| code-fold: false
-#| eval: false
-pbs <- pbs |>
-  mutate(s = NA_real_, prob = NA_real_, fmean = NA_real_, fvar = NA_real_)
-
-for (i in 36:(max(pbs$t) - 1)) {
-  # Fit ETS model to all series and compute 1-step forecasts
-  pbs_fc <- pbs |>
-    filter(t <= i) |>
-    model(ets = ETS(Scripts)) |>
-    forecast(h = 1) |>
-    rename(fcast = Scripts) |>
-    filter(!is.na(.mean))
-  # Calculate anomaly scores and probabilities
-  pbs_scores <- pbs |>
-    filter(t == i+1) |>
-    right_join(pbs_fc, by = c("Month", "ATC2")) |>
-    mutate(
-      newmean = mean(fcast),
-      newvar = distributional::variance(fcast),
-      news = -distributional::log_likelihood(fcast, Scripts),
-      newprob = lookout(density_scores = news, threshold = 0.9)
-    ) |>
-    select(Month, ATC2, news, newprob, newmean, newvar)
-  # Add scores to pbs data set
+compute_pbs_scores <- function(pbs) {
   pbs <- pbs |>
-    left_join(pbs_scores, by = c("Month", "ATC2")) |>
-    mutate(
-      fmean = if_else(!is.na(newmean), newmean, fmean),
-      fvar = if_else(!is.na(newvar), newvar, fvar),
-      s = if_else(!is.na(news), news, s),
-      prob = if_else(!is.na(newprob), newprob, prob)
-    ) |>
-    select(-news, -newprob, -newmean, -newvar)
+    mutate(s = NA_real_, prob = NA_real_, fmean = NA_real_, fvar = NA_real_)
+
+  for (i in 36:(max(pbs$t) - 1)) {
+    # Fit ETS model to all series and compute 1-step forecasts
+    pbs_fc <- pbs |>
+      filter(t <= i) |>
+      model(ets = ETS(Scripts)) |>
+      forecast(h = 1) |>
+      rename(fcast = Scripts) |>
+      filter(!is.na(.mean))
+    # Calculate anomaly scores and probabilities
+    pbs_scores <- pbs |>
+      filter(t == i + 1) |>
+      right_join(pbs_fc, by = c("Month", "ATC2")) |>
+      mutate(
+        newmean = mean(fcast),
+        newvar = distributional::variance(fcast),
+        news = -distributional::log_likelihood(fcast, Scripts),
+        newprob = lookout(density_scores = news, threshold = 0.9)
+      ) |>
+      select(Month, ATC2, news, newprob, newmean, newvar)
+    # Add scores to pbs data set
+    pbs <- pbs |>
+      left_join(pbs_scores, by = c("Month", "ATC2")) |>
+      mutate(
+        fmean = if_else(!is.na(newmean), newmean, fmean),
+        fvar = if_else(!is.na(newvar), newvar, fvar),
+        s = if_else(!is.na(news), news, s),
+        prob = if_else(!is.na(newprob), newprob, prob)
+      ) |>
+      select(-news, -newprob, -newmean, -newvar)
+  }
+  return(pbs)
 }
+pbs_scores <- compute_pbs_scores(pbs) |> cache("pbs_scores")
 ```
 
 ```{r}
