@@ -1349,6 +1349,31 @@
       ],
       "Hash": "8bf20c39b7dc84e336a78d70891254e9"
     },
+    "feasts": {
+      "Package": "feasts",
+      "Version": "0.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "dplyr",
+        "fabletools",
+        "ggplot2",
+        "grid",
+        "gtable",
+        "lifecycle",
+        "lubridate",
+        "rlang",
+        "scales",
+        "slider",
+        "tibble",
+        "tidyr",
+        "tsibble",
+        "utils",
+        "vctrs"
+      ],
+      "Hash": "d15631c019c27e50b1a99e3e9b3b53e1"
+    },
     "fontawesome": {
       "Package": "fontawesome",
       "Version": "0.5.2",
@@ -3304,6 +3329,20 @@
       ],
       "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
     },
+    "slider": {
+      "Package": "slider",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cli",
+        "rlang",
+        "vctrs",
+        "warp"
+      ],
+      "Hash": "a584625e2b9e4fad4be135c8ea5c99aa"
+    },
     "sm": {
       "Package": "sm",
       "Version": "2.2-6.0",
@@ -3929,6 +3968,16 @@
         "withr"
       ],
       "Hash": "390f9315bc0025be03012054103d227c"
+    },
+    "warp": {
+      "Package": "warp",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "fea474d578b1cbcb696ae6ac8bdcc439"
     },
     "weird": {
       "Package": "weird",
