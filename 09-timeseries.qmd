@@ -75,12 +75,11 @@ fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
 
 ## Time series anomaly detection paradigms
 
-Time series data are observations that are collected over time. In this book, we will only consider time series which are observed at regular intervals, such as annually, monthly, or hourly.
+Time series data are observations that are collected over time. In this book, we will only consider time series that are observed at regular intervals, such as annually, monthly, or hourly.
 
-When considering time series data, we can distinguish between four different anomaly detection paradigms:
+When considering time series data, we can distinguish between three different anomaly detection paradigms:
 
 1. **Weird times**: Identifying anomalies within a time series in historical data.
-1. **Weird subseries**: aka contextual anomalies
 1. **Weird series**: Identifying an anomalous time series within a collection of time series.
 1. **Surveillance**: Identifying anomalies within a time series in real time
 
@@ -89,7 +88,7 @@ These can be illustrated using the following examples.
 ```{r}
 #| label: fig-tsparadigms
 #| echo: false
-#| fig-cap: The three main anomaly detection paradigms.In the top panel, we aim to identify unusual observations within historical data. In the middle panel, we aim to identify an unusual time series within a collection of time series. In the bottom panel, we aim to identify an unusual observation in the next time period. 
+#| fig-cap: The three main anomaly detection paradigms. In the top panel, we aim to identify unusual observations within historical data. In the middle panel, we aim to identify an unusual time series within a collection of time series. In the bottom panel, we aim to identify an unusual observation in the next time period.
 a12 <- tsibbledata::PBS |>
   group_by(ATC2) |>
   summarise(Scripts = sum(Scripts) / 1e3) |>
@@ -121,10 +120,10 @@ p3 <- a12 |>
   scale_x_yearmonth(breaks = NULL) +
   scale_y_continuous(breaks = NULL)
 
-patchwork::wrap_plots(p1, p2, p3, p4, ncol = 1)
+patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 ```
 
-**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations. There may be an unusual sequence of observations within the time series, forming an anomalous subseries. This could happen, for example, when there is an event that affects multiple consecutive time periods. We will also consider this within the paradigm of weird times.
+**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations. There may also be an unusual sequence of observations within the time series, forming an anomalous subseries. This could happen, for example, when there is an event that affects multiple consecutive time periods. We will also consider this within the paradigm of weird times.
 
 **Weird series**: In the middle plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
 
@@ -132,20 +131,13 @@ patchwork::wrap_plots(p1, p2, p3, p4, ncol = 1)
 
 We will discuss each of these paradigms in turn.
 
-
 ## Weird times
 
 As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to 1999. In fact, the top plot in @fig-tsparadigms shows the male log mortality rates for 25 year olds over this time period.
 
 ```{r}
 #| label: fr_mortality
-#| warning: false
 #| code-fold: false
-fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
-  filter(Sex != "Total", Year < 2000) |>
-  vital::collapse_ages(max_age = 85) |>
-  as_tsibble() |>
-  select(Year, Age, Sex, Mortality)
 fr_mortality
 ```
 
@@ -156,14 +148,37 @@ fr_mortality
 #| code-fold: false
 #| fig-cap: French mortality rates by sex and age from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)`. We use a log scale because the rates are vastly different for different age groups.
 fr_mortality |>
-  ggplot(aes(
-    x = Year, y = Mortality,
-    color = Age, group = Age
-  )) +
+  ggplot(aes(x = Year, y = Mortality, color = Age, group = Age)) +
   geom_line() +
   facet_grid(. ~ Sex) +
-  scale_y_log10() 
+  scale_y_log10()
 ```
+
+Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function through the observations, and then identifying anomalies in the residuals. We will consider three such approaches here.
+
+### Hampel filter
+
+The Hampel filter is due to @Hampel1974, and is designed to replace anomalies in a time series with a estimate based on the surrounding observations. It identifies anomalies by computing the difference between each observation and a moving median. These differences are then standardized by dividing by a moving median absolute deviation (MAD) of the differences. Observations with standardized residuals greater than a specified threshold are considered outliers. The Hampel filter then replaces the outliers with the moving median.
+
+The `hampel_anomalies()` function does the first part of this process, by identifying anomalies within a time series using moving medians and MADs.
+
+```{r}
+fr_mortality <- fr_mortality |>
+  group_by(Age, Sex) |>
+  mutate(
+    hampel = hampel_anomalies(Mortality, bandwidth = 7, k = 5)
+  )
+```
+
+```{r}
+fr_mortality |> 
+  filter(hampel) |>
+  ggplot(aes(x = Year, y = Age)) +
+  geom_point() +
+  facet_grid(. ~ Sex)
+```
+
+### Density scores
 
 To identify the anomalous time periods within each series, we first fit a smooth trend line to each series, and calculate the residuals. Then we standardize the residuals so they are all on the same scale. Because we don't want the anomalies to affect the standardization, we will use the IQR to estimate the standard deviation of the residuals within each series.
 
@@ -187,7 +202,7 @@ Next we compute the density scores and corresponding lookout probabilities assum
 #| code-fold: false
 fr_scores <- augment(fr_fit) |>
   as_tibble() |>
-  left_join(fr_sigma) |>
+  left_join(fr_sigma, by = c("Age", "Sex")) |>
   mutate(
     s = -log(dnorm(.innov / sigma)),
     prob = lookout(density_scores = s, threshold_probability = 0.9)
@@ -201,16 +216,6 @@ Finally, we identify anomalies as observations with lookout probability less tha
 #| label: fr_scores3
 #| code-fold: false
 fr_scores |> arrange(prob)
-
-fr_anomalies <- fr_scores |>
-  filter(prob < 0.05) |>
-  as_tibble() |>
-  select(Year, Sex, Age) |>
-  distinct() |>
-  left_join(fr_mortality)
-yrs <- fr_anomalies |>
-  select(Year, Sex) |>
-  distinct()
 ```
 
 The most extreme anomalies all correspond to 1944, towards the end of World War II. Other anomalies also correspond to wars and other important events in French history. In particular, the following events are important.
@@ -222,6 +227,15 @@ The most extreme anomalies all correspond to 1944, towards the end of World War 
 
 ```{r}
 #| label: fr_25
+fr_anomalies <- fr_scores |>
+  filter(prob < 0.05) |>
+  as_tibble() |>
+  select(Year, Sex, Age) |>
+  distinct() |>
+  left_join(fr_mortality, by = c("Age", "Sex", "Year"))
+yrs <- fr_anomalies |>
+  select(Year, Sex) |>
+  distinct()
 fr_anomalies_plot_male2 <- fr_anomalies |>
   filter(Sex == "Male") |>
   ggplot(aes(x = Year, y = Age)) +
@@ -277,7 +291,6 @@ fr_mortality |>
   labs(title = "French mortality: Age 25")
 ```
 
-### Hampel filter
 
 ### Weird subseries
 
@@ -287,7 +300,7 @@ fr_mortality |>
 Next we consider unusual series within a large collection of time series.
 
 To illustrate the ideas we will use a data set of monthly observations on
-the Australian Pharmaceutical Benefits Scheme (PBS), from July 1991 to June 2008. The PBS involves the Australian government subsidising certain pharmaceutical products, to allow more equitable access to essential medicines. The data set contains monthly sales volumes of those products being subsidised, classified according to the Anatomical Therapeutic Chemical (ATC) classification system. 
+the Australian Pharmaceutical Benefits Scheme (PBS), from July 1991 to June 2008. The PBS involves the Australian government subsidising certain pharmaceutical products, to allow more equitable access to essential medicines. The data set contains monthly sales volumes of those products being subsidised, classified according to the Anatomical Therapeutic Chemical (ATC) classification system.
 
 
 ```{r}
@@ -424,7 +437,7 @@ pbs_fc <- forecast(pbs_fit, h = 1)
 pbs_fc
 ```
 
-The forecasts are in the `Scripts` column. Note that each of them is a normal distribution where the mean and variance has been estimated using the ETS model. The mean of the forecast distribution is given as `.mean`. 
+The forecasts are in the `Scripts` column. Note that each of them is a normal distribution where the mean and variance has been estimated using the ETS model. The mean of the forecast distribution is given as `.mean`.
 
 We can compute the density scores using the `log_likelihood()` function from the `distributional` package, and calculate the lookout probabilities.
 
@@ -446,6 +459,8 @@ This process is repeated as we increase the size of the training set. The follow
 ```{r}
 #| label: pbsloop
 #| code-fold: false
+#| warning: false
+#| message: false
 compute_pbs_scores <- function(pbs) {
   pbs <- pbs |>
     mutate(s = NA_real_, prob = NA_real_, fmean = NA_real_, fvar = NA_real_)
@@ -486,7 +501,7 @@ pbs_scores <- compute_pbs_scores(pbs) |> cache("pbs_scores")
 ```
 
 ```{r}
-pbs
+pbs_scores
 ```
 
 We compare the distribution against the observation for February 2006.
