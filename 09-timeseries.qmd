@@ -116,7 +116,7 @@ p3 <- a12 |>
 patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 ```
 
-**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations. There may also be an unusual sequence of observations within the time series, forming an anomalous subseries. This could happen, for example, when there is an event that affects multiple consecutive time periods. We will also consider this within the paradigm of weird times.
+**Weird times**: In the top plot, we are looking for historical anomalies within time series data. This is common in quality control, or in data cleaning. The aim is to find time periods where the observations are different from the rest of the data. Again, it can easily be extended to multivariate time series, where we look for time periods when one or more of the series may display unusual observations. 
 
 **Weird series**: In the middle plot, we are looking for an anomalous time series within a collection of time series. The observations within each series may all be consistent, but the series as a whole may be unusual. This is, by its nature, a multivariate problem. It is common in finance, where we look for unusual behaviour of a stock within a collection of stocks, or in health, where we look for unusual behaviour of a patient within a collection of patients.
 
@@ -147,7 +147,7 @@ fr_mortality |>
   scale_y_log10()
 ```
 
-Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function through the observations, and then identifying anomalies in the residuals. We will consider three such approaches here.
+Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function $m_t$ through the observations, and then identifying anomalies in the residuals $y_t - m_t$. We will consider three such approaches here.
 
 ### Hampel identifier
 
@@ -184,6 +184,7 @@ fr_mortality |> filter(hampel) |> arrange(Year, Age)
 #| code-fold: true
 #| warning: false
 #| fig-cap: French mortality observations identified as anomalies using the Hampel identifier.
+#| dependson: hampel_anomalies
 fr_anomalies <- fr_mortality |> filter(hampel)
 # Find years containing anomalies
 yrs <- fr_anomalies |>
@@ -245,63 +246,59 @@ patchwork::wrap_plots(
 * 1918: Spanish flu outbreak
 * 1940-1944: World War II
  
-### STL anomalies
+### Density score anomalies
 
-The Hampel identifier worked well for the annual mortality series, but the local median approach will break down when there is seasonality or other systematic patterns in the data. However, the same idea can be adapted by replacing the local median with a more sophisticated way of modelling the signal in the data. One such method is STL (Seasonal Trend decomposition using Loess) due to @Cleveland1990, and extended by @mstl to handle multiple seasonal periods.
-
-Another way the Hampel identifier can be adapted is to replace the distance-based measure of identifying anomalies based on their distance from neighbouring observations, with a density-based measure.
-
-
-
-
-To identify the anomalous time periods within each series, we first fit a smooth trend line to each series, and calculate the residuals. Then we standardize the residuals so they are all on the same scale. Because we don't want the anomalies to affect the standardization, we will use the IQR to estimate the standard deviation of the residuals within each series.
-
+The Hampel identifier worked well for the annual mortality series, but the local median approach will break down when there is seasonality or other systematic patterns in the data. However, the same idea can be adapted by replacing the local median with a more sophisticated way of modelling the signal in the data. One such method is STL (Seasonal Trend decomposition using Loess) due to @Cleveland1990, and extended by @mstl to handle multiple seasonal periods or series with no seasonality. In the latter case, Friedman's SuperSmoother [@supsmu] is used to estimate the signal $m_t$. This uses local linear regressions rather than local medians, with the window width chosen by cross-validation. Other estimates of $m_t$ are also possible, provided they are robust to outliers.
 
 ```{r}
 #| label: fr_fit
 #| code-fold: false
 fr_fit <- fr_mortality |>
   as_tsibble(index = Year, key = c(Age, Sex)) |>
-  model(stl = STL(log(Mortality)))
-
-fr_sigma <- augment(fr_fit) |>
+  model(stl = STL(Mortality)) |>
+  augment() |>
   as_tibble() |>
+  select(-.model, -.innov)
+fr_fit
+```
+
+The `.fitted` column contains the estimates of $m_t$, while the `.resid` column contains the differences $y_t - \hat{m}_t$. We will estimate the spread of the differences across each series (rather than locally, as was done with the Hampel method). This time, we will use IQR, rather than MAD, to estimate the spread, with a similar adjustment so that it is equivalent to a standard deviation if they data were normally distributed. 
+
+```{r}
+#| label: fr_scores1
+#| code-fold: false
+#| dependson: fr_fit
+fr_sigma <- fr_fit |>
   group_by(Age, Sex) |>
-  summarise(sigma = IQR(.innov) / 1.349, .groups = "drop")
-```
-
-Next we compute the density scores and corresponding lookout probabilities assuming the residuals follow a normal distribution.
-
-```{r}
-#| label: fr_scores
-#| code-fold: false
-fr_scores <- augment(fr_fit) |>
-  as_tibble() |>
+  summarise(sigma = IQR(.resid) / 1.349, .groups = "drop")
+fr_scores <- fr_fit |>
   left_join(fr_sigma, by = c("Age", "Sex")) |>
-  mutate(
-    s = -log(dnorm(.innov / sigma)),
-    prob = lookout(density_scores = s, threshold_probability = 0.9)
-  ) |>
-  select(-.model, -.resid, -.fitted, -sigma)
+  mutate(e = .resid / sigma)
+fr_scores
 ```
 
-Finally, we identify anomalies as observations with lookout probability less than 0.05.
+At this point, we could identify a point as an anomaly if it is more than k standard deviations away from $m_t$, as was done with the Hampel identifier. This is also the approach taken by the `tsoutliers` function from the `forecast` package, which uses 3 IQR as the threshold, equivalent to $k=4.05$ standard deviations. But we will use density scores instead, and compute the corresponding lookout probabilities assuming the residuals follow a normal distribution.
 
 ```{r}
-#| label: fr_scores3
+#| label: fr_scores2
 #| code-fold: false
+#| dependson: fr_scores1
+fr_scores <- fr_scores |>
+  mutate(
+    s = -dnorm(e, log = TRUE),
+    prob = lookout(density_scores = s, threshold_probability = 0.9)
+  )
 fr_scores |> arrange(prob)
 ```
 
-The most extreme anomalies all correspond to 1944, towards the end of World War II. Other anomalies also correspond to wars and other important events in French history. In particular, the following events are important.
-
-* 1870--1872: Franco-Prussian war and repression of the ‘Commune de Paris’
-* 1914--1918: World War I
-* 1918: Spanish flu
-* 1939--1945: World War II
+The most extreme anomalies all correspond to male deaths due to World War I. A plot similar to @fig-hampel_fr can be made, showing points with lookout probability less than 0.05. Fewer anomalies have been identified than with the Hampel identifier. Because the lookout probabilities were based on a Generalized Pareto Distribution with a threshold of 90%, and we are identifying anomalies with probability less than 0.05, the overall probability of a false positive is 0.005 per series, so it is unlikely that we have identified any false positives, and very likely that we have missed some anomalies.
 
 ```{r}
-#| label: fr_25
+#| label: fig-stl_anomalies
+#| code-fold: true
+#| warning: false
+#| fig-cap: French mortality observations identified as anomalies using density scores obtained from applying Friedman's supersmoother to each series. 
+#| dependson: fr_scores2
 fr_anomalies <- fr_scores |>
   filter(prob < 0.05) |>
   as_tibble() |>
@@ -349,26 +346,11 @@ fr_anomalies_plot_female2 <- fr_anomalies |>
   ) +
   ylim(4, 85)
 patchwork::wrap_plots(
-  fr_anomalies_plot_female2 +
-    geom_hline(yintercept = 25, color = "gray"),
-  fr_anomalies_plot_male2 +
-    geom_hline(yintercept = 25, color = "gray") +
-    annotate("text", x = 1890, y = 27, label = "Age 25", family = "Fira Sans"),
+  fr_anomalies_plot_female2,
+  fr_anomalies_plot_male2,
   nrow = 1
 )
-
-fr_mortality |>
-  filter(Age == 25) |>
-  ggplot(aes(x = Year, y = Mortality, color = Sex)) +
-  geom_line() +
-  facet_grid(Sex ~ ., scales = "free_y") +
-  geom_point(data = fr_anomalies |> filter(Age == 25)) +
-  labs(title = "French mortality: Age 25")
 ```
-
-
-### Weird subseries
-
 
 ## Weird series
 
