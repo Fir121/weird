@@ -55,6 +55,8 @@ For this chapter, we will load some additional packages designed to work with ti
 ```{r}
 #| label: tsibble
 #| code-fold: false
+#| warning: false
+#| message: false
 library(tsibble)
 library(fable)
 library(feasts)
@@ -96,7 +98,7 @@ p1 <- fr_mortality |>
 p2 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
   mutate(paradigm = "Weird series") |>
-  ggplot(aes(x = Year, y = Mortality)) +
+  ggplot(aes(x = Year, y = Mortality, color = as.factor(Age))) +
   geom_line() +
   guides(col = "none") +
   facet_grid(paradigm ~ .) +
@@ -137,7 +139,7 @@ fr_mortality
 ```{r}
 #| label: fig-fr_mortality_time_plots
 #| code-fold: false
-#| fig-cap: French mortality rates by sex and age from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)`. We use a log scale because the rates are vastly different for different age groups.
+#| fig-cap: !expr sprintf("French mortality rates by sex and age from %d to %d.  We use a log scale because the rates are vastly different for different age groups.", min(fr_mortality$Year), max(fr_mortality$Year))
 fr_mortality |>
   ggplot(aes(x = Year, y = Mortality, color = Age, group = Age)) +
   geom_line() +
