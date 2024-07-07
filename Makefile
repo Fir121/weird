@@ -1,7 +1,8 @@
 qmd_files := $(patsubst %.qmd, _book/%.html, $(wildcard *.qmd))
 rds_files := $(wildcard *.rds)
 
-default: all
+default: 
+	quarto preview
 
 all:
 	quarto render
@@ -10,7 +11,7 @@ $(qmd_files): _book/%.html: %.qmd $(rds_files) weird.bib before-each-chapter.R a
 	quarto render $< --to html
 
 launch:
-	vivaldi _book/index.html
+	xdg-open _book/index.html
 
 deploy:
 	cp .htaccess _book

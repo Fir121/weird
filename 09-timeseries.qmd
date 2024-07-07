@@ -62,17 +62,6 @@ library(broom)
 library(tsibbledata)
 ```
 
-```{r}
-#| label: egdata
-#| include: false
-# Loaded again later, but needed here for the paradigm examples
-fr_mortality <- vital::read_hmd_files(here::here("data/Mx_1x1.txt")) |>
-  filter(Sex != "Total", Year < 2000) |>
-  vital::collapse_ages(max_age = 85) |>
-  as_tsibble() |>
-  select(Year, Age, Sex, Mortality)
-```
-
 ## Time series anomaly detection paradigms
 
 Time series data are observations that are collected over time. In this book, we will only consider time series that are observed at regular intervals, such as annually, monthly, or hourly.
@@ -98,7 +87,8 @@ a12 <- tsibbledata::PBS |>
 p1 <- fr_mortality |>
   filter(Age == 25, Sex == "Male") |>
   mutate(paradigm = "Weird times") |>
-  autoplot(Mortality) +
+  ggplot(aes(x = Year, y = Mortality)) +
+  geom_line() +
   facet_grid(paradigm ~ .) +
   theme(axis.title = element_blank()) +
   scale_x_yearmonth(breaks = NULL) +
@@ -106,7 +96,8 @@ p1 <- fr_mortality |>
 p2 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
   mutate(paradigm = "Weird series") |>
-  autoplot(Mortality) +
+  ggplot(aes(x = Year, y = Mortality)) +
+  geom_line() +
   guides(col = "none") +
   facet_grid(paradigm ~ .) +
   theme(axis.title = element_blank()) +
@@ -133,7 +124,7 @@ We will discuss each of these paradigms in turn.
 
 ## Weird times
 
-As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to 1999. In fact, the top plot in @fig-tsparadigms shows the male log mortality rates for 25 year olds over this time period.
+As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)` over ages `r min(fr_mortality$Age)` to `r max(fr_mortality$Age)`, giving `r fr_mortality |> select(Age, Sex) |> distinct() |> NROW()` separate time series, each of length `r max(fr_mortality$Year) - min(fr_mortality$Year) + 1`. In fact, the top plot in @fig-tsparadigms shows the male log mortality rates for 25 year olds over this time period.
 
 ```{r}
 #| label: fr_mortality
@@ -141,7 +132,7 @@ As a vehicle of illustration, we will consider French mortality rates, disaggreg
 fr_mortality
 ```
 
-@fig-fr_mortality_time_plots shows the data for both sexes and all ages as time series. The mortality rates have improved over time for all ages, especially since 1950. Infant mortality (age 0) is much higher than the rest of childhood, with mortality rates at a minimum at about age 10 in all years. The highest mortality rates are for the oldest age groups. The effect of the two wars are particularly evident in the male mortality rates.
+@fig-fr_mortality_time_plots shows the data for both sexes and all ages. The mortality rates have improved over time for all ages, especially since 1950. Infant mortality (age 0) is much higher than the rest of childhood, with mortality rates at a minimum at about age 10 in all years. The highest mortality rates are for the oldest age groups. The effect of the two wars are particularly evident in the male mortality rates.
 
 ```{r}
 #| label: fig-fr_mortality_time_plots
@@ -156,29 +147,110 @@ fr_mortality |>
 
 Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function through the observations, and then identifying anomalies in the residuals. We will consider three such approaches here.
 
-### Hampel filter
+### Hampel identifier
 
-The Hampel filter is due to @Hampel1974, and is designed to replace anomalies in a time series with a estimate based on the surrounding observations. It identifies anomalies by computing the difference between each observation and a moving median. These differences are then standardized by dividing by a moving median absolute deviation (MAD) of the differences. Observations with standardized residuals greater than a specified threshold are considered outliers. The Hampel filter then replaces the outliers with the moving median.
+The Hampel identifier is due to a proposal of Frank Hampel [@Davies1993], and is designed to identify anomalies in a time series based on whether an observation is very different from the neighbouring observations. Suppose we define neighbourhoods comprising observations within $h$ time periods. Then the local median is given by
+$$
+\hat{m}_t = \text{median}(y_{t-h}, \dots, y_{t+h}).
+$$
+This is also called a "moving median", a "running median" or a "rolling median". Similarly, the local median absolute deviation (MAD) is given by
+$$
+\hat{d}_t = \text{median}(|y_{t-h}-\hat{m}_t|, \dots, |y_{t+h}- \hat{m}_t|).
+$$
+This measures the variation of the series in the neighbourhood of time $t$. The ratios $|y_t-\hat{m}_t|/d_t$ provide a measure for how different an observation $y_t$ is from its neighbours. The Hampel identifier denotes an observation as an anomaly if 
+$$|y_t - \hat{m}_t|/d_t > \tau$$
+for some threshold $\tau$. A related idea is the Hampel filter, where each anomaly is replaced by the local median $\hat{m}_t$.
 
-The `hampel_anomalies()` function does the first part of this process, by identifying anomalies within a time series using moving medians and MADs.
+The threshold is often set under the assumption of a normal distribution, for which the MAD is equal to 0.67445 times the standard deviation. So it is common to set $\tau = k/0.67445$ where $k$ is the number of standard deviations permitted before an observation is considered an outlier. Because we apply the rule repeatedly over the length of a time series, we need to be careful of the problem of multiple comparisons, where the probability of a false positive overall is much larger than the probability of a false positive for each individual test. However, it is not straightforward to adjust the probabilities because the tests are not independent, and the dependency between them depends on the window size $h$, and the characteristics of the time series. Setting $k=5$ or 6 seems to work quite well for many problems.
+
+The `hampel_anomalies()` function implements this algorithm. The code below applies the algorithm to all 172 time series in `fr_mortality`.
 
 ```{r}
+#| label: hampel-anomalies
+#| code-fold: false
 fr_mortality <- fr_mortality |>
   group_by(Age, Sex) |>
   mutate(
-    hampel = hampel_anomalies(Mortality, bandwidth = 7, k = 5)
-  )
+    hampel = hampel_anomalies(Mortality, bandwidth = 7, k = 6)
+  ) |>
+  ungroup()
+fr_mortality |> filter(hampel) |> arrange(Year, Age)
 ```
 
 ```{r}
-fr_mortality |> 
-  filter(hampel) |>
+#| label: fig-hampel_fr
+#| code-fold: true
+#| warning: false
+#| fig-cap: French mortality observations identified as anomalies using the Hampel identifier.
+fr_anomalies <- fr_mortality |> filter(hampel)
+# Find years containing anomalies
+yrs <- fr_anomalies |>
+  select(Year, Sex) |>
+  distinct()
+fr_anomalies_plot_male2 <- fr_anomalies |>
+  filter(Sex == "Male") |>
   ggplot(aes(x = Year, y = Age)) +
-  geom_point() +
-  facet_grid(. ~ Sex)
+  facet_grid(. ~ Sex) +
+  scale_x_continuous(
+    breaks = seq(1820, 2000, by = 20),
+    limits = range(yrs$Year)
+  ) +
+  geom_vline(
+    xintercept = unique(yrs$Year[yrs$Sex == "Male"]),
+    alpha = 0.5, color = "grey"
+  ) +
+  geom_point(col = "#478cb2") +
+  ggrepel::geom_text_repel(
+    data =  yrs |>
+      filter(Sex == "Male", !Year %in% 1915:1918),
+    aes(y = 75, label = Year), col = "#478cb2", size = 3, seed = 1967
+  ) +
+  ylim(4, 85)
+fr_anomalies_plot_female2 <- fr_anomalies |>
+  filter(Sex == "Female") |>
+  ggplot(aes(x = Year, y = Age)) +
+  facet_grid(. ~ Sex) +
+  scale_x_continuous(
+    breaks = seq(1820, 2000, by = 20),
+    limits = range(yrs$Year)
+  ) +
+  geom_vline(
+    xintercept = unique(yrs$Year[yrs$Sex == "Female"]),
+    alpha = 0.5, color = "grey"
+  ) +
+  labs(title = "French mortality anomalies") +
+  geom_point(col = "#c1653a") +
+  ggrepel::geom_text_repel(
+    data = yrs[yrs$Sex == "Female", ],
+    aes(y = 75, label = Year), col = "#c1653a", size = 3, seed = 1967
+  ) +
+  ylim(4, 85)
+patchwork::wrap_plots(
+  fr_anomalies_plot_female2,
+  fr_anomalies_plot_male2,
+  nrow = 1
+)
+
 ```
 
-### Density scores
+@fig-hampel_fr shows the observations that have been identified as anomalies, showing the wars and epidemics that have occurred over time. The following events in French history are evident in the data:
+
+* 1832, 1849, 1854: Cholera outbreaks
+* 1853-1856: Crimean war
+* 1870: Franco-Prussian war 
+* 1871: Repression of the ‘Commune de Paris’
+* 1914-1918: World War I
+* 1918: Spanish flu outbreak
+* 1940-1944: World War II
+ 
+### STL anomalies
+
+The Hampel identifier worked well for the annual mortality series, but the local median approach will break down when there is seasonality or other systematic patterns in the data. However, the same idea can be adapted by replacing the local median with a more sophisticated way of modelling the signal in the data. One such method is STL (Seasonal Trend decomposition using Loess) due to @Cleveland1990, and extended by @mstl to handle multiple seasonal periods.
+
+Another way the Hampel identifier can be adapted is to replace the distance-based measure of identifying anomalies based on their distance from neighbouring observations, with a density-based measure.
+
+
+
 
 To identify the anomalous time periods within each series, we first fit a smooth trend line to each series, and calculate the residuals. Then we standardize the residuals so they are all on the same scale. Because we don't want the anomalies to affect the standardization, we will use the IQR to estimate the standard deviation of the residuals within each series.
 
@@ -187,6 +259,7 @@ To identify the anomalous time periods within each series, we first fit a smooth
 #| label: fr_fit
 #| code-fold: false
 fr_fit <- fr_mortality |>
+  as_tsibble(index = Year, key = c(Age, Sex)) |>
   model(stl = STL(log(Mortality)))
 
 fr_sigma <- augment(fr_fit) |>
