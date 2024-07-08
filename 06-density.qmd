@@ -9,19 +9,40 @@ wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to first estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Density scores and the lookout algorithm {#sec-lookout}
+## Density scores {#sec-density-scores}
 
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
 
-The density score of an observation $\bm{y}_i$, is defined as $s_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
+The density score of an observation $\bm{y}_i$, is defined as $p_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $p_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
 
 Density scores are commonly used in forecasting and prediction problems, where they are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data $y$ are assumed to come from some distribution, and the density scores are used to assess how well the estimated distribution $f$ matches that distribution. Here we are using density scores in reverse --- we assume $f$ is a good description of the data, and then we use the density scores to identify observations that are unlikely to have come from that distribution.
 
-If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated density score, a "LOO density score", given by $s_i = -\log f_{-i}(\bm{y}_i)$.
+If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated density score, a "LOO density score", given by $p_i = -\log f_{-i}(\bm{y}_i)$.
+
+We can use density scores to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
+$$
+P_i = \int f(u) \mathbb{1}(-\log f(u) > p_i) du.
+$$
+If we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $P_i < \alpha$.
+
+In fact, $P_i$ is one minus the probability of the level set containing $y_i$. Therefore, if $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $P_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function.
+
+More generally, for any symmetric distribution, $P_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
+
+When the sample size $n$ is large enough, a quick estimate of the value of $P_i$ can be obtained 
+as the proportion of density scores larger than $p_i$.
+
+## The lookout algorithm {#sec-lookout}
 
 The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses density scores to find the probability of each observation being an anomaly. Although it was proposed using density scores from kernel density estimates, it can be applied to scores obtained using any density.
 
-The underlying idea of the lookout algorithm is to use extreme value theory applied to the density scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the density scores using the POT approach discussed in @sec-evt, with the $95^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the LOO density scores to obtain the probability of each observation. In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the density scores. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
+The underlying idea of the lookout algorithm is to use extreme value theory applied to the density scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the density scores using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ or $95^{th}$ percentile as the threshold. Then we apply the fitted distribution to the LOO density scores to obtain the probability of each observation. 
+
+This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the choice of $f$. 
+
+The approach does require a relatively large number of density scores to be available. We are only using the top 5 or 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
+
+In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the density scores. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
 
 In the following sections, we will discuss how to compute density scores for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
 
@@ -79,7 +100,7 @@ A linear model can be estimated in R using the `stats::lm()` function. The `broo
 
 The density scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
 $$
-  s_i = -\log\phi(r_i),
+  p_i = -\log\phi(r_i),
 $$ {#eq-regression-log-score}
 where $\phi(u) = (2\pi)^{-1/2}e^{-u^2}$ is the standard normal density. This can be computed as follows, assuming that `fit` is the output from `stats::lm()`.
 
@@ -114,7 +135,7 @@ $$
 $$ {#eq-studentized-residuals}
 from which we obtain the log-LOO regression scores given by
 $$
-  s_{-i} = -\log \phi(r_{-i})
+  p_{-i} = -\log \phi(r_{-i})
 $$ {#eq-log-loo-regression-scores}
 
 If `fit` is the output from `stats::lm()`, then these quantities can be computed as follows.
@@ -381,7 +402,7 @@ $$
 $$ {#eq-kdescores}
 and so the "**kde score**" at each observation as
 $$
-  s_i = -\log(f_i).
+  p_i = -\log(f_i).
 $$
 The largest possible score occurs when an observation has no other observations nearby. Then $f_i \approx K_H(\bm{0})/n$ because $K_H(\bm{y}_i-\bm{y}_j)\approx 0$ when $\|\bm{y}_i-\bm{y}_j\|$ is large. So the largest possible kde score, when using a Gaussian kernel, is
 $$
