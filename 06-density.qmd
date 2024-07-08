@@ -13,24 +13,25 @@ Anomalies are observations that are unlikely to have come from the same distribu
 
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
 
-The density score of an observation $\bm{y}_i$, is defined as $p_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $p_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
+The density score of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $p_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
 
 Density scores are commonly used in forecasting and prediction problems, where they are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data $y$ are assumed to come from some distribution, and the density scores are used to assess how well the estimated distribution $f$ matches that distribution. Here we are using density scores in reverse --- we assume $f$ is a good description of the data, and then we use the density scores to identify observations that are unlikely to have come from that distribution.
 
-If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated density score, a "LOO density score", given by $p_i = -\log f_{-i}(\bm{y}_i)$.
+If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated density score, a "LOO density score", given by $g_i = -\log f_{-i}(\bm{y}_i)$.
 
 We can use density scores to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
 $$
-P_i = \int f(u) \mathbb{1}(-\log f(u) > p_i) du.
+p_i = \int f(u) \mathbb{1}(-\log f(u) > g_i) du.
 $$
-If we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $P_i < \alpha$.
+If we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
 
-In fact, $P_i$ is one minus the probability of the level set containing $y_i$. Therefore, if $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $P_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function.
+In fact, $p_i$ is one minus the probability of the level set containing $y_i$. Therefore, if $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function.
 
-More generally, for any symmetric distribution, $P_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
+More generally, for any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
 
-When the sample size $n$ is large enough, a quick estimate of the value of $P_i$ can be obtained 
-as the proportion of density scores larger than $p_i$.
+When the sample size $n$ is large enough, an estimate of the value of $p_i$ can be obtained as the proportion of density scores larger than $g_i$.
+
+The function `score_prob()` function will return values of $p_i$ given values of the density scores $g_i$, where the assumed density $f$ can be provided as a density function (such as `dnorm`) or an empirical estate can be used.
 
 ## The lookout algorithm {#sec-lookout}
 
@@ -100,7 +101,7 @@ A linear model can be estimated in R using the `stats::lm()` function. The `broo
 
 The density scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
 $$
-  p_i = -\log\phi(r_i),
+  g_i = -\log\phi(r_i),
 $$ {#eq-regression-log-score}
 where $\phi(u) = (2\pi)^{-1/2}e^{-u^2}$ is the standard normal density. This can be computed as follows, assuming that `fit` is the output from `stats::lm()`.
 
