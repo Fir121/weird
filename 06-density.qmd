@@ -21,13 +21,11 @@ If the density $f$ has been estimated from the data, then it is sometimes useful
 
 We can use density scores to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
 $$
-p_i = \int f(u) \mathbb{1}(-\log f(u) > g_i) du.
+p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
 $$
-If we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
+where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise. This probability is related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $R_\alpha$ is the highest density region whose boundary is the level set containing $y_i$, then $p_i = 1-\alpha$. If we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
 
-In fact, $p_i$ is one minus the probability of the level set containing $y_i$. Therefore, if $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function.
-
-More generally, for any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
+Suppose $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function. More generally, for any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
 
 When the sample size $n$ is large enough, an estimate of the value of $p_i$ can be obtained as the proportion of density scores larger than $g_i$.
 

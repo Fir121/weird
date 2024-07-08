@@ -252,7 +252,7 @@ Multivariate Normal distributions have the interesting property that the margina
 
 A good reference on multivariate probability distributions is @JKmulticontinuous1.
 
-## Highest density regions
+## Highest density regions {#sec-mhdr}
 
 As with univariate distributions, a **highest density region** for a multivariate distribution is defined as the region of the sample space where the density is higher than a given threshold. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
 $$
