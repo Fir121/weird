@@ -93,8 +93,7 @@ p1 <- fr_mortality |>
   geom_line() +
   facet_grid(paradigm ~ .) +
   theme(axis.title = element_blank()) +
-  scale_x_yearmonth(breaks = NULL) +
-  scale_y_log10(breaks = NULL)
+  scale_x_yearmonth(breaks = NULL)
 p2 <- fr_mortality |>
   filter(Age %in% c(2:6, 60), Sex == "Female") |>
   mutate(paradigm = "Weird series") |>
@@ -126,7 +125,7 @@ We will discuss each of these paradigms in turn.
 
 ## Weird times
 
-As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)` over ages `r min(fr_mortality$Age)` to `r max(fr_mortality$Age)`, giving `r fr_mortality |> select(Age, Sex) |> distinct() |> NROW()` separate time series, each of length `r max(fr_mortality$Year) - min(fr_mortality$Year) + 1`. In fact, the top plot in @fig-tsparadigms shows the male log mortality rates for 25 year olds over this time period.
+As a vehicle of illustration, we will consider French mortality rates, disaggregated by age and sex. These are obtained from the @HMD. We will consider male and female data from `r min(fr_mortality$Year)` to `r max(fr_mortality$Year)` over ages `r min(fr_mortality$Age)` to `r max(fr_mortality$Age)`, giving `r fr_mortality |> select(Age, Sex) |> distinct() |> NROW()` separate time series, each of length `r max(fr_mortality$Year) - min(fr_mortality$Year) + 1`. In fact, the top plot in @fig-tsparadigms shows the male mortality rates for 25 year olds over this time period.
 
 ```{r}
 #| label: fr_mortality
@@ -147,7 +146,7 @@ fr_mortality |>
   scale_y_log10()
 ```
 
-Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function $m_t$ through the observations, and then identifying anomalies in the residuals $y_t - m_t$. We will consider three such approaches here.
+Anomaly detection methods for identifying weird time anomalies are usually based on fitting a smooth function $m_t$ through the observations, estimating the spread in the series $s_t$, and computing the standardized residuals $e_t = (y_t - m_t)/s_t$. We then identify anomalies in the $e_t$ series using one of the methods discussed in @sec-density-methods or @sec-distance-methods. To illustrate, we will consider two such approaches, but many more are possible depending on how $m_t$ and $s_t$ are estimated, and how anomalies are identified in $e_t$.
 
 ### Hampel identifier
 
@@ -157,10 +156,10 @@ $$
 $$
 This is also called a "moving median", a "running median" or a "rolling median". Similarly, the local median absolute deviation (MAD) is given by
 $$
-\hat{d}_t = \text{median}(|y_{t-h}-\hat{m}_t|, \dots, |y_{t+h}- \hat{m}_t|).
+\hat{s}_t = \text{median}(|y_{t-h}-\hat{m}_t|, \dots, |y_{t+h}- \hat{m}_t|).
 $$
-This measures the variation of the series in the neighbourhood of time $t$. The ratios $|y_t-\hat{m}_t|/d_t$ provide a measure for how different an observation $y_t$ is from its neighbours. The Hampel identifier denotes an observation as an anomaly if 
-$$|y_t - \hat{m}_t|/d_t > \tau$$
+This measures the variation of the series in the neighbourhood of time $t$. The residuals $e_t = (y_t-\hat{m}_t)/s_t$ provide a measure for how different an observation $y_t$ is from its neighbours. The Hampel identifier denotes an observation as an anomaly if 
+$$|e_t| > \tau$$
 for some threshold $\tau$. A related idea is the Hampel filter, where each anomaly is replaced by the local median $\hat{m}_t$.
 
 The threshold is often set under the assumption of a normal distribution, for which the MAD is equal to 0.67445 times the standard deviation. So it is common to set $\tau = k/0.67445$ where $k$ is the number of standard deviations permitted before an observation is considered an outlier. Because we apply the rule repeatedly over the length of a time series, we need to be careful of the problem of multiple comparisons, where the probability of a false positive overall is much larger than the probability of a false positive for each individual test. However, it is not straightforward to adjust the probabilities because the tests are not independent, and the dependency between them depends on the window size $h$, and the characteristics of the time series. Setting $k=5$ or 6 seems to work quite well for many problems.
@@ -170,13 +169,14 @@ The `hampel_anomalies()` function implements this algorithm. The code below appl
 ```{r}
 #| label: hampel-anomalies
 #| code-fold: false
-fr_mortality <- fr_mortality |>
+fr_anomalies <- fr_mortality |>
   group_by(Age, Sex) |>
   mutate(
     hampel = hampel_anomalies(Mortality, bandwidth = 7, k = 6)
   ) |>
-  ungroup()
-fr_mortality |> filter(hampel) |> arrange(Year, Age)
+  ungroup() |> 
+  filter(hampel) |> 
+  arrange(Year, Age)
 ```
 
 ```{r}
@@ -185,7 +185,6 @@ fr_mortality |> filter(hampel) |> arrange(Year, Age)
 #| warning: false
 #| fig-cap: French mortality observations identified as anomalies using the Hampel identifier.
 #| dependson: hampel_anomalies
-fr_anomalies <- fr_mortality |> filter(hampel)
 # Find years containing anomalies
 yrs <- fr_anomalies |>
   select(Year, Sex) |>
@@ -262,18 +261,18 @@ fr_fit <- fr_mortality |>
 fr_fit
 ```
 
-The `.fitted` column contains the estimates of $m_t$, while the `.resid` column contains the differences $y_t - \hat{m}_t$. We will estimate the spread of the differences across each series (rather than locally, as was done with the Hampel method). This time, we will use IQR, rather than MAD, to estimate the spread, with a similar adjustment so that it is equivalent to a standard deviation if they data were normally distributed. 
+The `.fitted` column contains the estimates of $m_t$, while the `.resid` column contains the differences $y_t - \hat{m}_t$. We will estimate $s_t$ using a robust estimate of standard deviation across each series (rather than locally, as was done with the Hampel method). This time, we will use IQR, rather than MAD, to estimate the spread, with a similar adjustment so that it is equivalent to a standard deviation if they data were normally distributed. 
 
 ```{r}
 #| label: fr_scores1
 #| code-fold: false
 #| dependson: fr_fit
-fr_sigma <- fr_fit |>
+fr_sd <- fr_fit |>
   group_by(Age, Sex) |>
-  summarise(sigma = IQR(.resid) / 1.349, .groups = "drop")
+  summarise(s = IQR(.resid) / 1.349, .groups = "drop")
 fr_scores <- fr_fit |>
-  left_join(fr_sigma, by = c("Age", "Sex")) |>
-  mutate(e = .resid / sigma)
+  left_join(fr_sd, by = c("Age", "Sex")) |>
+  mutate(e = .resid / s)
 fr_scores
 ```
 
@@ -350,6 +349,42 @@ patchwork::wrap_plots(
   fr_anomalies_plot_male2,
   nrow = 1
 )
+```
+
+### Multivariate time series
+
+A similar can be applied to the whole collection of time series, where we are looking for years that are anomalous across all ages and both sexes. One way to do this is to first take principal components of the series, and then apply the preceding procedure to the series of first principal component scores.
+
+First we convert the series to logs as they are on vastly different scales, then we transform the data to wide form. Finally, we compute the first principal component of the resulting matrix.
+
+```{r}
+# Convert to wide form
+fr_wide <- fr_mortality |>
+  mutate(logm = log(Mortality)) |>
+  mutate(series = paste0(substr(Sex,1,1), ":", Age)) |>
+  select(-Age, -Sex, -Mortality) |>
+  tidyr::pivot_wider(names_from = series, values_from = logm) 
+# Compute 1 principal component from mortality rates
+pcs <- fr_wide |>
+  select(-Year) |>
+  prcomp(rank = 1) |>
+  broom::augment(fr_wide |> select(Year))
+# Plot principal component scores
+pcs |>
+  ggplot(aes(x=Year, y = .fittedPC1)) +
+  geom_line()
+```
+
+Now we can apply an STL model to find anomalies in this series.
+
+```{r}
+pcs |>
+  as_tsibble(index = Year) |>
+  model(stl = STL(.fittedPC1)) |>
+  augment() |>
+  select(-.model, -.innov) |>
+  mutate(e = .resid / IQR(.resid) * 1.349) |>
+  filter(abs(e) > 3)
 ```
 
 ## Weird series
