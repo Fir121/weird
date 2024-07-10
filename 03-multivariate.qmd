@@ -80,6 +80,7 @@ To visualise trivariate relationships, we need to use a 3d-scatterplot. It is ea
 ```{r}
 #| webgl: true
 #| code-fold: false
+#| cache: false
 rgl::plot3d(df[, 1:3],
   size = 5,
   col = c(rep("#777777", 998), rep("#D55E00", 2))
@@ -131,6 +132,7 @@ The equivalent plot in 3-dimensions is shown in @fig-curse3d. The unit sphere is
 
 ```{r}
 #| webgl: true
+#| cache: false
 df <- tibble(
   x = runif(2000, -1, 1),
   y = runif(2000, -1, 1),
