@@ -426,7 +426,10 @@ for (i in depths) {
 }
 p + geom_point() +
   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1)) +
-  geom_point(aes(x = median$center[1], y = median$center[2]), col = "yellow", size = 2)
+  geom_point(
+    data = data.frame(v1 = median$center[1], v2 = median$center[2]), 
+    col = "yellow", size = 2
+  )
 ```
 
 ### Depth median
