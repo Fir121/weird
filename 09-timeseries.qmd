@@ -174,8 +174,8 @@ fr_anomalies <- fr_mortality |>
   mutate(
     hampel = hampel_anomalies(Mortality, bandwidth = 7, k = 6)
   ) |>
-  ungroup() |> 
-  filter(hampel) |> 
+  ungroup() |>
+  filter(hampel) |>
   arrange(Year, Age)
 ```
 
@@ -203,7 +203,7 @@ fr_anomalies_plot_male2 <- fr_anomalies |>
   ) +
   geom_point(col = "#478cb2") +
   ggrepel::geom_text_repel(
-    data =  yrs |>
+    data = yrs |>
       filter(Sex == "Male", !Year %in% 1915:1918),
     aes(y = 75, label = Year), col = "#478cb2", size = 3, seed = 1967
   ) +
@@ -232,7 +232,6 @@ patchwork::wrap_plots(
   fr_anomalies_plot_male2,
   nrow = 1
 )
-
 ```
 
 @fig-hampel_fr shows the observations that have been identified as anomalies, showing the wars and epidemics that have occurred over time. The following events in French history are evident in the data:
@@ -296,7 +295,7 @@ The most extreme anomalies all correspond to male deaths due to World War I. A p
 #| label: fig-stl_anomalies
 #| code-fold: true
 #| warning: false
-#| fig-cap: French mortality observations identified as anomalies using density scores obtained from applying Friedman's supersmoother to each series. 
+#| fig-cap: French mortality observations identified as anomalies using density scores obtained from applying Friedman's supersmoother to each series.
 #| dependson: fr_scores2
 fr_anomalies <- fr_scores |>
   filter(prob < 0.05) |>
@@ -361,9 +360,9 @@ First we convert the series to logs as they are on vastly different scales, then
 # Convert to wide form
 fr_wide <- fr_mortality |>
   mutate(logm = log(Mortality)) |>
-  mutate(series = paste0(substr(Sex,1,1), ":", Age)) |>
+  mutate(series = paste0(substr(Sex, 1, 1), ":", Age)) |>
   select(-Age, -Sex, -Mortality) |>
-  tidyr::pivot_wider(names_from = series, values_from = logm) 
+  tidyr::pivot_wider(names_from = series, values_from = logm)
 # Compute 1 principal component from mortality rates
 pcs <- fr_wide |>
   select(-Year) |>
@@ -371,7 +370,7 @@ pcs <- fr_wide |>
   broom::augment(fr_wide |> select(Year))
 # Plot principal component scores
 pcs |>
-  ggplot(aes(x=Year, y = .fittedPC1)) +
+  ggplot(aes(x = Year, y = .fittedPC1)) +
   geom_line()
 ```
 

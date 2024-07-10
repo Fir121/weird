@@ -46,9 +46,9 @@ The U(0,1) distribution is shown in @fig-uniform.
 #| label: fig-uniform
 #| fig-cap: Probability density function for a U(0,1) distribution. The mean is 0.5 and the variance is 1/12.
 tibble(
-    y = seq(-0.5, 1.5, l = 501),
-    fy = dunif(y, 0, 1)
-  ) |>
+  y = seq(-0.5, 1.5, l = 501),
+  fy = dunif(y, 0, 1)
+) |>
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)")
@@ -68,11 +68,11 @@ Three Normal distributions are shown in @fig-normal.
 #| label: fig-normal
 #| fig-cap: Probability density functions for three Normal distributions. The mean $\mu$ controls the location of the distribution, while the variance $\sigma^2$ controls the spread.
 tibble(
-    y = seq(-7.5, 7.5, l = 501),
-    `N(0,1)` = dnorm(y, 0, 1),
-    `N(0,4)` = dnorm(y, 0, 2),
-    `N(1,1)` = dnorm(y, 1, 1)
-  ) |>
+  y = seq(-7.5, 7.5, l = 501),
+  `N(0,1)` = dnorm(y, 0, 1),
+  `N(0,4)` = dnorm(y, 0, 2),
+  `N(1,1)` = dnorm(y, 1, 1)
+) |>
   pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
   ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
@@ -93,16 +93,16 @@ Three $\chi^2$ distributions are shown in @fig-chisq.
 #| label: fig-chisq
 #| fig-cap: Probability density functions for three $\chi^2$ distributions. As the degrees of freedom $k$ increases, the distribution becomes more symmetric, and converges to the Normal distribution $N(k,2k)$.
 tibble(
-    y = seq(0, 15, l = 501),
-    `x1` = dchisq(y, 1),
-    `x2` = dchisq(y, 2),
-    `x5` = dchisq(y, 5)
-  ) |>
+  y = seq(0, 15, l = 501),
+  `x1` = dchisq(y, 1),
+  `x2` = dchisq(y, 2),
+  `x5` = dchisq(y, 5)
+) |>
   pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
   ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  coord_cartesian(ylim = c(0, 1))  +
+  coord_cartesian(ylim = c(0, 1)) +
   scale_color_discrete(labels = c(
     latex2exp::TeX("$\\chi^{~2}_{~~1}$"),
     latex2exp::TeX("$\\chi^{~2}_{~~2}$"),
@@ -125,11 +125,11 @@ Three t distributions are shown in @fig-t.
 #| label: fig-t
 #| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
 tibble(
-    y = seq(-7.5, 7.5, l = 501),
-    `t1` = dt(y, 1),
-    `t5` = dt(y, 5),
-    `t99` = dt(y, 99)
-  ) |>
+  y = seq(-7.5, 7.5, l = 501),
+  `t1` = dt(y, 1),
+  `t5` = dt(y, 5),
+  `t99` = dt(y, 99)
+) |>
   pivot_longer(-y, names_to = "Distribution", values_to = "density") |>
   ggplot(aes(x = y, y = density, col = Distribution)) +
   geom_line() +
@@ -191,11 +191,11 @@ An example is shown in @fig-mixture, where $\mu_1 = -2$, $\mu_2 = 2$, $\sigma_1^
 #| label: fig-mixture
 #| fig-cap: Probability density functions for a mixture of two Normal distributions. The dashed lines show the (scaled) component densities, and the solid line shows the mixture density, equal to the sum of the dashed lines.
 tibble(
-    y = seq(-5, 5, l = 501),
-    pdf1 = 1/3 * dnorm(y, -2, 1),
-    pdf2 = 2/3 * dnorm(y, 2, 1),
-    fy = pdf1 + pdf2
-  ) |>
+  y = seq(-5, 5, l = 501),
+  pdf1 = 1 / 3 * dnorm(y, -2, 1),
+  pdf2 = 2 / 3 * dnorm(y, 2, 1),
+  fy = pdf1 + pdf2
+) |>
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
   geom_line(aes(y = pdf1), linetype = "dashed") +
@@ -235,8 +235,8 @@ A quantile of a continuous univariate distribution is a point that divides the s
 ```{r}
 #| label: fig-quantile
 #| fig-cap: The 0.8 quantile of a $\chi^2_5$ distribution is the value $Q(0.8) = 7.29$ such that $P(Y \le 7.29) = 0.8$. The shaded area is 0.8, and the probability of observing a value greater than 7.29 is 0.2.
-q80 = qchisq(0.8, 5)
-x5 <- tibble(x = seq(0, 19, l=501)) |>
+q80 <- qchisq(0.8, 5)
+x5 <- tibble(x = seq(0, 19, l = 501)) |>
   mutate(y = dchisq(x, 5))
 x5 |>
   ggplot(aes(x = x, y = y)) +
@@ -245,12 +245,12 @@ x5 |>
   geom_area(data = x5 |> filter(x >= q80), fill = "#D55E00") +
   labs(x = "y", y = "Probability Density Function: f(y)") +
   scale_x_continuous(
-    breaks = c(seq(0,20,by=5), q80),
-    labels = c(seq(0,20,by=5), paste0(round(q80,2),"\nQ(0.8)")),
+    breaks = c(seq(0, 20, by = 5), q80),
+    labels = c(seq(0, 20, by = 5), paste0(round(q80, 2), "\nQ(0.8)")),
     minor_breaks = NULL
   ) +
   geom_label(
-    data = tibble(x = c(4, 10), y=0.01),
+    data = tibble(x = c(4, 10), y = 0.01),
     aes(x = x, y = y, label = paste("Prob =", c(0.8, 0.2)))
   )
 ```
@@ -267,11 +267,11 @@ The quantile functions for a standard normal distribution, a $\text{t}_5$ distri
 #| label: fig-quantile2
 #| fig-cap: Quantile function for a standard Normal distribution, a $\text{t}_5$ distribution, and a $\chi^2_5$ distribution.
 tibble(
-    p = seq(0, 1, l = 501),
-    qy1 = qnorm(p, 0, 1),
-    qy2 = qt(p, 5),
-    qy3 = qchisq(p, 5)
-  ) |>
+  p = seq(0, 1, l = 501),
+  qy1 = qnorm(p, 0, 1),
+  qy2 = qt(p, 5),
+  qy3 = qchisq(p, 5)
+) |>
   pivot_longer(-p, names_to = "Distribution", values_to = "Q") |>
   ggplot(aes(x = p, y = Q, col = Distribution)) +
   geom_line() +
@@ -317,26 +317,30 @@ avequantile <- function(n, p, m) {
   Q7 <- Q8 <- numeric(length(p))
   for (i in seq(m)) {
     random_sample <- rnorm(n)
-    Q7 <- Q7 + quantile(random_sample, prob = p, type = 7)/m
-    Q8 <- Q8 + quantile(random_sample, prob = p, type = 8)/m
+    Q7 <- Q7 + quantile(random_sample, prob = p, type = 7) / m
+    Q8 <- Q8 + quantile(random_sample, prob = p, type = 8) / m
   }
   tibble(n = n, p = p, Q7 = Q7, Q8 = Q8)
 }
-qbias <- tibble(n = c(100, 1000))  |>
-  purrr::pmap_dfr(~ avequantile(n = .x,
-    p = seq(0.002,0.998,by=0.001), m = 10000)) |>
-  pivot_longer(Q7:Q8, names_to = "type", values_to = "Q")  |>
+qbias <- tibble(n = c(100, 1000)) |>
+  purrr::pmap_dfr(~ avequantile(
+    n = .x,
+    p = seq(0.002, 0.998, by = 0.001), m = 10000
+  )) |>
+  pivot_longer(Q7:Q8, names_to = "type", values_to = "Q") |>
   mutate(
     type = paste("type = ", parse_number(type)),
     Qtrue = qnorm(p),
     bias = Q - qnorm(p)
   )
 qbias |>
-  ggplot(aes(x=p, group = type)) +
-  geom_line(aes(y=bias, col=type, linetype = "n = 100"),
-    data = qbias |> filter(n == 100)) +
-  geom_line(aes(y=bias, col=type, linetype = "n = 1000"),
-    data = qbias |> filter(n == 1000)) +
+  ggplot(aes(x = p, group = type)) +
+  geom_line(aes(y = bias, col = type, linetype = "n = 100"),
+    data = qbias |> filter(n == 100)
+  ) +
+  geom_line(aes(y = bias, col = type, linetype = "n = 1000"),
+    data = qbias |> filter(n == 1000)
+  ) +
   labs(
     x = "Probability p",
     y = "Bias of sample quantile",
@@ -427,16 +431,20 @@ hdr <- hdr_table(density = den, prob = 0.90)
 interval2 <- c(hdr$lower, hdr$upper)
 falpha <- hdr$density
 tibble(
-    y = seq(0, 15, l = 501),
-    fy = dchisq(y, 5)
-  ) |>
+  y = seq(0, 15, l = 501),
+  fy = dchisq(y, 5)
+) |>
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.002),
-            col = "#0072B2", linewidth = 2) +
-  geom_line(data = tibble(x = interval2), aes(x = x, y = 0.001),
-            col = "#D55E00", linewidth = 2) +
+  geom_line(
+    data = tibble(x = interval1), aes(x = x, y = -0.002),
+    col = "#0072B2", linewidth = 2
+  ) +
+  geom_line(
+    data = tibble(x = interval2), aes(x = x, y = 0.001),
+    col = "#D55E00", linewidth = 2
+  ) +
   geom_line(
     data = tibble(x = rep(interval2[1], 2), y = c(0, falpha)),
     aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
@@ -459,9 +467,9 @@ For a multimodal distribution, the HDR may be a union of intervals. For example,
 #| label: fig-hdr-mixture
 #| fig-cap: Highest density region for the mixture distribution shown in @fig-mixture. The blue bar shows the 90% interval based on the 0.05 and 0.95 quantiles. The orange bar shows the 90% HDR, which is the smallest region containing 90% of the probability mass.
 den <- list(y = seq(-5, 5, l = 501))
-den$density <- 1/3 * dnorm(den$y, -2, 1) + 2/3 * dnorm(den$y, 2, 1)
+den$density <- 1 / 3 * dnorm(den$y, -2, 1) + 2 / 3 * dnorm(den$y, 2, 1)
 interval1 <- quantile(c(rnorm(100000, -2, 1), rnorm(200000, 2, 1)), c(0.05, 0.95))
-hdr <- hdr_table(density=den, prob = 0.90)
+hdr <- hdr_table(density = den, prob = 0.90)
 hdrinterval1 <- c(hdr$lower[1], hdr$upper[1])
 hdrinterval2 <- c(hdr$lower[2], hdr$upper[2])
 falpha <- hdr$density[1]
@@ -469,13 +477,19 @@ p <- as_tibble(den) |>
   ggplot(aes(x = y, y = density)) +
   geom_line() +
   labs(x = "y", y = "Probability Density Function: f(y)") +
-  geom_line(data = tibble(x = interval1), aes(x = x, y = -0.0028),
-            col = "#0072B2", linewidth = 2) +
-  geom_line(data = tibble(x = hdrinterval1), aes(x = x, y = 0.0018),
-            col = "#D55E00", linewidth = 2) +
-  geom_line(data = tibble(x = hdrinterval2), aes(x = x, y = 0.0018),
-            col = "#D55E00", linewidth = 2)
-for (edge in c(hdr$lower,hdr$upper)) {
+  geom_line(
+    data = tibble(x = interval1), aes(x = x, y = -0.0028),
+    col = "#0072B2", linewidth = 2
+  ) +
+  geom_line(
+    data = tibble(x = hdrinterval1), aes(x = x, y = 0.0018),
+    col = "#D55E00", linewidth = 2
+  ) +
+  geom_line(
+    data = tibble(x = hdrinterval2), aes(x = x, y = 0.0018),
+    col = "#D55E00", linewidth = 2
+  )
+for (edge in c(hdr$lower, hdr$upper)) {
   p <- p + geom_line(
     data = tibble(x = rep(edge, 2), y = c(0, falpha)),
     aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
@@ -617,10 +631,10 @@ We will use the `kde()` function from the `ks` package, which uses the Gaussian 
 of <- oldfaithful |>
   filter(duration < 7000)
 h <- kde_bandwidth(of$duration)
-of_density <- kde(of$duration, h=h)
+of_density <- kde(of$duration, h = h)
 of_density |>
   autoplot() +
-  geom_rug(aes(x=duration), of) +
+  geom_rug(aes(x = duration), of) +
   labs(x = "Duration (seconds)")
 ```
 
@@ -697,8 +711,10 @@ The resulting estimate is shown in @fig-of-hdr, along with the 10% of observatio
 #| label: fig-of-hdr
 #| fig-cap: 90% highest density region for the `oldfaithful` data set.
 of_density |>
-  autoplot(show_hdr = TRUE, prob = 0.9, show_points = TRUE,
-           alpha = 0.2) +
+  autoplot(
+    show_hdr = TRUE, prob = 0.9, show_points = TRUE,
+    alpha = 0.2
+  ) +
   labs(x = "Duration (seconds)")
 ```
 
@@ -767,7 +783,7 @@ for (i in seq(m)) {
 gev <- evd::fgev(maximums)$estimate
 max_density <- tibble(y = seq(2, 6, l = 100)) |>
   mutate(
-    fy = n * pnorm(y)^(n-1) * dnorm(y),
+    fy = n * pnorm(y)^(n - 1) * dnorm(y),
     estfy = evd::dgev(y, loc = gev["loc"], scale = gev["scale"], shape = gev["shape"])
   )
 max_density |>

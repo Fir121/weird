@@ -22,9 +22,9 @@ d <- tibble(
 prox <- 0.5
 p1 <- ggplot(d, aes(x = x, y = y)) +
   coord_fixed() +
-  stat_disk(radius = prox/2, fill = "#56B4E9") +
+  stat_disk(radius = prox / 2, fill = "#56B4E9") +
   stat_vietoris0() +
-  stat_vietoris1(diameter = prox, col="#D55e00") +
+  stat_vietoris1(diameter = prox, col = "#D55e00") +
   stat_vietoris2(diameter = prox, fill = "#D55E00") +
   geom_text(aes(label = point), nudge_x = 0.03, nudge_y = 0.03)
 
@@ -37,12 +37,12 @@ X <- tibble(
 prox <- 1.3
 p2 <- ggplot(X, aes(x = x, y = y)) +
   coord_fixed() +
-  stat_disk(radius = prox/2, fill = "#56B4E9") +
+  stat_disk(radius = prox / 2, fill = "#56B4E9") +
   stat_vietoris0() +
-  stat_vietoris1(diameter = prox, col="#D55e00") +
+  stat_vietoris1(diameter = prox, col = "#D55e00") +
   stat_vietoris2(diameter = prox, fill = "#D55E00") +
   geom_text(aes(label = point), nudge_x = -0.1, nudge_y = 0.1)
-patchwork::wrap_plots(p1, p2, ncol=2)
+patchwork::wrap_plots(p1, p2, ncol = 2)
 ```
 
 A second example is shown on the right of @fig-tetrahedron, where there are eight points, and  $\varepsilon=1.3$. Here, $f$ is a vertex, disconnected from all other points because it is further than $\varepsilon$ from any point. The pair $g$ and $b$ are connected to each other, but not to any other points. The points $ade$ and $adc$ form connected triangles (but not a tetrahedron), while $h$ is connected to them via $c$.
@@ -62,19 +62,19 @@ Taking the small example on the right of @fig-tetrahedron, we explore what happe
 #| out.width: "100%"
 prox <- c(0.5, 1.5, 2.5, 3.5)
 p <- list()
-for(i in seq_along(prox)) {
+for (i in seq_along(prox)) {
   p[[i]] <- ggplot(X, aes(x = x, y = y)) +
     coord_fixed() +
-    stat_disk(radius = prox[i]/2, fill = "#56B4E9") +
+    stat_disk(radius = prox[i] / 2, fill = "#56B4E9") +
     stat_vietoris0()
-  if(prox[i] > 0.5) {
-    p[[i]] <- p[[i]] + stat_vietoris1(diameter = prox[i], col="#D55e00")
+  if (prox[i] > 0.5) {
+    p[[i]] <- p[[i]] + stat_vietoris1(diameter = prox[i], col = "#D55e00")
   }
   p[[i]] <- p[[i]] +
     stat_vietoris2(diameter = prox[i], fill = "#D55E00") +
     geom_text(aes(label = point), nudge_x = -0.1, nudge_y = 0.1) +
-    labs(subtitle = latex2exp::TeX(sprintf('$\\epsilon$ = %.1f', prox[i]))) +
-    xlim(-4,3) + ylim(-4,3.5)
+    labs(subtitle = latex2exp::TeX(sprintf("$\\epsilon$ = %.1f", prox[i]))) +
+    xlim(-4, 3) + ylim(-4, 3.5)
 }
 patchwork::wrap_plots(p, nrow = 2)
 ```
@@ -99,15 +99,16 @@ X <- tibble(
 )
 prox <- c(0.005, 0.3, 0.7, 1.4)
 p <- list()
-for(i in seq_along(prox)) {
+for (i in seq_along(prox)) {
   p[[i]] <- ggplot(X, aes(x = x, y = y)) +
     coord_fixed() +
-    stat_disk(radius = prox[i]/2, fill = "#56B4E9") +
+    stat_disk(radius = prox[i] / 2, fill = "#56B4E9") +
     stat_vietoris0() +
-    stat_vietoris1(diameter = prox[i], col="#D55e00") +
+    stat_vietoris1(diameter = prox[i], col = "#D55e00") +
     stat_vietoris2(diameter = prox[i], fill = "#D55E00") +
-    labs(subtitle = latex2exp::TeX(sprintf('$\\epsilon$ = %.3f', prox[i]))) +
-    xlim(-1.75,1.75) + ylim(-1.75,1.75)
+    labs(subtitle = latex2exp::TeX(sprintf("$\\epsilon$ = %.3f", prox[i]))) +
+    xlim(-1.75, 1.75) +
+    ylim(-1.75, 1.75)
 }
 patchwork::wrap_plots(p, nrow = 2)
 ```
@@ -122,7 +123,7 @@ library(TDAstats)
 ph1 <- calculate_homology(as.matrix(X), dim = 1)
 longblueline <- ph1 |>
   as_tibble() |>
-  filter(dimension==1) |>
+  filter(dimension == 1) |>
   head(1)
 ```
 
@@ -180,7 +181,7 @@ X <- bind_rows(
   )
 )
 phom <- calculate_homology(X, dim = 0)
-top2 <- tail(phom[,"death"],2)
+top2 <- tail(phom[, "death"], 2)
 
 g1 <- ggplot(X, aes(x, y)) +
   geom_point()
@@ -212,7 +213,7 @@ annulus_density <- X |>
   kde(H = kde_bandwidth(X, method = "lookout"))
 annulus_density |>
   autoplot() +
-  geom_point(aes(x, y), data = X, alpha=0.15)
+  geom_point(aes(x, y), data = X, alpha = 0.15)
 ```
 
 We can repeat the bivariate kde for the Old Faithful data, shown in @fig-ofbivariate2, but this time using the bandwidth matrix given by @eq-lookoutH. The resulting density estimate is shown in @fig-kdeogktda. This has captured the two modes of the data, and makes it clear that one is much larger the other; it also highlights the outliers.
@@ -227,8 +228,10 @@ of <- oldfaithful |>
 of_density <- of |>
   kde(H = kde_bandwidth(of, method = "lookout"))
 of_density |>
-  autoplot(prob = c(0.5, 0.90, 0.99), fill = TRUE,
-           show_points = TRUE, show_mode = TRUE, show_lookout = TRUE) +
+  autoplot(
+    prob = c(0.5, 0.90, 0.99), fill = TRUE,
+    show_points = TRUE, show_mode = TRUE, show_lookout = TRUE
+  ) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 

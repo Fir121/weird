@@ -93,20 +93,20 @@ d <- 2
 nreps <- 500
 sim_kn <- tidyr::expand_grid(
   n = c(100, 200, 500, 1000, 2000, 5000),
-  kn = c(1,2,3,5,10),
+  kn = c(1, 2, 3, 5, 10),
   nfalse = NA
-) 
+)
 sim_tda <- tibble(
   n = unique(sim_kn$n),
   nfalse = NA
 )
 no_false <- any_false <- rep(NA, nreps)
-for(i in seq(NROW(sim_kn))) {
-  cat(paste("n =", sim_kn$n[i], "kn =", sim_kn$kn[i],"\n"))
-  for(j in seq(nreps)) {
+for (i in seq(NROW(sim_kn))) {
+  cat(paste("n =", sim_kn$n[i], "kn =", sim_kn$kn[i], "\n"))
+  for (j in seq(nreps)) {
     y <- rmvnorm(sim_kn$n[i], sigma = diag(d))
     H <- kde_bandwidth(y, multiplier = sim_kn$kn[i])
-    scores <- weird:::calc_kde_scores(y, H=H)
+    scores <- weird:::calc_kde_scores(y, H = H)
     lookout_prob <- lookout(density_scores = scores$scores, loo_scores = scores$loo_scores)
     # Number of false anomalies
     no_false[j] <- sum(lookout_prob < 0.05)
@@ -114,12 +114,12 @@ for(i in seq(NROW(sim_kn))) {
   # Average number of false anomalies
   sim_kn$nfalse[i] <- mean(no_false)
 }
-for(i in seq(NROW(sim_tda))) {
+for (i in seq(NROW(sim_tda))) {
   cat(paste("n =", sim_tda$n[i], "\n"))
-  for(j in seq(nreps)) {
+  for (j in seq(nreps)) {
     y <- rmvnorm(sim_tda$n[i], sigma = diag(d))
     H <- kde_bandwidth(y, method = "lookout")
-    scores <- weird:::calc_kde_scores(y, H=H)
+    scores <- weird:::calc_kde_scores(y, H = H)
     lookout_prob <- lookout(density_scores = scores$scores, loo_scores = scores$loo_scores)
     # Number of false anomalies
     no_false[j] <- sum(lookout_prob < 0.05)
@@ -129,16 +129,17 @@ for(i in seq(NROW(sim_tda))) {
 }
 
 # Plot proportion of false anomalies vs n
-sim_kn |> 
-  mutate(kn = as.character(kn)) |> 
+sim_kn |>
+  mutate(kn = as.character(kn)) |>
   bind_rows(
     sim_tda |> mutate(kn = "lookout")
-  ) |> 
+  ) |>
   mutate(
-    proportion = nfalse/n,
-    kn = factor(kn, levels=c("1","2","3","5","10","lookout"))) |> 
+    proportion = nfalse / n,
+    kn = factor(kn, levels = c("1", "2", "3", "5", "10", "lookout"))
+  ) |>
   ggplot(aes(x = n, y = proportion)) +
-    geom_line(aes(col = kn, group = kn)) +
+  geom_line(aes(col = kn, group = kn)) +
   scale_y_log10()
 ```
 
@@ -148,22 +149,26 @@ sim_kn |>
 Old Faithful data
 
 ```{r}
-of <- oldfaithful |> 
-  filter(duration < 7000, waiting < 7000) |> 
+of <- oldfaithful |>
+  filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting)
-gg_hdrboxplot(of, duration, waiting, scatterplot = TRUE,show_lookout = TRUE,
-    H = kde_bandwidth(of, multiplier = 3))
+gg_hdrboxplot(of, duration, waiting,
+  scatterplot = TRUE, show_lookout = TRUE,
+  H = kde_bandwidth(of, multiplier = 3)
+)
 ```
 
 Cricket batting averages
 
 ```{r}
 #| fig-height: 2
-bat_ave <- cricket_batting |> 
-  filter(Innings > 20) 
-bat_ave |> 
-  gg_hdrboxplot(Average, show_lookout = TRUE, scatterplot = TRUE,
-      h = kde_bandwidth(bat_ave$Average, multiplier = 3))
+bat_ave <- cricket_batting |>
+  filter(Innings > 20)
+bat_ave |>
+  gg_hdrboxplot(Average,
+    show_lookout = TRUE, scatterplot = TRUE,
+    h = kde_bandwidth(bat_ave$Average, multiplier = 3)
+  )
 ```
 
 # References

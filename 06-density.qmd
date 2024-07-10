@@ -277,7 +277,8 @@ Now we use the fitted model to compute the lookout probabilities from the LOO sc
 #| code-fold: false
 wine_aug |>
   mutate(
-    lookout_prob = evd::pgpd(LOO_fscores, loc = threshold,
+    lookout_prob = evd::pgpd(LOO_fscores,
+      loc = threshold,
       scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
     )
   ) |>
@@ -305,8 +306,8 @@ shiraz |>
 #| fig.cap: Price vs points for Shiraz wines. Points are colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
 shiraz |>
   ggplot(aes(x = points, y = price, color = lookout_prob < 0.02)) +
-   geom_jitter(height = 0, width = 0.2) +
-   scale_y_log10()
+  geom_jitter(height = 0, width = 0.2) +
+  scale_y_log10()
 ```
 
 
@@ -339,7 +340,7 @@ df_no <- cricket_batting |>
   filter(Innings > 0) |>
   mutate(prop_no = NotOuts / Innings)
 df_no |>
-  ggplot(aes(x = Innings, y = NotOuts/Innings)) +
+  ggplot(aes(x = Innings, y = NotOuts / Innings)) +
   geom_point(alpha = 0.15)
 ```
 
@@ -358,16 +359,22 @@ We can fit this model using the `mgcv` package.
 #| message: false
 #| code-fold: false
 #| fig.cap: "Proportion of not outs for each batter as a function of the number of innings they played, with a GAM fit using a Binomial distribution. The blue line shows the probability of a batter being not out as a function of the number of Innings they have played."
-fit_notouts <- mgcv::gam(prop_no ~ s(Innings), data = df_no,
-           family = binomial(link = logit), weights = Innings)
+fit_notouts <- mgcv::gam(prop_no ~ s(Innings),
+  data = df_no,
+  family = binomial(link = logit), weights = Innings
+)
 notouts_aug <- broom::augment(fit_notouts, data = df_no, type.predict = "response")
 notouts_aug |>
   ggplot(aes(x = Innings, y = prop_no)) +
   geom_point(alpha = 0.2) +
   geom_line(aes(y = .fitted), color = "#0072B2") +
-  geom_ribbon(aes(ymin = .fitted - 2*.se.fit,
-                  ymax = .fitted + 2*.se.fit),
-              fill = "#0072B2", alpha = 0.2) +
+  geom_ribbon(
+    aes(
+      ymin = .fitted - 2 * .se.fit,
+      ymax = .fitted + 2 * .se.fit
+    ),
+    fill = "#0072B2", alpha = 0.2
+  ) +
   labs(y = "Proportion of not outs")
 ```
 
@@ -446,8 +453,8 @@ The two infinite LOO scores correspond to the extreme 2 hour duration, and the t
 #| dependson: ofpot2
 #| fig.asp: 0.2
 #| code-fold: false
-oldfaithful  |>
-  filter(duration < 7200)  |>
+oldfaithful |>
+  filter(duration < 7200) |>
   gg_hdrboxplot(duration, show_lookout = TRUE)
 ```
 
@@ -472,7 +479,7 @@ The same algorithm is easily applied in two dimensions. Here we use the `oldfait
 ```{r}
 #| label: lookout2
 #| code-fold: false
-of <- oldfaithful  |>
+of <- oldfaithful |>
   select(duration, waiting) |>
   filter(duration < 7200, waiting < 7200)
 of |>

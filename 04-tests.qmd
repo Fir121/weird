@@ -42,11 +42,11 @@ The density functions for these three distributions are shown in @fig-testdist.
 #| label: fig-testdist
 #| fig.cap: "Three distributions we will use to test various anomaly detection methods."
 tibble(
-    x = seq(-6, 11, l = 999),
-    t3 = dt(x, df = 3),
-    X4 = dchisq(x, df = 4),
-    N01 = dnorm(x)
-  ) |>
+  x = seq(-6, 11, l = 999),
+  t3 = dt(x, df = 3),
+  X4 = dchisq(x, df = 4),
+  N01 = dnorm(x)
+) |>
   pivot_longer(-x, names_to = "Distribution", values_to = "pdf") |>
   ggplot(aes(x = x, y = pdf, col = Distribution)) +
   geom_line() +
@@ -57,7 +57,8 @@ tibble(
       latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
-    )) +
+    )
+  ) +
   theme(legend.text.align = 0) +
   coord_cartesian(xlim = c(-5, 10))
 ```
@@ -82,26 +83,26 @@ Good anomaly detection methods should pick up one anomaly in the cricket batting
 #| include: false
 #| depends: ["fig-n01b", "fig-testdist-data"]
 nanomalies <- tibble(
-    Example = c(
-      "Cricket batting",
-      "Old Faithful duration",
-      "N(0,1) + 2 outliers",
-      "N(0,1)",
-      "t(3)",
-      "Chi-squared(4)"
-    ),
-    `N observations` = c(
-      NROW(cricket_batting),
-      NROW(oldfaithful),
-      NROW(n01b),
-      NROW(n01),
-      NROW(t3),
-      NROW(chisq4)
-    ),
-    `Expected anomalies` = c(
-      1, 2, 2, 0, 0, 0
-    )
+  Example = c(
+    "Cricket batting",
+    "Old Faithful duration",
+    "N(0,1) + 2 outliers",
+    "N(0,1)",
+    "t(3)",
+    "Chi-squared(4)"
+  ),
+  `N observations` = c(
+    NROW(cricket_batting),
+    NROW(oldfaithful),
+    NROW(n01b),
+    NROW(n01),
+    NROW(t3),
+    NROW(chisq4)
+  ),
+  `Expected anomalies` = c(
+    1, 2, 2, 0, 0, 0
   )
+)
 ```
 
 ## Z scores {#sec-zscores}
@@ -157,7 +158,7 @@ chisq4 |>
 ```{r}
 #| label: check2
 #| include: false
-nanomalies <- nanomalies  |>
+nanomalies <- nanomalies |>
   mutate(Zscore = c(
     cricket_batting |>
       filter(Innings > 20) |>
@@ -229,8 +230,8 @@ breaks <- sort(c(2:6, 8, 10^(1:4), 2.5 * 10^(1:3), 5 * 10^(1:3)))
 #| dependson: pspurious
 #| fig-cap: The probability of at least one spurious anomaly using z-scores and with a threshold $c$ for normally distributed data.
 zspuriousdf <- expand_grid(n = n, c = seq(2, 3.5, by = 0.5)) |>
-    mutate(pmax = pspurious(n, rnorm, c = c)) |>
-    cache("zspuriousdf")
+  mutate(pmax = pspurious(n, rnorm, c = c)) |>
+  cache("zspuriousdf")
 labels <- zspuriousdf |>
   group_by(c) |>
   filter(abs(pmax - 0.75) == min(abs(pmax - 0.75))) |>
@@ -255,15 +256,15 @@ Let's also compute the probability of spurious anomalies for different data dist
 #| dependson: ["pspurious", "zspurious"]
 #| fig-cap: The probability of at least one spurious anomaly using z-scores for different data distributions and with a threshold of $c=3$.
 zspurious2df <- tibble(n = n, c = 3) |>
-    mutate(
-      ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
-      Normal = pspurious(n, rnorm, c = c),
-      `t(3)` = pspurious(n, rt, df = 3, c = c),
-      `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
-    ) |>
-    select(-c) |>
-    pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
-    cache("zspurious2df")
+  mutate(
+    ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
+    Normal = pspurious(n, rnorm, c = c),
+    `t(3)` = pspurious(n, rt, df = 3, c = c),
+    `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
+  ) |>
+  select(-c) |>
+  pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
+  cache("zspurious2df")
 zspurious2df |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -277,7 +278,8 @@ zspurious2df |>
       latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
-  )) +
+    )
+  ) +
   theme(legend.text.align = 0) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(6, 7500))
@@ -336,7 +338,7 @@ chisq4 |> filter(peirce_anomalies(y))
 ```{r}
 #| label: checkpeirce
 #| include: false
-nanomalies <- nanomalies  |>
+nanomalies <- nanomalies |>
   mutate(Peirce = c(
     cricket_batting |> filter(peirce_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(peirce_anomalies(duration)) |> NROW(),
@@ -365,7 +367,7 @@ The `chauvenet_anomalies()` function can be used to implement this test. For our
 ```{r}
 #| label: checkchauvenet
 #| include: false
-nanomalies <- nanomalies  |>
+nanomalies <- nanomalies |>
   mutate(Chauvenet = c(
     cricket_batting |> filter(chauvenet_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(chauvenet_anomalies(duration)) |> NROW(),
@@ -433,9 +435,9 @@ From these, we can compute the probability of a spurious anomaly in a normal dis
 #| echo: false
 #| dependson: ["pspurious", "zscoretests"]
 #| fig-cap: True size of the tests (i.e., the probability of a spurious anomaly) for normally distributed data with $\alpha=0.05$.
-  pzscoredf <- df |>
-    mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6)) |>
-    cache("pzscoredf")
+pzscoredf <- df |>
+  mutate(pmax = pspurious(n, rnorm, c = c, rep = 1e6)) |>
+  cache("pzscoredf")
 pzscoredf |>
   ggplot(aes(x = n, y = pmax, group = test, col = test)) +
   geom_hline(aes(yintercept = 0.05), col = "gray") +
@@ -466,16 +468,16 @@ However, when we allow for different data distributions, Grubbs' test also gives
 #| dependson: ["pspurious","zscoretests"]
 #| fig-cap: True size of Grubbs' tests (i.e., the probability of a false positive) for different data distributions with $\alpha=0.05$.
 pgrubbsdf <- pzscoredf |>
-    filter(test == "grubbs") |>
-    mutate(
-      Normal = pmax,
-      ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
-      `t(3)` = pspurious(n, rt, df = 3, c = c),
-      `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
-    ) |>
-    select(-c, -test, -pmax) |>
-    pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
-    cache("pgrubbsdf")
+  filter(test == "grubbs") |>
+  mutate(
+    Normal = pmax,
+    ApproxNormal = 1 - pt(c, n - 1)^(2 * n),
+    `t(3)` = pspurious(n, rt, df = 3, c = c),
+    `Chi-squared(4)` = pspurious(n, rchisq, df = 4, c = c)
+  ) |>
+  select(-c, -test, -pmax) |>
+  pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
+  cache("pgrubbsdf")
 pgrubbsdf |>
   filter(Distribution != "ApproxNormal") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -492,7 +494,8 @@ pgrubbsdf |>
       latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
-  )) +
+    )
+  ) +
   theme(legend.text.align = 0) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(4, 7500))
@@ -523,7 +526,7 @@ chisq4 |>
 ```{r}
 #| label: checkgrubbs
 #| include: false
-nanomalies <- nanomalies  |>
+nanomalies <- nanomalies |>
   mutate(Grubbs = c(
     cricket_batting |> filter(grubbs_anomalies(Average)) |> NROW(),
     oldfaithful |> filter(grubbs_anomalies(duration)) |> NROW(),
@@ -578,13 +581,13 @@ pspuriousdixon <- function(n, dist, rep = 1e6, ...) {
     return(pv)
   }
 }
- dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
-    mutate(
-      Normal = pspuriousdixon(n, rnorm),
-      `t(3)` = pspuriousdixon(n, rt, df = 3),
-      `Chi-squared(4)` = pspuriousdixon(n, rchisq, df = 4)
-    ) |>
-    cache("dixondf")
+dixondf <- tibble(n = c(3:10, seq(12, 26, by = 2), seq(30, 100, by = 5))) |>
+  mutate(
+    Normal = pspuriousdixon(n, rnorm),
+    `t(3)` = pspuriousdixon(n, rt, df = 3),
+    `Chi-squared(4)` = pspuriousdixon(n, rchisq, df = 4)
+  ) |>
+  cache("dixondf")
 dixondf |>
   pivot_longer(-n, values_to = "Probability", names_to = "Distribution") |>
   ggplot(aes(x = n, y = Probability, group = Distribution, col = Distribution)) +
@@ -598,7 +601,8 @@ dixondf |>
       latex2exp::TeX("$t_{~3}$"),
       latex2exp::TeX("$\\chi^{~2}_{~~4}$"),
       "N(0,1)"
-  )) +
+    )
+  ) +
   theme(legend.text.align = 0) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(4, 96))
@@ -629,7 +633,7 @@ chisq4 |>
 ```{r}
 #| label: checkdixon
 #| include: false
-nanomalies <- nanomalies  |>
+nanomalies <- nanomalies |>
   mutate(Dixon = c(
     cricket_batting |>
       filter(Innings > 20) |>

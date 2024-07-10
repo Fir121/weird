@@ -65,7 +65,7 @@ We can compute the letter values using the `lvtable()` function from the `lvplot
 batave <- cricket_batting |>
   filter(Innings > 20) |>
   pull(Average)
-batave |> lvplot::lvtable(k=4)
+batave |> lvplot::lvtable(k = 4)
 ```
 
 The output also provides 95% confidence intervals based on @eq-sample-quantile-distribution. The estimates are similar, but not identical, to the quantiles calculated using the `quantile()` function.
@@ -118,8 +118,10 @@ In the `ggplot2` version of the boxplot shown here, the middle line in the box s
 cricket_batting |>
   filter(Innings > 20) |>
   pull(Average) |>
-  boxplot(horizontal = TRUE,
-    ylab = "", xlab = "Career batting average")
+  boxplot(
+    horizontal = TRUE,
+    ylab = "", xlab = "Career batting average"
+  )
 ```
 
 Whichever variation is used, roughly half of all observations lie within the box. The width of the box is an estimate of the "interquartile range" (IQR). Any points more than 1.5 IQR outside the box are shown as anomalies and appear as separate points in the plot. The "whiskers" that extend out each side of the box show the range of the remaining points.
@@ -262,14 +264,24 @@ In summary, while the modified IQR approach is an improvement on the original bo
 #| dependson: barbato4
 n1 <- cricket_batting |>
   filter(Innings > 20) |>
-  filter(barbato_anomaly(Average))  |>
+  filter(barbato_anomaly(Average)) |>
   NROW()
-n2 <- oldfaithful |> filter(barbato_anomaly(duration)) |> NROW()
-n3 <- n01b |> filter(barbato_anomaly(y)) |> NROW()
-n4 <- n01 |> filter(barbato_anomaly(v1)) |> NROW()
-n5 <- t3 |> filter(barbato_anomaly(y)) |> NROW()
-n6 <- chisq4 |> filter(barbato_anomaly(y)) |> NROW()
-stopifnot(identical(c(n1,n2,n3,n4,n5,n6), c(0L,1L,0L,0L,0L,0L)))
+n2 <- oldfaithful |>
+  filter(barbato_anomaly(duration)) |>
+  NROW()
+n3 <- n01b |>
+  filter(barbato_anomaly(y)) |>
+  NROW()
+n4 <- n01 |>
+  filter(barbato_anomaly(v1)) |>
+  NROW()
+n5 <- t3 |>
+  filter(barbato_anomaly(y)) |>
+  NROW()
+n6 <- chisq4 |>
+  filter(barbato_anomaly(y)) |>
+  NROW()
+stopifnot(identical(c(n1, n2, n3, n4, n5, n6), c(0L, 1L, 0L, 0L, 0L, 0L)))
 ```
 
 ## Letter value plots

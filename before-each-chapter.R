@@ -1,7 +1,7 @@
 set.seed(1967)
 library(tidyverse)
 library(weird)
-#library(patchwork)
+# library(patchwork)
 
 knitr::opts_chunk$set(
   comment = "#>",
@@ -24,7 +24,7 @@ options(
   ggplot2.discrete.colour = discrete_colors,
   ggplot2.discrete.fill = discrete_colors
 )
-ggplot2::theme_update(text = element_text(family = 'Fira Sans'))
+ggplot2::theme_update(text = element_text(family = "Fira Sans"))
 
 # Avoid some conflicts
 conflicted::conflict_prefer("select", "dplyr")
@@ -32,8 +32,8 @@ conflicted::conflict_prefer("filter", "dplyr")
 
 # Simple cache function
 cache <- function(command, name) {
-  file <- here::here(paste0("rds/",name,".rds"))
-  if(fs::file_exists(file)) {
+  file <- here::here(paste0("rds/", name, ".rds"))
+  if (fs::file_exists(file)) {
     object <- readRDS(file)
   } else {
     object <- command

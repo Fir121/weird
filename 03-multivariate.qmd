@@ -61,11 +61,11 @@ Now we will plot pairwise scatterplots of the four variables, giving the bivaria
 #| warning: false
 #| message: false
 GGally::ggpairs(df[, 1:3],
-    lower = list(
-      continuous = GGally::wrap("points"),
-      mapping = aes(color = df$anomaly)
-    )
-  ) +
+  lower = list(
+    continuous = GGally::wrap("points"),
+    mapping = aes(color = df$anomaly)
+  )
+) +
   scale_color_manual(values = c("#777777", "#D55E00"))
 ```
 
@@ -80,7 +80,8 @@ To visualise trivariate relationships, we need to use a 3d-scatterplot. It is ea
 ```{r}
 #| webgl: true
 #| code-fold: false
-rgl::plot3d(df[, 1:3], size = 5,
+rgl::plot3d(df[, 1:3],
+  size = 5,
   col = c(rep("#777777", 998), rep("#D55E00", 2))
 )
 ```
@@ -109,14 +110,14 @@ First, let's visualise what this means in 1, 2 and 3 dimensions. In 1 dimension,
 #| fig-width: 5
 #| out-width: 70%
 tibble(
-    x = runif(2000, -1, 1),
-    y = runif(2000, -1, 1),
-    within_sphere = (x^2 + y^2) < 1
-  ) |>
-  ggplot(aes(x=x, y=y, color = within_sphere)) +
+  x = runif(2000, -1, 1),
+  y = runif(2000, -1, 1),
+  within_sphere = (x^2 + y^2) < 1
+) |>
+  ggplot(aes(x = x, y = y, color = within_sphere)) +
   geom_point() +
   coord_fixed() +
-  scale_color_manual(values = c("#D55E00","#777777")) +
+  scale_color_manual(values = c("#D55E00", "#777777")) +
   guides(col = "none")
 ```
 
@@ -137,8 +138,10 @@ df <- tibble(
   within_sphere = (x^2 + y^2 + z^2) < 1,
   color = if_else(within_sphere, "#777777", "#D55E00")
 )
-rgl::plot3d(df[, 1:3], size = 5,
-  col = df$color)
+rgl::plot3d(df[, 1:3],
+  size = 5,
+  col = df$color
+)
 ```
 
 :::
@@ -175,14 +178,14 @@ Another way to think about this is to consider hypercubes that contain 50% of th
 #| fig-width: 5
 #| out-width: 70%
 tibble(
-    x = runif(2000, -1, 1),
-    y = runif(2000, -1, 1),
-    within_cube = (abs(x) < 2^(-1/2)) & (abs(y) < 2^(-1/2))
-  ) |>
-  ggplot(aes(x=x, y=y, color = within_cube)) +
+  x = runif(2000, -1, 1),
+  y = runif(2000, -1, 1),
+  within_cube = (abs(x) < 2^(-1 / 2)) & (abs(y) < 2^(-1 / 2))
+) |>
+  ggplot(aes(x = x, y = y, color = within_cube)) +
   geom_point() +
   coord_fixed() +
-  scale_color_manual(values = c("#D55E00","#777777")) +
+  scale_color_manual(values = c("#D55E00", "#777777")) +
   guides(col = "none")
 ```
 
@@ -193,12 +196,13 @@ As the dimension $d$ increases, the size of the hypercube containing 50% of the 
 #| label: fig-hypercubes
 #| fig-cap: For observations from a $d$-dimensional U(-1,1) distribution, the side length of a hypercube which contains 50% of points.
 tibble(d = seq(20)) |>
-  mutate(length = 2^(1-1/d)) |>
+  mutate(length = 2^(1 - 1 / d)) |>
   ggplot(aes(x = d, y = length)) +
-  geom_line() + geom_point() +
+  geom_line() +
+  geom_point() +
   labs(x = "Dimensions (d)", y = "Side length of hypercube containing 50% of points") +
-  scale_x_continuous(breaks = seq(2, 20, by=2), minor_breaks = NULL) +
-  ylim(1,2)
+  scale_x_continuous(breaks = seq(2, 20, by = 2), minor_breaks = NULL) +
+  ylim(1, 2)
 ```
 
 The side lengths of these hypercubes increasingly approaches the maximum of 2 as the number of dimensions increases. So the size of the neighbourhood containing 50% of the observations becomes almost as large as the whole space. Therefore, we cannot use methods that rely on local neighbourhoods in high dimensions, as these neighbourhoods must become so large as to no longer be "local".
@@ -289,7 +293,7 @@ Sigma2 <- diag(2)
 # Define the density function on a grid
 mixture_density <- expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
 mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density, mu1, Sigma1) +
-               p2 * mvtnorm::dmvnorm(mixture_density, mu2, Sigma2)
+  p2 * mvtnorm::dmvnorm(mixture_density, mu2, Sigma2)
 # Plot the contours
 mixture_plot <- as_kde(mixture_density) |>
   autoplot(fill = TRUE) +
@@ -370,7 +374,7 @@ of2021 <- oldfaithful |>
   head(10) |>
   select(duration, waiting) |>
   mutate(eruption = row_number())
-H <- kde_bandwidth(of2021[,1:2])
+H <- kde_bandwidth(of2021[, 1:2])
 ```
 
 To illustrate the idea, consider a simple bivariate example of 10 observations: the first 10 eruption durations from 2021 that are in the `oldfaithful` data set, along with the corresponding waiting times until the following eruption. These are shown in the figure below along with the contours of bivariate kernels placed over each observation. Here we have used a bivariate Gaussian kernel with bandwidth matrix given by $\bm{H} = \left[\begin{array}{rr}`r sprintf("%.f", H[1,1])` & `r sprintf("%.f", H[1,2])` \\ `r sprintf("%.f", H[2,1])` & `r sprintf("%.f", H[2,2])`\end{array}\right]$.
@@ -386,7 +390,7 @@ k <- expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
   y = seq(-3 * h[2], 3 * h[2], l = 100)
 ) |>
-  mutate(z = mvtnorm::dmvnorm(x = cbind(x,y), sigma = H))
+  mutate(z = mvtnorm::dmvnorm(x = cbind(x, y), sigma = H))
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
   unnest(k) |>
@@ -433,7 +437,7 @@ of_density <- of |>
   kde(H = kde_bandwidth(of))
 of_density |>
   autoplot() +
-  geom_point(aes(duration, waiting), data = of, alpha=0.15) +
+  geom_point(aes(duration, waiting), data = of, alpha = 0.15) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
@@ -508,7 +512,8 @@ plot1 <- mixture_plot +
 plot2 <- mixture_density |>
   ggplot(aes(x = y1, y = density + y2, group = y2)) +
   geom_ribbon(aes(ymin = y2, ymax = density + y2, xmin = -2, xmax = 4),
-    col = "#4c93bb", fill = "#4c93bb") +
+    col = "#4c93bb", fill = "#4c93bb"
+  ) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Conditional densities: $f(y_1|y_2)$")
@@ -561,13 +566,17 @@ of <- oldfaithful |>
 p1 <- of |>
   ggplot(aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.2) +
-  labs(title = "Original data",
-       x = "Duration of eruption (seconds)",
-       y = "Waiting time to next eruption (seconds)")
+  labs(
+    title = "Original data",
+    x = "Duration of eruption (seconds)",
+    y = "Waiting time to next eruption (seconds)"
+  )
 p2 <- mvscale(of, warning = FALSE) |>
   ggplot(aes(x = z1, y = z2)) +
   geom_point(alpha = 0.2) +
-  labs(title = "Scaled data",
-       x = latex2exp::TeX("$z_1$"), y = latex2exp::TeX("$z_2$"))
-patchwork::wrap_plots(p1, p2, nrow=1)
+  labs(
+    title = "Scaled data",
+    x = latex2exp::TeX("$z_1$"), y = latex2exp::TeX("$z_2$")
+  )
+patchwork::wrap_plots(p1, p2, nrow = 1)
 ```
