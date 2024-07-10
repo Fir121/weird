@@ -392,7 +392,7 @@ n01 |>
   ggplot(aes(x = v1, y = v2)) +
   geom_point() +
   geom_abline(aes(intercept = -0.8, slope = -1.8), col = "red") +
-  geom_point(aes(x = 0, y = -1), col = discrete_colors[1]) +
+  geom_point(data = data.frame(v1 = 0, v2 = -1), col = discrete_colors[1]) +
   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
 ```
 
@@ -483,7 +483,7 @@ To find the loop, we inflate the bag relative to the median by a factor of 3. Th
 #| label: fig-bagplot
 #| fig-cap: A bagplot of the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
 n01 |>
-  head(10) |>
+  head(10) |> 
   gg_bagplot(v1, v2) +
   geom_point(aes(x = v1, y = v2), data = n01[1:10, ])
 ```
