@@ -139,7 +139,7 @@ tibble(
     latex2exp::TeX("$t_{~5}$"),
     latex2exp::TeX("$t_{~99}$")
   )) +
-  theme(legend.text.align = 0)
+  theme(legend.text = element_text(hjust = 0))
 ```
 
 ### Gamma distribution
@@ -281,7 +281,7 @@ tibble(
     latex2exp::TeX("$t_{~5}$"),
     latex2exp::TeX("$\\chi^{~2}_{~~5}$")
   )) +
-  theme(legend.text.align = 0)
+  theme(legend.text = element_text(hjust = 0))
 ```
 
 ## Sample quantiles {#sec-sample-quantiles}

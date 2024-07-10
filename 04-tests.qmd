@@ -59,7 +59,7 @@ tibble(
       "N(0,1)"
     )
   ) +
-  theme(legend.text.align = 0) +
+  theme(legend.text = element_text(hjust = 0)) +
   coord_cartesian(xlim = c(-5, 10))
 ```
 
@@ -280,7 +280,7 @@ zspurious2df |>
       "N(0,1)"
     )
   ) +
-  theme(legend.text.align = 0) +
+  theme(legend.text = element_text(hjust = 0)) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(6, 7500))
 ```
@@ -496,7 +496,7 @@ pgrubbsdf |>
       "N(0,1)"
     )
   ) +
-  theme(legend.text.align = 0) +
+  theme(legend.text = element_text(hjust = 0)) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(4, 7500))
 ```
@@ -603,7 +603,7 @@ dixondf |>
       "N(0,1)"
     )
   ) +
-  theme(legend.text.align = 0) +
+  theme(legend.text = element_text(hjust = 0)) +
   theme(axis.text.x = element_text(size = 8)) +
   coord_cartesian(xlim = c(4, 96))
 ```
