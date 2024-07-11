@@ -374,7 +374,7 @@
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
-      "Version": "0.12.8.4.0",
+      "Version": "14.0.0-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -384,7 +384,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "a535dd90aa8ec9a2e63a8f79b4a1bf43"
+      "Hash": "a711769be34214addf7805278b72d56b"
     },
     "RcppCGAL": {
       "Package": "RcppCGAL",
@@ -2184,7 +2184,7 @@
     },
     "knitr": {
       "Package": "knitr",
-      "Version": "1.47",
+      "Version": "1.48",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2196,7 +2196,7 @@
         "xfun",
         "yaml"
       ],
-      "Hash": "7c99b2d55584b982717fcc0950378612"
+      "Hash": "acf380f300c721da9fde7df115a5f86f"
     },
     "ks": {
       "Package": "ks",
@@ -3065,7 +3065,7 @@
     },
     "reprex": {
       "Package": "reprex",
-      "Version": "2.1.0",
+      "Version": "2.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -3083,7 +3083,7 @@
         "utils",
         "withr"
       ],
-      "Hash": "1425f91b4d5d9a8f25352c44a3d914ed"
+      "Hash": "97b1d5361a24d9fb588db7afe3e5bcbf"
     },
     "rex": {
       "Package": "rex",
@@ -3122,16 +3122,16 @@
       "Version": "1.1.4.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "rlang",
       "RemoteUsername": "r-lib",
+      "RemoteRepo": "rlang",
       "RemoteRef": "HEAD",
-      "RemoteSha": "6f102ce3a79720fefff7f044ac14d3f688429f75",
+      "RemoteSha": "f185e62f0eb14f95d2a3144947e6da3187677fd9",
+      "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
         "utils"
       ],
-      "Hash": "8fa45e929fec9a1f4dadd63e768b0a01"
+      "Hash": "b3f4755ff549948ea0e9d4faac8a779c"
     },
     "rmarkdown": {
       "Package": "rmarkdown",
@@ -3179,7 +3179,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "roxygen2",
       "RemoteRef": "HEAD",
-      "RemoteSha": "9855db3dc47a2816b4f4487e6f80d7648fced993",
+      "RemoteSha": "10ec8deecacac50d4714a03503811b3b9a52e926",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3200,7 +3200,7 @@
         "withr",
         "xml2"
       ],
-      "Hash": "431af8e1b87bb807a7fe188f6482a544"
+      "Hash": "6c590b0af4571bc2742d9c13a30b8ec5"
     },
     "rpart": {
       "Package": "rpart",
@@ -3998,7 +3998,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "3bd727a999e5852db89a1b06f8744cbd3ffd2f55",
+      "RemoteSha": "527203d8b842ee6dd6e3c1f6cc4a2ab890e0d872",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4007,6 +4007,7 @@
         "cli",
         "crayon",
         "dbscan",
+        "distributional",
         "dplyr",
         "evd",
         "ggplot2",
@@ -4020,7 +4021,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "ed34bcd671c50b76e3a0680ddf37df77"
+      "Hash": "2d55d3337e6ebf92ab6a27fce716089f"
     },
     "whisker": {
       "Package": "whisker",
