@@ -333,7 +333,7 @@ When applied to the remaining examples, we see approximately 10--20 observations
 ```{r}
 #| label: fig-lvplots1
 #| fig.asp: 0.2
-#| fig.cap: "Letter value plot of Old Faithful eruption durations, omitting the very long 2 hour duration."
+#| fig.cap: "Letter value plot of Old Faithful eruption durations, omitting the long 2 hour duration."
 oldfaithful |>
   filter(duration < 7000) |>
   ggplot(aes(x = 1, y = duration)) +
@@ -427,7 +427,7 @@ for (i in depths) {
 p + geom_point() +
   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1)) +
   geom_point(
-    data = data.frame(v1 = median$center[1], v2 = median$center[2]), 
+    data = data.frame(v1 = median$center[1], v2 = median$center[2]),
     col = "yellow", size = 2
   )
 ```
@@ -476,7 +476,7 @@ In this example, the convex hulls shown in @fig-convexhull are equivalent to the
 
 The bagplot was proposed by @bagplot as a bivariate version of a boxplot, constructed using similar principles. Like a univariate boxplot, the bivariate bagplot has a central point (the depth median), an inner region (the "bag"), and an outer region (the "loop"), beyond which outliers are shown as individual points.
 
-To define the bag, we first find the smallest depth region $D_k$ containing at least $\lfloor n/2 \rfloor$ of the observations. Then the bag is linearly interpolated between $D_k$ and $D_{k-1}$, with the linear interpolation depending on the number of observations in each depth region. Because the bag is interpolated between depth regions, it is also a convex polygon. The procedure is slightly more complicated for very small data sets where only $D_1$ might contain more than half of the observations.
+To define the bag, we first find the smallest depth region $D_k$ containing at least $\lfloor n/2 \rfloor$ of the observations. Then the bag is linearly interpolated between $D_k$ and $D_{k-1}$, with the linear interpolation depending on the number of observations in each depth region. Because the bag is interpolated between depth regions, it is also a convex polygon. The procedure is slightly more complicated for small data sets where only $D_1$ might contain more than half of the observations.
 
 To find the loop, we inflate the bag relative to the median by a factor of 3. This forms the "fence". Then the loop is the convex hull of the points contained within the fence.
 
@@ -486,7 +486,7 @@ To find the loop, we inflate the bag relative to the median by a factor of 3. Th
 #| label: fig-bagplot
 #| fig-cap: A bagplot of the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the blue point in the centre. The darker shaded region is the bag, while the lighter shaded region shows the loop. There are no outliers outside the loop for this data set.
 n01 |>
-  head(10) |> 
+  head(10) |>
   gg_bagplot(v1, v2) +
   geom_point(aes(x = v1, y = v2), data = n01[1:10, ])
 ```

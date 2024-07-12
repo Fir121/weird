@@ -142,7 +142,7 @@ In fact, anomaly scores often underpin the algorithms that are used to detect an
 
 ### Test cricket batting data
 
-Cricket is a very popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
+Cricket is a popular sport in England, India, Australia, and other countries which had strong ties to England during the 19th and 20th centuries. The `cricket_batting` data contains summary statistics for all `r NROW(cricket_batting)` men and women to have played test cricket (the traditional and long form of the game), up to 6 October 2021. Each row contains data on one player, and we will be looking for anomalies in their playing statistics.
 
 ```{r}
 #| label: cricketdata
@@ -250,7 +250,7 @@ oldfaithful |>
   scale_y_discrete()
 ```
 
-We see that almost all of the remaining eruptions were between 100 and 300 seconds in length, with one extremely short anomalous duration of 1 second. (Again, perhaps this is an error in the recorded data.) However, the plot reveals another feature of the data. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Very few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
+We see that almost all of the remaining eruptions were between 100 and 300 seconds in length, with one extremely short anomalous duration of 1 second. (Again, perhaps this is an error in the recorded data.) However, the plot reveals another feature of the data. The majority of observations are between 200 and 300 seconds, with a smaller group at around 120 seconds. Few observations fall between 140 and 180 seconds. Those that do can be considered "inliers" --- anomalous points that lie within the range of the rest of the data but in regions of low density.
 
 The two clusters of observations characterise two eruption modes for the Old Faithful geyser: short durations (around 2 minutes in length) and long durations (between 3 and 5 minutes in length). There was an earthquake in 1998 which changed the distribution of durations. Before 1998, the durations were more evenly split between the two clusters, but currently the long durations are much more common.
 
@@ -303,7 +303,7 @@ wine_reviews |>
 
 A similar phenomenon occurs whenever you consider additional variables. An anomaly in three dimensions may not appear anomalous in any of the 2-dimensional sets of variables. As the number of dimensions increases, there are more ways for observations to be anomalous, but it is increasingly difficult to find them.
 
-While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two numerical variables, we will need alternative tools once we have three or more variables, or a very large data set, or non-numerical data.
+While strip plots and scatterplots are useful for finding anomalies in small- to moderate-sized data sets with one or two numerical variables, we will need alternative tools once we have three or more variables, or a large data set, or non-numerical data.
 
 We will consider the problem of high dimensions in [Chapter -@sec-highdim], while various types of non-numerical data are considered in the later chapters of the book.
 

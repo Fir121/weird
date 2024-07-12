@@ -115,7 +115,7 @@ Some books recommend that observations be identified as anomalies when the absol
 
 1. If the data really do come from a normal distribution that has been contaminated with anomalies, then the estimated mean ($\bar{y}$) and standard deviation $s_y$ will also be affected by those anomalies. Any anomaly detection method should be relatively robust to the anomalies in the data.
 2. Having a fixed threshold regardless of sample size means that the probability of a spurious anomaly increases with the sample size.
-3. The assumption of normality is very unlikely to be satisfied with most real data.
+3. The assumption of normality is unlikely to be satisfied with most real data.
 
 ### Examples
 
@@ -457,9 +457,9 @@ pzscoredf |>
   coord_cartesian(xlim = c(4, 60000))
 ```
 
-@fig-pzscoretests shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in very small samples.
+@fig-pzscoretests shows that only Grubbs' test gives reasonable results, with the others finding too many anomalies except in small samples.
 
-However, when we allow for different data distributions, Grubbs' test also gives poor results, showing it is very sensitive to the assumed data distribution.
+However, when we allow for different data distributions, Grubbs' test also gives poor results, showing it is sensitive to the assumed data distribution.
 
 
 ```{r}
@@ -555,7 +555,7 @@ The test is clearly flawed for several reasons. First, if the two largest values
 
 As with the other tests considered here, the test assumes that the underlying data distribution is normal, and anomalies are identified which appear inconsistent with that assumption.
 
-Simulation can be used to compute the critical values for this test, assuming that the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is very sensitive to the assumed data distribution making it largely useless for real data analysis.
+Simulation can be used to compute the critical values for this test, assuming that the data come from a normal distribution. We can also use simulation to compute the probability of false positives, giving the results shown in @fig-spuriousdixon. As with the other tests we have considered, Dixon's test is sensitive to the assumed data distribution making it largely useless for real data analysis.
 
 ```{r}
 #| label: fig-spuriousdixon
@@ -676,7 +676,7 @@ nanomalies |>
 
 None of the tests found the two clear anomalies in the Old Faithful data, and most failed to find either of the artificial anomalies in `n01b`. All tests found at least one spurious anomaly in the large simulated data sets with no real anomalies.
 
-As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are very unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
+As noted at the start of this chapter, anomaly detection methods based on assumed data distributions are unreliable. Until about 1975, they were the only viable methods given the lack of computing facilities available, because they could be implemented using tables and hand calculations. However, there is really no justifiable reason for continuing to use such methods.
 
 They are particularly sensitive to the assumed data distribution, and the probability of detecting spurious anomalies is usually much higher in reality than under the ideal conditions in which the tests were conceived.
 

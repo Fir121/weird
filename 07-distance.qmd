@@ -84,7 +84,7 @@ $\bm{z}_i = \bm{U} (\bm{y}_i - \bm{m})$, where $\bm{m}$ is the pointwise median,
 $$
   \| \bm{z}_i - \bm{z}_j\|_2 = \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{U}' \bm{U} (\bm{y}_i - \bm{y}_j)} =  \sqrt{(\bm{y}_i - \bm{y}_j)' \bm{S}_{\text{OGK}}^{-1} (\bm{y}_i - \bm{y}_j)}
 $$
-This is known as the Mahalanobis distance, named after the Indian statistician Prasanta Chandra Mahalanobis (although he wasn't using a robust measure of covariance).  It is a multivariate generalization of the number of standard deviations between any two observations.
+This is known as the Mahalanobis distance, named after the Indian statistician Prasanta Chandra Mahalanobis (although he wasn't using a robust measure of covariance). It is a multivariate generalization of the number of standard deviations between any two observations.
 
 Mahalanobis distance is not an option provided by the `dist()` function, so we will need to compute the scaled data first.
 

@@ -216,7 +216,7 @@ $$
   \frac{\sum_{i=1}^n Y_i - n\mu}{\sigma\sqrt{n}} \longrightarrow \text{N}(0,1).
 $$
 
-This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $Y_1,\dots,Y_n$, other than that they have finite mean and variance. It is also a very useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
+This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $Y_1,\dots,Y_n$, other than that they have finite mean and variance. It is also a useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
 For example, the sample mean (or average), is simply the sum of the observations divided by the sample size. So by the CLT, for a large sample size, the sample mean will have a Normal distribution. That is, if the observations come from a distribution with mean $\mu$ and variance $\sigma^2$, then the sample mean will have distribution $\text{N}(\mu, \sigma^2/n)$ when $n$ is large, regardless of the underlying distribution of the observations.
 
@@ -290,7 +290,7 @@ The **sample quantiles** of a data set are estimates of the quantiles of the und
 
 ### The `quantile()` function
 
-The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is very small, or when you are interested in the tails when $p$ is close to 0 or 1. However, for anomaly detection, we are usually interested in the tails, so we will need to use a method that works well for extreme values of $p$.
+The R function `quantile()` includes nine variations, based on @HF96. Which variation you use makes little difference except for tiny data sets where $n$ is small, or when you are interested in the tails when $p$ is close to 0 or 1. However, for anomaly detection, we are usually interested in the tails, so we will need to use a method that works well for extreme values of $p$.
 
 Let's compare two of the possible variations available in `quantile()`: `type = 7` which is the default method, and `type = 8` which was the recommendation of @HF96 due to it having smaller bias.
 
@@ -609,7 +609,7 @@ of2021 |>
   geom_label(x = 320, y = .004, label = "h = 40", col = "#009E73")
 ```
 
-When $h$ is too small, the density estimate is very rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ is the "normal reference rule" [@Silverman1986, p45] given by
+When $h$ is too small, the density estimate is rough with many peaks and troughs. When $h$ is too large, the density estimate is too smooth and we fail to see any features in the data. A popular choice for $h$ is the "normal reference rule" [@Silverman1986, p45] given by
 $$
   h = 1.059 s n^{-1/5}
 $$ {#eq-nrr}
