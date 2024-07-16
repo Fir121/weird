@@ -12,7 +12,7 @@ I will assume a knowledge of statistics and probability at about second year und
 
 I will also assume that you already know how to use R and are familiar with the [tidyverse](https://tidyverse.org) packages such as `dplyr`, `tidyr` and `ggplot2`.
 
-All R examples in the book assume that you have loaded the `weird` package first:
+All R examples in the book assume that you have loaded the [`weird` package](https://pkg.robjhyndman.com/weird-package/) first. It is available [on CRAN](https://cran.r-project.org/package=weird), although some examples in the book use the latest dev version [available on GitHub](https://github.com/robjhyndman/weird-package).
 
 ```{r}
 #| label: library
