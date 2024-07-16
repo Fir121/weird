@@ -3995,11 +3995,11 @@
       "Version": "1.0.2.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
+      "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "9829814666bf99d0fda92ca5ebc34cd56ea5c255",
+      "RemoteSha": "c66a2569c58a65f903e4987c014847b32caf8178",
+      "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
         "aplpack",
@@ -4021,7 +4021,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "0f8f87d6e4c308e97fd392c9d1634a87"
+      "Hash": "31f2afc7e4cb7a6431ca2bdcc49a80ec"
     },
     "whisker": {
       "Package": "whisker",

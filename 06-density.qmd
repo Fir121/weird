@@ -31,51 +31,60 @@ The function `score_tail_prob()` function will return values of $p_i$ given valu
 
 For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function. Therefore, under the normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard normal distribution.
 
-For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `score_tail_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
+### Generalized Pareto tail probabilities {#sec-gpd-tails}
 
-```{r}
-#| code-fold: false
-library(distributional)
-# Compute scores of v1 assuming a standard normal distribution
-tibble(
-  y = n01$v1,
-  g = -dnorm(n01$v1, log = TRUE),
-  prob = score_tail_prob(g, dist_normal())
-) |>
-  filter(prob < 0.01)
-```
+If we do not know what the distribution of the data should be, or if we are unsure about the assumed distribution, we can use extreme value theory to estimate the tail probabilities.
 
-As expected, there are 10 of them (1% of 1000) since all observations did come from the standard normal distribution. (It is a coincidence that there are exactly 10 --- there could have been a few less or a few more.)
+We fit a Generalized Pareto Distribution (GPD) to the largest density scores using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the density scores to obtain the probability of each observation.
+
+This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the assumed density $f$.
+
+The approach does require a relatively large number of density scores to be available. We are only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
 ### Empirical tail probabilities
 
-In some cases, computing @eq-pi-density can be time-consuming, and for large $n$, and estimate of $p_i$ can be obtained as the proportion of density scores larger than $g_i$. We can repeat the above example, but without providing the distribution.
+An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of density scores larger than $g_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the approximation to hold, we only need that the ordering of $-\log f(y_i)$ and $-\log f^*(y_i)$ is similar in the tails of the distribution.
+
+### Example
+
+For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `score_tail_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
+
+We will use all three methods described above using the correct density in computing the scores, and then repeat the calculation using an incorrect density. For the incorrect density, we will use a $t_3$ distribution, which has much longer tails than the true $N(0,1)$ distribution.
 
 ```{r}
+#| label: score_tail_prob
 #| code-fold: false
-tibble(
+# Compute scores of v1 assuming a standard normal distribution and a t4 distribution
+norm_prob <- tibble(
   y = n01$v1,
-  g = -dnorm(n01$v1, log = TRUE),
-  prob = score_tail_prob(g)
-) |>
-  filter(prob < 0.01)
+  g = -dnorm(y, log = TRUE),
+  gt = -dt(y, 4, log = TRUE),
+  p = score_tail_prob(g, distributional::dist_normal()),
+  p_gpd = score_tail_prob(g, GPD = TRUE),
+  p_emp = score_tail_prob(g),
+  pt = score_tail_prob(gt, distributional::dist_normal()),
+  pt_gpd = score_tail_prob(gt, GPD = TRUE),
+  pt_emp = score_tail_prob(gt)
+)
+norm_prob |> arrange(p)
 ```
 
-Here, 9 of the 10 anomalies previously identified have been reported, only missing the 3rd one from the previous calculation.
+The most accurate values are in column `p`, as this uses the correct distribution applied to the correct density scores. Notice that `p_gpd` and `p_emp` are both relatively accurate: the GPD and empirical approximations work. For the probabilities calculated using the incorrect distribution, `pt` is relatively inaccurate, with much larger probabilities than they should be, especially in the extreme tails. But `pt_gpd` and `pt_emp` are both reasonable estimates, despite being based on an incorrect distribution for computing the scores. In fact, `p_emp` and `pt_emp` are identical, because the ordering of the density scores is unchanged despite the incorrect distribution being used.
 
-## The lookout algorithm {#sec-lookout}
+The various estimates are displayed in @fig-score_tail_prob for values of $y$ greater than 2.5, showing how the estimates (other than `pt`) are particularly accurate in the extreme tails, where we need them for anomaly detection.
 
-The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses density scores to find the probability of each observation being an anomaly. Although it was proposed using density scores from kernel density estimates, it can be applied to scores obtained using any density.
+```{r}
+#| label: fig-score_tail_prob
+norm_prob |>
+  filter(y > 2.5) |>
+  select(-g, -gt) |>
+  tidyr::pivot_longer(p:pt_emp, names_to = "Estimate", values_to = "Probability") |>
+  ggplot(aes(x = y, y = Probability, col = Estimate)) +
+  geom_line()
+```
 
-The underlying idea of the lookout algorithm is to use extreme value theory applied to the density scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the density scores using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ or $95^{th}$ percentile as the threshold. Then we apply the fitted distribution to the LOO density scores to obtain the probability of each observation.
 
-This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the choice of $f$.
-
-The approach does require a relatively large number of density scores to be available. We are only using the top 5 or 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
-
-In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the density scores. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
-
-In the following sections, we will discuss how to compute density scores for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
+In summary, even when we don't know the distribution of the data, we can use either a GPD or the empirical distribution to obtain good estimates of the tail probabilities of the density scores.
 
 ## Linear regression {#sec-regression-log-scores}
 
@@ -458,6 +467,14 @@ $$
   f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
 $$ {#eq-lookout}
 where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the leave-one-out kernel density scores without needing to re-estimate the density many times.
+
+### The lookout algorithm {#sec-lookout}
+
+The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses density scores to find the probability of each observation being an anomaly. Although it was proposed using density scores from kernel density estimates, it can be applied to scores obtained using any density.
+
+In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the density scores. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
+
+In the following sections, we will discuss how to compute density scores for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
 
 ### Example: Old Faithful eruption durations
 
