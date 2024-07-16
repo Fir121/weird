@@ -22,6 +22,8 @@ $h5-font-size: 0.9rem !default;
 $code-block-bg: $theme-gray;
 $code-color: $body-color;
 
+$callout-color-tip: $theme-orange;
+
 
 /*-- scss:rules --*/
 
@@ -265,3 +267,9 @@ button {
 }
 
 .katex { font-size: 1.1em !important; }
+
+.callout.callout-style-default .callout-body {
+  font-size: 1rem;
+  font-weight: 400;
+  background-color: lighten($theme-gray, 5%);
+}
