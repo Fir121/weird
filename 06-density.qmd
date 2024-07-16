@@ -11,7 +11,7 @@ Anomalies are observations that are unlikely to have come from the same distribu
 
 ## Density scores {#sec-density-scores}
 
-Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data.
+Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
 
 The density score of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $p_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
 
@@ -22,18 +22,19 @@ If the density $f$ has been estimated from the data, then it is sometimes useful
 We can use density scores to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
 $$
 p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
-$$
-where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise. This probability is related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $y_i$ lies on the boundary of the $R_\alpha$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
-
-Suppose $f$ denotes the normal distribution $N(\mu, \sigma^2)$, then $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function. More generally, for any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function.
-
-When the sample size $n$ is large enough, an estimate of the value of $p_i$ can be obtained as the proportion of density scores larger than $g_i$.
+$$ {#eq-pi-density}
+where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise. This probability is related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $y_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
 
 The function `score_tail_prob()` function will return values of $p_i$ given values of the density scores $g_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
-For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `score_tail_prob()` to identify anomalies with probability less than 1%.
+### Symmetric distributions
+
+For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function. Therefore, under the normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard normal distribution.
+
+For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `score_tail_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
 
 ```{r}
+#| code-fold: false
 library(distributional)
 # Compute scores of v1 assuming a standard normal distribution
 tibble(
@@ -46,14 +47,29 @@ tibble(
 
 As expected, there are 10 of them (1% of 1000) since all observations did come from the standard normal distribution. (It is a coincidence that there are exactly 10 --- there could have been a few less or a few more.)
 
+### Empirical tail probabilities
+
+In some cases, computing @eq-pi-density can be time-consuming, and for large $n$, and estimate of $p_i$ can be obtained as the proportion of density scores larger than $g_i$. We can repeat the above example, but without providing the distribution.
+
+```{r}
+#| code-fold: false
+tibble(
+  y = n01$v1,
+  g = -dnorm(n01$v1, log = TRUE),
+  prob = score_tail_prob(g)
+) |>
+  filter(prob < 0.01)
+```
+
+Here, 9 of the 10 anomalies previously identified have been reported, only missing the 3rd one from the previous calculation.
 
 ## The lookout algorithm {#sec-lookout}
 
 The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses density scores to find the probability of each observation being an anomaly. Although it was proposed using density scores from kernel density estimates, it can be applied to scores obtained using any density.
 
-The underlying idea of the lookout algorithm is to use extreme value theory applied to the density scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the density scores using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ or $95^{th}$ percentile as the threshold. Then we apply the fitted distribution to the LOO density scores to obtain the probability of each observation. 
+The underlying idea of the lookout algorithm is to use extreme value theory applied to the density scores to estimate the probability of each observation being an anomaly. We fit a Generalized Pareto Distribution to the density scores using the POT approach discussed in @sec-evt, with the $90^{\text{th}}$ or $95^{th}$ percentile as the threshold. Then we apply the fitted distribution to the LOO density scores to obtain the probability of each observation.
 
-This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the choice of $f$. 
+This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the choice of $f$.
 
 The approach does require a relatively large number of density scores to be available. We are only using the top 5 or 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
