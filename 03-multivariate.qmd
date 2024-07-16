@@ -560,7 +560,6 @@ Let's consider the `oldfaithful` data again, where durations are much longer tha
 
 ```{r}
 #| label: fig-scaling
-#| code-fold: false
 #| warning: false
 #| fig.cap: "Old Faithful duration and waiting time data, before and after scaling."
 of <- oldfaithful |>

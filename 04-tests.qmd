@@ -657,7 +657,7 @@ We can summarise the results of the various tests used here in the following tab
 ```{r}
 #| label: tbl-nanomalies
 #| echo: false
-#| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies and only known anomalies."
+#| tbl-cap: "Number of anomalies detected by each test. Cells in red indicate that the test has failed to identify all known anomalies (i.e., it has some false negatives), or it has identified some spurious anomalies (i.e., it has some false positives)."
 library(kableExtra)
 nanomalies$Example[5] <- "<span class='math inline'>\\text{t}_3</span>"
 nanomalies$Example[6] <- "<span class='math inline'>\\chi^2_4</span>"

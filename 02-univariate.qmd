@@ -211,10 +211,16 @@ A good introduction to other probability distributions on real sample spaces is 
 
 ## Central limit theorem {#sec-clt}
 
-The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed. That is, if $Y_1,\dots,Y_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
+The central limit theorem (CLT) is one of the most important results in statistics. There are several variations of the theorem; the simplest version states that the sum of a large number of iid random variables, with finite mean and variance, is approximately Normally distributed.
+
+::: {.callout-tip}
+## Central Limit Theorem {-}
+
+If $Y_1,\dots,Y_n$ are iid random variables with mean $\mu$ and variance $\sigma^2 < \infty$, then
 $$
   \frac{\sum_{i=1}^n Y_i - n\mu}{\sigma\sqrt{n}} \longrightarrow \text{N}(0,1).
 $$
+:::
 
 This is a remarkable result as it does not require any assumptions about the underlying distribution of the random variables $Y_1,\dots,Y_n$, other than that they have finite mean and variance. It is also a useful result, as it allows us to use the Normal distribution to approximate the distribution of many statistics.
 
@@ -720,11 +726,12 @@ of_density |>
 
 ## Extreme value theory {#sec-evt}
 
-Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a cdf $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the cdf of $M_n$ is given by $P\{M_n \leq z \} = \left(F(z)\right)^n$. However, $F$ is usually not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
+Extreme Value Theory is used to model rare, extreme events and is useful in anomaly detection. Suppose we have $n$ independent and identically distributed random variables $Y_1, \dots, Y_n$ with a cdf $F(y) = P\{Y \leq y\}$. Then the maximum of these $n$ random variables is $M_n = \max \{Y_1, \dots, Y_n\}$. If $F$ is known, the cdf of $M_n$ is given by $P\{M_n \leq z \} = P\{Y_1 \leq z, \dots, Y_n \leq z\} = \left(F(z)\right)^n$. However, $F$ is often not known in practice. This gap is filled by Extreme Value Theory, which studies approximate families of models for $F^n$ so that extremes can be modeled and their uncertainty quantified.
 
-It is well known, due to the [central limit theorem](02-tools.html#sec-clt), that the average of a set of iid random variables will converge to the normal distribution if the mean and variance both exist and are finite. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, 46]; no other limits are possible.
+It is well known, due to the [central limit theorem](02-tools.html#sec-clt), that the average of a set of iid random variables will converge to the normal distribution if the mean and variance both exist and are finite. The Fisher-Tippett-Gnedenko (FTG) Theorem provides an analogous result for the maximum. It was developed in a series of papers by @Frechet1927, @Fisher1928, and @Gnedenko1943. Independently, @Mises1936 proposed a similar result. The FTG Theorem states that if the maximum can be scaled so that it converges, then the scaled maximum will converge to either a Gumbel, Fréchet or Weibull distribution [@coles2001introduction, p46]; no other limits are possible.
 
-### Fisher-Tippett-Gnedenko Theorem {-}
+::: {.callout-tip}
+## Fisher-Tippett-Gnedenko Theorem {-}
 
 If there exist sequences $\{a_n\}$ and $\{b_n\}$ such that
 $$
@@ -745,20 +752,22 @@ where $G$ is a non-degenerate cumulative distribution function, then $G$ belongs
     \end{cases}
 \end{align*}
 for parameters $a, b$ and $\alpha$ where $a, \alpha >0$.
-
-These three families of distributions can be further combined into a single family by using the following cdf known as the Generalized Extreme Value (GEV) distribution,
-$$
-  G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
-$$ {#eq-EVT4}
-where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$. The location parameter is $\mu\in\mathbb{R}$, $\sigma>0$ is the scale parameter, while $\xi\in\mathbb{R}$ is the shape parameter. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi < 0$ we get a Weibull distribution with a finite upper end, and when $\xi > 0$ we get a Fréchet family of distributions with heavy tails including polynomial tails.
-
-If we take the negative of the random variables $Y_1,\dots,Y_n$, it becomes clear that a similar result holds for the minimum.
+:::
 
 The three types of limits correspond to different forms of the tail behaviour of $F$.
 
   * When $F$ has a finite upper bound, such as with a uniform distribution, then $G$ is a Weibull distribution.
   * When $F$ has exponential tails, such as with a normal distribution or a Gamma distribution, then $G$ is a Gumbel distribution.
   * When $F$ has heavy tails including polynomial decay, then $G$ is a Fréchet distribution. One example is when $F$ itself is a Fréchet distribution with $F(y)= e^{-1/y}$, $y>0$.
+
+
+If we take the negative of the random variables $Y_1,\dots,Y_n$, it becomes clear that a similar result holds for the minimum.
+
+These three families of distributions can be further combined into a single family by using the following cdf known as the Generalized Extreme Value (GEV) distribution,
+$$
+  G(z) = \exp\left\{ -\left[ 1 + \xi\Big(\frac{z - \mu}{\sigma} \Big)\right]^{-1/\xi} \right\} ,
+$$ {#eq-EVT4}
+where the domain of the function is $\{z: 1 + \xi (z - \mu)/\sigma >0 \}$. The location parameter is $\mu\in\mathbb{R}$, $\sigma>0$ is the scale parameter, while $\xi\in\mathbb{R}$ is the shape parameter. When $\xi = 0$ we obtain a Gumbel distribution with exponentially decaying tails. When $\xi < 0$ we get a Weibull distribution with a finite upper end, and when $\xi > 0$ we get a Fréchet family of distributions with heavy tails including polynomial tails.
 
 To illustrate, suppose $F$ is a standard normal distribution N(0,1) and we have $n=1000$ observations, $Y_1,\dots,Y_n$. Then we know that the distribution of the maximum is given by
 $$
