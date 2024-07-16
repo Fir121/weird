@@ -337,7 +337,7 @@
     },
     "RCurl": {
       "Package": "RCurl",
-      "Version": "1.98-1.14",
+      "Version": "1.98-1.16",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -345,7 +345,7 @@
         "bitops",
         "methods"
       ],
-      "Hash": "47f648d288079d0c696804ad4e55197e"
+      "Hash": "ddbdf53d15b47be4407ede6914f56fbb"
     },
     "ROOPSD": {
       "Package": "ROOPSD",
@@ -888,13 +888,13 @@
     },
     "cubature": {
       "Package": "cubature",
-      "Version": "2.1.0",
+      "Version": "2.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "Rcpp"
       ],
-      "Hash": "2aa17112c073602a08b1f4a7db282cac"
+      "Hash": "ebb09f71a8b5e20c3edeed932c85504a"
     },
     "curl": {
       "Package": "curl",
@@ -1745,7 +1745,7 @@
         "ggplot2",
         "rlang"
       ],
-      "Hash": "5be047891a5a75926c256927925a9a3e"
+      "Hash": "6685a4af442bfa84ab467644ad892aae"
     },
     "gh": {
       "Package": "gh",
@@ -3995,11 +3995,11 @@
       "Version": "1.0.2.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteUsername": "robjhyndman",
-      "RemoteRepo": "weird-package",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "527203d8b842ee6dd6e3c1f6cc4a2ab890e0d872",
       "RemoteHost": "api.github.com",
+      "RemoteRepo": "weird-package",
+      "RemoteUsername": "robjhyndman",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "9829814666bf99d0fda92ca5ebc34cd56ea5c255",
       "Requirements": [
         "R",
         "aplpack",
@@ -4021,7 +4021,7 @@
         "stray",
         "tibble"
       ],
-      "Hash": "2d55d3337e6ebf92ab6a27fce716089f"
+      "Hash": "0f8f87d6e4c308e97fd392c9d1634a87"
     },
     "whisker": {
       "Package": "whisker",
