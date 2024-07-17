@@ -25,6 +25,77 @@ p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
 $$ {#eq-pi-density}
 where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise. This probability is related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $y_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
 
+```{r}
+#| label: fig-density-scores
+#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: Density scores for different values of $y$. The dashed line shows the density score $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
+#| fig-asp: 1
+#| echo: false
+den <- list(y = seq(0, 20, l = 501))
+den$density <- dchisq(den$y, 5)
+hdr <- hdr_table(density = den, prob = 0.90)
+interval2 <- c(hdr$lower, hdr$upper)
+falpha <- hdr$density
+yi <- hdr$upper
+df <- tibble(
+  y = seq(0, 15, l = 501),
+  fy = dchisq(y, 5),
+  g = -log(fy)
+)
+p1 <- df |>
+  ggplot(aes(x = y, y = fy)) +
+  geom_line() +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
+  geom_hline(aes(yintercept = falpha), col = "#D55E00", linetype = "dashed") +
+  geom_polygon(
+    fill = "#D55E00",
+    data = df |>
+      filter(y >= yi) |>
+      bind_rows(
+        tibble(y = c(yi, yi, max(df$y)), fy = c(0, falpha, 0))
+      ) |>
+      arrange(fy, y)
+  ) +
+  geom_polygon(
+    fill = "#D55E00",
+    data = df |>
+      filter(y <= hdr$lower) |>
+      bind_rows(
+        tibble(y = c(hdr$lower, hdr$lower, 0), fy = c(0, falpha, 0))
+      ) |>
+      arrange(fy, desc(y))
+  ) +
+  scale_x_continuous(
+    breaks = c(seq(0, 15, by = 5), yi),
+    labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$y_i$")),
+    minor_breaks = NULL
+  ) +
+  scale_y_continuous(
+    breaks = c(seq(0, 0.15, by = 0.05), falpha),
+    labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$f(y_i)$")),
+    minor_breaks = NULL
+  )
+p2 <- df |>
+  ggplot(aes(x = y, y = g)) +
+  geom_line() +
+  labs(x = "y", y = "Density score: g(y) = -log f(y)") +
+  geom_hline(aes(yintercept = -log(falpha)), col = "#D55E00", linetype = "dashed") +
+  geom_line(
+    data = tibble(x = rep(yi, 2), y = c(0, falpha)),
+    aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
+  ) +
+  scale_x_continuous(
+    breaks = c(seq(0, 15, by = 5), hdr$upper),
+    labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$y_i$")),
+    minor_breaks = NULL
+  ) +
+  scale_y_continuous(
+    breaks = c(seq(0, 7, by = 2), -log(falpha)),
+    labels = latex2exp::TeX(c(seq(0, 7, by = 2), "$g(y_i)$")),
+    minor_breaks = NULL
+  )
+patchwork::wrap_plots(p1, p2, ncol = 1)
+```
+
 The function `score_tail_prob()` function will return values of $p_i$ given values of the density scores $g_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
 ### Symmetric distributions
