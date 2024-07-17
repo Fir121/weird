@@ -154,13 +154,11 @@ norm_prob |>
   geom_line()
 ```
 
-
 In summary, even when we don't know the distribution of the data, we can use either a GPD or the empirical distribution to obtain good estimates of the tail probabilities of the density scores.
 
 ## Linear regression {#sec-regression-log-scores}
 
-Suppose we want to find anomalies amongst $n$ univariate observations $y_1,\dots,y_n$, and we have $p$ variables that we think might be useful for predicting $y$. Then we can write the conditional density as
-$f(y \mid \bm{x})$, where $\bm{x}$ is a $p$-dimensional vector of predictor variables. Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$. This is commonly called a "regression model", regardless of the form of $f$, or whether the relationship with $\bm{x}$ is linear or not.
+Suppose we want to find anomalies amongst $n$ univariate observations $y_1,\dots,y_n$, and we have $p$ variables that we think might be useful for predicting $y$. Then we can write the conditional density as $f(y \mid \bm{x})$, where $\bm{x}$ is a $p$-dimensional vector of predictor variables. Anomalies in $y$ are identified as observations that are unlikely to have come from the conditional density $f$. This is commonly called a "regression model", regardless of the form of $f$, or whether the relationship with $\bm{x}$ is linear or not.
 
 By far the most common type of regression model assumes that $f$ is a Normal distribution, and that the conditional mean is a linear function of $\bm{x}$. Note that this does *not* mean that $y$ is Normally distributed, or that $\bm{x}$ has a Normal distribution. The assumption is that the *conditional* distribution of $y$ given $\bm{x}$ is Normal, which can easily be checked by looking at the residuals from the regression model.
 
@@ -373,34 +371,19 @@ wine_aug |>
 
 This corresponds to the only orange point in @fig-shiraz-regression that has a point value above 95 and a price below the 95% prediction interval.
 
-### Lookout probabilities
+### Score tail probabilities
 
-We will apply the lookout algorithm to these scores. First we compute the threshold value equal to the 95th percentile of the density scores, and then fit a generalized Pareto distribution to the scores above this threshold.
-
-```{r}
-#| code-fold: false
-threshold <- quantile(wine_aug$fscores, prob = 0.95, type = 8)
-gpd <- evd::fpot(wine_aug$fscores, threshold = threshold)$estimate
-```
-
-Now we use the fitted model to compute the lookout probabilities from the LOO scores for each observation.
+We will compute the tail probabilities for these scores using the empirical distribution.
 
 ```{r}
 #| code-fold: false
 wine_aug |>
-  mutate(
-    lookout_prob = evd::pgpd(LOO_fscores,
-      loc = threshold,
-      scale = gpd["scale"], shape = gpd["shape"], lower.tail = FALSE
-    )
-  ) |>
-  select(country:winery, year, points, price, LOO_fscores, lookout_prob) |>
-  arrange(lookout_prob)
+  mutate(tail_prob = score_tail_prob(LOO_fscores)) |>
+  select(country:winery, year, points, price, LOO_fscores, tail_prob) |>
+  arrange(tail_prob)
 ```
 
-Those with the ten smallest lookout probabilities are all wines that appear to be over-priced given their points values.
-
-The above code was introduced to illustrate each step of the procedure, but it is simpler to use the `lookout` function. This can be applied directly to the fitted model object, as follows.
+Those with the ten smallest tail probabilities are all wines that appear to be over-priced given their points values.
 
 ```{r}
 #| code-fold: false
