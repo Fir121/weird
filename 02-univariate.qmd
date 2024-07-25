@@ -166,8 +166,8 @@ dist_mixture(
   weights = c(1/3, 2/3)
 ) |>
   autoplot() +
-  autolayer(dist_normal(-2,1), linetype = "dashed") +
-  autolayer(dist_normal(2,1), linetype = "dashed") +
+  autolayer(dist_normal(-2,1), linetype = "dashed", scale = 1/3) +
+  autolayer(dist_normal(2,1), linetype = "dashed", scale = 2/3) +
   labs(x = "y", y = "Probability Density Function: f(y)")
 ```
 
@@ -243,6 +243,7 @@ The quantile functions for a standard normal distribution, a $\text{t}_5$ distri
 ```{r}
 #| label: fig-quantile2
 #| fig-cap: Quantile function for a standard Normal distribution, a $\text{t}_5$ distribution, and a $\chi^2_5$ distribution.
+#| message: false
 p <- seq(0, 1, l = 501)
 c(dist_normal(0, 1), dist_student_t(5), dist_chisq(5)) |>
   quantile(p = p) |>
@@ -404,7 +405,7 @@ dist <- dist_chisq(5)
 interval1 <- quantile(dist, p = c(0.05, 0.95)) |> unlist()
 interval2 <- hdr(dist, size = 90) |> unlist()
 falpha <- density(dist, at = interval2[1])
-autoplot(dist) |>
+autoplot(dist) +
   labs(x = "y", y = "Probability Density Function: f(y)") +
   geom_line(
     data = tibble(x = interval1), aes(x = x, y = -0.002),
@@ -427,8 +428,7 @@ autoplot(dist) |>
     breaks = c(seq(0, 0.15, by = 0.05), falpha),
     minor_breaks = NULL,
     labels = latex2exp::TeX(c(seq(0, 0.15, by = 0.05), "$f_\\alpha$")),
-  ) +
-  coord_cartesian(xlim = c(0, 15))
+  )
 ```
 
 For a multimodal distribution, the HDR may be a union of intervals. For example, the HDR for the mixture shown in @fig-mixture is displayed in @fig-hdr-mixture.
@@ -597,8 +597,7 @@ We will use the `kde()` function from the `ks` package, which uses the Gaussian 
 #| fig.cap: "Kernel density estimate of Old Faithful eruption durations since 2015, omitting the one eruption that lasted nearly two hours."
 of <- oldfaithful |>
   filter(duration < 7000)
-h <- kde_bandwidth(of$duration)
-of_density <- kde(of$duration, h = h)
+of_density <- dist_kde(of$duration)
 of_density |>
   autoplot() +
   geom_rug(aes(x = duration), of) +
@@ -666,11 +665,11 @@ The kernel density estimate can be used to identify regions of highest density i
 
 ```{r}
 # code-fold: false
-hdr <- hdr_table(density = of_density, prob = 0.90)
+hdr <- hdr(of_density, size = 90)
 hdr
 ```
 
-This shows that the 90% HDR comprises two intervals, corresponding to the short and long duration events. The output from `hdr_table` also includes the density at the ends of the HDR, which is the same for both intervals, and the modes (the points of maximum density) of the density.
+This shows that the 90% HDR comprises two intervals, corresponding to the short and long duration events.
 
 The resulting estimate is shown in @fig-of-hdr, along with the 10% of observations that lie outside the 90% HDR.
 
