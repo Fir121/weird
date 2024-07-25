@@ -109,8 +109,8 @@ Three t distributions are shown in @fig-t.
 #| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
 dist_student_t(c(1, 5, 99)) |>
   autoplot(ngrid = 3001) +
-  labs(x = "y", y = "Probability Density Function: f(y)") +
   coord_cartesian(xlim = c(-8,8)) +
+  labs(x = "y", y = "Probability Density Function: f(y)") +
   scale_color_discrete(labels = c(
     latex2exp::TeX("$t_{~1}$"),
     latex2exp::TeX("$t_{~5}$"),
@@ -119,19 +119,19 @@ dist_student_t(c(1, 5, 99)) |>
   theme(legend.text = element_text(hjust = 0))
 ```
 
-### Gamma distribution
+### $\Gamma$ distribution
 
-The **gamma** distribution is a generalization of the $\chi^2$ distribution, and is used in many statistical models. There are several parameterizations. Here, we use the shape/rate parameterization which uses the shape $\alpha$ and the rate $\beta$. The pdf is given by
+The $\Gamma$ (or **Gamma**) distribution is a generalization of the $\chi^2$ distribution, and is used in many statistical models. There are several parameterizations. Here, we use the shape/rate parameterization which uses the shape $\alpha$ and the rate $\beta$. The pdf is given by
 $$
   f(y; \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)} y^{\alpha-1}e^{-\beta y}.
 $$
-We refer to a gamma random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \text{Gamma}(\alpha, \beta)$. The mean and variance of a gamma random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. The $\chi^2_k$ distribution is a special case of the gamma distribution, with $\alpha = k/2$ and $\beta = 1/2$. The Exponential distribution is also a special case of the gamma distribution, with $\alpha = 1$. The sum of $k$ independent Exponential random variables with rate $\beta$ has a $\text{Gamma}(k, \beta)$ distribution.
+We refer to a $\Gamma$ random variable with shape $\alpha$ and rate $\beta$ as $Y \sim \Gamma(\alpha, \beta)$. The mean and variance of a $\Gamma$ random variable are $\alpha/\beta$ and $\alpha/\beta^2$ respectively. The $\chi^2_k$ distribution is a special case of the $\Gamma$ distribution, with $\alpha = k/2$ and $\beta = 1/2$. The Exponential distribution is also a special case of the $\Gamma$ distribution, with $\alpha = 1$. The sum of $k$ independent Exponential random variables with rate $\beta$ has a $\Gamma(k, \beta)$ distribution.
 
-Three gamma distributions are shown in @fig-gamma.
+Three $\Gamma$ distributions are shown in @fig-gamma.
 
 ```{r}
 #| label: fig-gamma
-#| fig-cap: Probability density functions for three Gamma distributions. As $\alpha$ increases, the distribution to a $N(\alpha/\beta, \alpha/\beta^2)$ distribution.
+#| fig-cap: Probability density functions for three $\Gamma$ distributions. As $\alpha$ increases, the distribution to a $N(\alpha/\beta, \alpha/\beta^2)$ distribution.
 dist_gamma(c(1, 1, 2), c(1, 2, 1)) |>
   autoplot() +
   labs(x = "y", y = "Probability Density Function: f(y)")
@@ -198,7 +198,7 @@ Variations on the theorem allow the variables $Y_1,\dots,Y_n$ to be independent 
 
 It is because of the CLT that a $\chi^2_k$ distribution is approximately Normal for large $k$. (Recall that the sum of $k$ independent N(0,1) random variables has a $\chi^2_k$ distribution.)
 
-Similarly, a Gamma($\alpha,\beta$) distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\text{Gamma}(1,\beta)$, or Exponential, random variables has a $\text{Gamma}(\alpha,\beta)$ distribution.)
+Similarly, a $\Gamma(\alpha,\beta)$ distribution is approximately Normal for large $\alpha$. (Recall that the sum of $\alpha$ independent $\Gamma(1,\beta)$, or Exponential, random variables has a $\Gamma(\alpha,\beta)$ distribution.)
 
 @Wasserman2004 provides some further details and examples of the CLT.
 
@@ -664,7 +664,7 @@ This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relativ
 The kernel density estimate can be used to identify regions of highest density in the data. We could simply take the estimated density function and use the `hdr_table()` function to find the HDR regions with specified probability coverage. For example, we can compute the 90% HDR for the `oldfaithful` data set as follows:
 
 ```{r}
-# code-fold: false
+#| code-fold: false
 hdr <- hdr(of_density, size = 90)
 hdr
 ```
@@ -677,10 +677,7 @@ The resulting estimate is shown in @fig-of-hdr, along with the 10% of observatio
 #| label: fig-of-hdr
 #| fig-cap: 90% highest density region for the `oldfaithful` data set.
 of_density |>
-  autoplot(
-    show_hdr = TRUE, prob = 0.9, show_points = TRUE,
-    alpha = 0.2
-  ) +
+  autoplot(show_hdr = TRUE, prob = 0.9, show_points = TRUE, jitter = TRUE, alpha = 0.2) +
   labs(x = "Duration (seconds)")
 ```
 
