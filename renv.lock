@@ -363,14 +363,14 @@
     },
     "Rcpp": {
       "Package": "Rcpp",
-      "Version": "1.0.12",
+      "Version": "1.0.13",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "methods",
         "utils"
       ],
-      "Hash": "5ea2700d21e038ace58269ecdbeb9ec0"
+      "Hash": "f27411eb6d9c3dada5edd444b8416675"
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
@@ -433,7 +433,7 @@
     },
     "SparseM": {
       "Package": "SparseM",
-      "Version": "1.84",
+      "Version": "1.84-2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -443,7 +443,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "0648c7c4e275c265356649f818dbfcf5"
+      "Hash": "e78499cbcbbca98200254bd171379165"
     },
     "TDAstats": {
       "Package": "TDAstats",
@@ -1600,7 +1600,7 @@
     },
     "gert": {
       "Package": "gert",
-      "Version": "2.0.1",
+      "Version": "2.1.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1611,7 +1611,7 @@
         "sys",
         "zip"
       ],
-      "Hash": "f70d3fe2d9e7654213a946963d1591eb"
+      "Hash": "bdc909d9f16e2478d615b0e6a7330435"
     },
     "ggdist": {
       "Package": "ggdist",
@@ -1745,7 +1745,7 @@
         "ggplot2",
         "rlang"
       ],
-      "Hash": "6685a4af442bfa84ab467644ad892aae"
+      "Hash": "5be047891a5a75926c256927925a9a3e"
     },
     "gh": {
       "Package": "gh",
@@ -1964,7 +1964,7 @@
     },
     "htmlTable": {
       "Package": "htmlTable",
-      "Version": "2.4.2",
+      "Version": "2.4.3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1978,7 +1978,7 @@
         "rstudioapi",
         "stringr"
       ],
-      "Hash": "0164d8cade33fac2190703da7e6e3241"
+      "Hash": "ca027d8771f2c039aed82f00a81e725b"
     },
     "htmltools": {
       "Package": "htmltools",
@@ -2041,7 +2041,7 @@
     },
     "httr2": {
       "Package": "httr2",
-      "Version": "1.0.1",
+      "Version": "1.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2058,7 +2058,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "03d741c92fda96d98c3a3f22494e3b4a"
+      "Hash": "320c8fe23fcb25a6690ef7bdb6a3a705"
     },
     "ids": {
       "Package": "ids",
@@ -2763,13 +2763,13 @@
     },
     "polyclip": {
       "Package": "polyclip",
-      "Version": "1.10-6",
+      "Version": "1.10-7",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R"
       ],
-      "Hash": "436542aadb70675e361cf359285af7c7"
+      "Hash": "5879bf5aae702ffef0a315c44328f984"
     },
     "pracma": {
       "Package": "pracma",
@@ -3704,13 +3704,13 @@
     },
     "tinytex": {
       "Package": "tinytex",
-      "Version": "0.51",
+      "Version": "0.52",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "xfun"
       ],
-      "Hash": "d44e2fcd2e4e076f0aac540208559d1d"
+      "Hash": "cfbad971a71f0e27cec22e544a08bc3b"
     },
     "tseries": {
       "Package": "tseries",
@@ -3824,7 +3824,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "usethis",
       "RemoteRef": "HEAD",
-      "RemoteSha": "83283d7cf108d4e1e1077cc16189ef091f299f8c",
+      "RemoteSha": "46e3fef4e5936356fd67cc61456c8a43472a5d35",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3850,7 +3850,7 @@
         "withr",
         "yaml"
       ],
-      "Hash": "0159c3f4dac21d0dbcca75b003bbedbb"
+      "Hash": "f301286df44852ad8020f8c8e50daadf"
     },
     "utf8": {
       "Package": "utf8",
@@ -3998,7 +3998,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "c66a2569c58a65f903e4987c014847b32caf8178",
+      "RemoteSha": "4d3de64ba21a29e6a6ca9a68f0c88950f121ccc1",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4019,9 +4019,10 @@
         "robustbase",
         "rstudioapi",
         "stray",
-        "tibble"
+        "tibble",
+        "vctrs"
       ],
-      "Hash": "31f2afc7e4cb7a6431ca2bdcc49a80ec"
+      "Hash": "25e5377c17273712a89f77b862b7c6a3"
     },
     "whisker": {
       "Package": "whisker",
@@ -4044,7 +4045,7 @@
     },
     "xfun": {
       "Package": "xfun",
-      "Version": "0.45",
+      "Version": "0.46",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -4052,7 +4053,7 @@
         "stats",
         "tools"
       ],
-      "Hash": "ca59c87fe305b16a9141a5874c3a7889"
+      "Hash": "00ce32f398db0415dde61abfef11300c"
     },
     "xml2": {
       "Package": "xml2",
