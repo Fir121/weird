@@ -739,23 +739,16 @@ According to the FTG theorem, the distribution of the maximum can be approximate
 
 ```{r}
 #| label: "fig-evdexample"
-#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 10000 such maximums and shown the estimated GEV distribution (in blue), along with the true distribution (in black)."
-m <- 10000 # Number of simulations
-n <- 1000 # Number of observations in each data set
-maximums <- numeric(m)
-for (i in seq(m)) {
-  maximums[i] <- max(rnorm(n))
-}
+#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 10000 such maximums and shown the estimated GEV distribution (in black), along with the true distribution (in blue). The approximation is so good, that it is hard to distinguish the two distributions."
+maximums <- replicate(10000, max(rnorm(1000)))
 gev <- evd::fgev(maximums)$estimate
-max_density <- tibble(y = seq(2, 6, l = 100)) |>
-  mutate(
-    fy = n * pnorm(y)^(n - 1) * dnorm(y),
-    estfy = evd::dgev(y, loc = gev["loc"], scale = gev["scale"], shape = gev["shape"])
+dist_gev(location = gev["loc"], scale = gev["scale"], shape = gev["shape"]) |>
+  gg_dist() +
+  geom_line(
+    data = tibble(y = seq(2, 7, l = 100), fy = n * pnorm(y)^(n - 1) * dnorm(y)),
+    aes(x = y, y = fy),
+    col = "#0072B2"
   )
-max_density |>
-  ggplot(aes(x = y, y = fy)) +
-  geom_line() +
-  geom_line(aes(y = estfy), col = "#0072B2")
 ```
 
 ### The Generalized Pareto Distribution {-}

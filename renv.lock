@@ -812,7 +812,7 @@
     },
     "colorspace": {
       "Package": "colorspace",
-      "Version": "2.1-0",
+      "Version": "2.1-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -822,7 +822,7 @@
         "methods",
         "stats"
       ],
-      "Hash": "f20c47fd52fae58b4e377c37bb8c335b"
+      "Hash": "d954cb1c57e8d8b756165d7ba18aa55a"
     },
     "commonmark": {
       "Package": "commonmark",
@@ -1745,7 +1745,7 @@
         "ggplot2",
         "rlang"
       ],
-      "Hash": "5be047891a5a75926c256927925a9a3e"
+      "Hash": "6685a4af442bfa84ab467644ad892aae"
     },
     "gh": {
       "Package": "gh",
@@ -2630,7 +2630,7 @@
     },
     "parallelly": {
       "Package": "parallelly",
-      "Version": "1.37.1",
+      "Version": "1.38.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2638,7 +2638,7 @@
         "tools",
         "utils"
       ],
-      "Hash": "5410df8d22bd36e616f2a2343dbb328c"
+      "Hash": "6e8b139c1904f5e9e14c69db64453bbe"
     },
     "patchwork": {
       "Package": "patchwork",
@@ -3824,7 +3824,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "usethis",
       "RemoteRef": "HEAD",
-      "RemoteSha": "46e3fef4e5936356fd67cc61456c8a43472a5d35",
+      "RemoteSha": "632e106e4b561dfa802106444fb9824073fce993",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3850,7 +3850,7 @@
         "withr",
         "yaml"
       ],
-      "Hash": "f301286df44852ad8020f8c8e50daadf"
+      "Hash": "581a9d9f1d6c552866018c9e4ec610f5"
     },
     "utf8": {
       "Package": "utf8",
@@ -3998,7 +3998,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "4d3de64ba21a29e6a6ca9a68f0c88950f121ccc1",
+      "RemoteSha": "516159daa6b75e3c53e6638bb75230687b217926",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4022,7 +4022,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "25e5377c17273712a89f77b862b7c6a3"
+      "Hash": "aa398f91cb1412d8b1e0c4c058d70bb2"
     },
     "whisker": {
       "Package": "whisker",
@@ -4092,10 +4092,10 @@
     },
     "yaml": {
       "Package": "yaml",
-      "Version": "2.3.9",
+      "Version": "2.3.10",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "9cb28d11799d93c953f852083d55ee9e"
+      "Hash": "51dab85c6c98e50a18d7551e9d49f76c"
     },
     "zip": {
       "Package": "zip",
