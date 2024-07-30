@@ -3818,13 +3818,13 @@
     },
     "usethis": {
       "Package": "usethis",
-      "Version": "2.2.3.9000",
+      "Version": "3.0.0.9000",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteUsername": "r-lib",
       "RemoteRepo": "usethis",
       "RemoteRef": "HEAD",
-      "RemoteSha": "632e106e4b561dfa802106444fb9824073fce993",
+      "RemoteSha": "6aee0d0aafc29c8f5a59b7881ea2ff6e1293fe47",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3850,7 +3850,7 @@
         "withr",
         "yaml"
       ],
-      "Hash": "581a9d9f1d6c552866018c9e4ec610f5"
+      "Hash": "b5a6620c40f33aacbcf311178f2768a4"
     },
     "utf8": {
       "Package": "utf8",
@@ -3998,7 +3998,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "516159daa6b75e3c53e6638bb75230687b217926",
+      "RemoteSha": "b67ed2c4a74156073f86098045fca396bc009217",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4022,7 +4022,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "aa398f91cb1412d8b1e0c4c058d70bb2"
+      "Hash": "dc2b49d585c58fb519d30d244cae1e83"
     },
     "whisker": {
       "Package": "whisker",

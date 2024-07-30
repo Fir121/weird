@@ -739,16 +739,18 @@ According to the FTG theorem, the distribution of the maximum can be approximate
 
 ```{r}
 #| label: "fig-evdexample"
-#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 10000 such maximums and shown the estimated GEV distribution (in black), along with the true distribution (in blue). The approximation is so good, that it is hard to distinguish the two distributions."
-maximums <- replicate(10000, max(rnorm(1000)))
-gev <- evd::fgev(maximums)$estimate
-dist_gev(location = gev["loc"], scale = gev["scale"], shape = gev["shape"]) |>
-  gg_dist() +
-  geom_line(
-    data = tibble(y = seq(2, 7, l = 100), fy = n * pnorm(y)^(n - 1) * dnorm(y)),
-    aes(x = y, y = fy),
-    col = "#0072B2"
-  )
+#| fig.cap: "Distribution of the maximum of 1000 N(0,1) draws. Here we have simulated 2000 such maximums and shown the estimated GEV distribution (in black), along with the true distribution (in blue). The approximation is so good, that it is hard to distinguish the two distributions."
+n <- 1000
+maximums <- replicate(2000, max(rnorm(n)))
+# Fit GEV distribution
+gev_fit <- evd::fgev(maximums)$estimate
+x <- seq(0, 8, l=500)
+# Plot true distribution and GEV distribution
+c(
+  Exact = dist_density(x = x, density = n * pnorm(x)^(n-1) * dnorm(x)),
+  `GEV approximation` = dist_gev(location = gev_fit["loc"], scale = gev_fit["scale"], shape = gev_fit["shape"])
+) |>
+  gg_dist()
 ```
 
 ### The Generalized Pareto Distribution {-}
@@ -769,19 +771,17 @@ Continuing the previous example, we now look at the probability distribution of 
 ```{r}
 #| label: fig-pot
 #| dependson: evdexample
-#| fig.cap: "Conditional distribution of exceedances above 3 from N(0,1) draws. Here we have simulated 1 million values and only kept those above 3. The density implied by the GEV distribution is shown in orange, and an estimated GPD distribution is shown in blue."
-df <- tibble(y = rnorm(1e6)) |>
-  filter(y > 3)
-gpd <- evd::fpot(df$y, 3)$estimate
-max_density <- max_density |>
-  mutate(
-    hy = evd::dgpd(y, loc = 3, scale = gev["scale"], shape = gev["shape"]),
-    hy2 = evd::dgpd(y, loc = 3, scale = gpd["scale"], shape = gpd["shape"])
-  )
-df |>
-  ggplot(aes(x = y)) +
-  geom_line(data = max_density, aes(x = y, y = hy), col = "#D55E00") +
-  geom_line(data = max_density, aes(x = y, y = hy2), col = "#0072B2")
+#| fig.cap: "Conditional distribution of exceedances above 3 from N(0,1) draws. Here we have simulated 100,000 values and only kept those above 3. The density implied by the GEV distribution is shown in blue, and an estimated GPD distribution is shown in orange."
+# Generate random normal data above 3 and fit GPD distribution
+df <- tibble(y = rnorm(1e5)) |> filter(y >= 3)
+gpd_fit <- evd::fpot(df$y, 3)$estimate
+# Show both distributions
+c(
+  `GPD_from_GEV` = dist_gpd(location = 3, scale = gev_fit["scale"], shape = gev_fit["shape"]),
+  `GPD_estimate` = dist_gpd(location = 3, scale = gpd_fit["scale"], shape = gpd_fit["shape"])
+) |>
+  gg_dist() +
+  geom_rug(data = df, aes(x = y))
 ```
 
-The orange estimate is slightly better because it is based on more information (10000 maximums rather than `r NROW(df)` exceedances).
+The GEV (blue) estimate is better because it is based on more information (2000 maximums rather than `r NROW(df)` exceedances).
