@@ -46,7 +46,7 @@ tibble(
     `Poisson(5)` = dpois(0:25, 5),
     `Poisson(10)` = dpois(0:25, 10),
   ) |>
-  pivot_longer(-y, names_to = "lambda", values_to = "density") |>
+  tidyr::pivot_longer(-y, names_to = "lambda", values_to = "density") |>
   mutate(
     lambda = factor(lambda, levels = paste0("Poisson(",c(1,5,10),")"))
   ) |>

@@ -41,7 +41,7 @@ First, we can do a strip plot of each variable to visualize the data from a univ
 #| fig-asp: 0.3
 #| fig-cap: Strip plots of each of the three variables, with anomalies shown in orange.
 df |>
-  pivot_longer(V1:V3) |>
+  tidyr::pivot_longer(V1:V3) |>
   ggplot(aes(x = value, y = 0, col = anomaly)) +
   geom_jitter(width = 0) +
   facet_grid(name ~ .) +
@@ -271,7 +271,7 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
 grid <- seq(-3, 3, by = 0.05)
-den <- expand_grid(y1 = grid, y2 = grid)
+den <- tidyr::expand_grid(y1 = grid, y2 = grid)
 den$density <- mvtnorm::dmvnorm(den, mu, Sigma)
 as_kde(den) |>
   autoplot(fill = TRUE) +
@@ -293,7 +293,7 @@ mu2 <- c(3, 1)
 Sigma1 <- rbind(c(1, 0.5), c(0.5, 1))
 Sigma2 <- diag(2)
 # Define the density function on a grid
-mixture_density <- expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
+mixture_density <- tidyr::expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
 mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density, mu1, Sigma1) +
   p2 * mvtnorm::dmvnorm(mixture_density, mu2, Sigma2)
 # Plot the contours
@@ -388,14 +388,14 @@ To illustrate the idea, consider a simple bivariate example of 10 observations: 
 #| warning: false
 #| fig-cap: Contours of bivariate kernels centred over the first ten observations in 2021 from the `oldfaithful` data set.
 h <- sqrt(diag(H))
-k <- expand_grid(
+k <- tidyr::expand_grid(
   x = seq(-3 * h[1], 3 * h[1], l = 100),
   y = seq(-3 * h[2], 3 * h[2], l = 100)
 ) |>
   mutate(z = mvtnorm::dmvnorm(x = cbind(x, y), sigma = H))
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
-  unnest(k) |>
+  tidyr::unnest(k) |>
   mutate(x = x + duration, y = y + waiting)
 ggplot() +
   geom_contour(

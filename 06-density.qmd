@@ -327,7 +327,7 @@ wine_aug <- wine_aug |>
   )
 wine_aug |>
   select(points, Studentized_residuals, LOO_fscores, location) |>
-  pivot_longer(c(Studentized_residuals, LOO_fscores), names_to = "variable", values_to = "value") |>
+  tidyr::pivot_longer(c(Studentized_residuals, LOO_fscores), names_to = "variable", values_to = "value") |>
   mutate(variable = factor(variable, levels = c("Studentized_residuals", "LOO_fscores"))) |>
   ggplot(aes(x = points, y = value, col = location)) +
   facet_grid(variable ~ ., scales = "free_y") +

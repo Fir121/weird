@@ -204,7 +204,7 @@ tibble(n = exp(seq(log(3), log(1e6), l = 100))) |>
     Barbato1 = 2 * (1 - pnorm(q3 + 1.5 * iqr * (1 + 0.1 * log(n / 10)))),
     Barbato2 = 2 * (1 - pnorm(q3 + 3 * iqr * (1 + 0.1 * log(n / 10))))
   ) |>
-  pivot_longer(Tukey1:Barbato2, names_to = "method", values_to = "probability") |>
+  tidyr::pivot_longer(Tukey1:Barbato2, names_to = "method", values_to = "probability") |>
   mutate(
     level = stringr::str_extract(method, "\\d"),
     level = if_else(level == "1", "Regular outlier", "Extreme outlier"),
@@ -406,7 +406,7 @@ The depth region $D_k$ is the set of all points $\bm{z}$ with Tukey depth at lea
 #| label: fig-depthregions
 #| fig-cap: The depth regions for the 10 bivariate observations from @fig-tukeydepth. The depth median is shown as the yellow point in the centre. The 10 observations are shown in black. These lie at the outer edges of the depth regions.
 median <- aplpack::compute.bagplot(n01[1:10, 1:2])
-z <- expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) |>
+z <- tidyr::expand_grid(v1 = seq(-0.9, 1.6, l = 200), v2 = seq(-1.95, 1.15, l = 200)) |>
   bind_rows(n01[1:10, 1:2])
 z$depth <- round(as.numeric(DepthProc::depthTukey(as.matrix(z), as.matrix(n01[1:10, 1:2]))) * 10)
 regions <- list()

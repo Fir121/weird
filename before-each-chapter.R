@@ -1,5 +1,4 @@
 set.seed(1967)
-library(tidyverse)
 library(weird)
 # library(patchwork)
 

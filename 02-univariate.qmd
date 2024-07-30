@@ -249,7 +249,7 @@ c(dist_normal(0, 1), dist_student_t(5), dist_chisq(5)) |>
   quantile(p = p) |>
   as_tibble(.name_repair = "unique") |>
   mutate(p = p) |>
-  pivot_longer(-p, names_to = "Distribution", values_to = "Q") |>
+  tidyr::pivot_longer(-p, names_to = "Distribution", values_to = "Q") |>
   ggplot(aes(x = p, y = Q, col = Distribution)) +
   geom_line() +
   labs(x = "p", y = "Quantile function: Q(p)") +
@@ -304,9 +304,9 @@ qbias <- tibble(n = c(100, 1000)) |>
     n = .x,
     p = seq(0.002, 0.998, by = 0.001), m = 10000
   )) |>
-  pivot_longer(Q7:Q8, names_to = "type", values_to = "Q") |>
+  tidyr::pivot_longer(Q7:Q8, names_to = "type", values_to = "Q") |>
   mutate(
-    type = paste("type = ", parse_number(type)),
+    type = paste("type = ", readr::parse_number(type)),
     Qtrue = qnorm(p),
     bias = Q - qnorm(p)
   )
@@ -525,7 +525,7 @@ k <- tibble(x = seq(-3 * h, 3 * h, l = 1000)) |>
   mutate(y = dnorm(x, 0, h) / 10)
 of2021kde <- of2021 |>
   mutate(k = list(k)) |>
-  unnest(k) |>
+  tidyr::unnest(k) |>
   mutate(x = x + duration)
 ggplot() +
   geom_line(data = of2021kde, aes(x = x, y = y, group = eruption), col = "gray") +
