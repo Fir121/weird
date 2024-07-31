@@ -41,15 +41,9 @@ The density functions for these three distributions are shown in @fig-testdist.
 ```{r}
 #| label: fig-testdist
 #| fig.cap: "Three distributions we will use to test various anomaly detection methods."
-tibble(
-  x = seq(-6, 11, l = 999),
-  t3 = dt(x, df = 3),
-  X4 = dchisq(x, df = 4),
-  N01 = dnorm(x)
-) |>
-  tidyr::pivot_longer(-x, names_to = "Distribution", values_to = "pdf") |>
-  ggplot(aes(x = x, y = pdf, col = Distribution)) +
-  geom_line() +
+library(distributional)
+c(t3 = dist_student_t(3), X4 = dist_chisq(4), N01 = dist_normal()) |>
+  gg_density() +
   labs(y = "Probability density") +
   scale_color_discrete(
     breaks = c("t3", "X4", "N01"),

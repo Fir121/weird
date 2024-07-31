@@ -534,8 +534,8 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 #| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015. Below the density estimate is shown an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions, and observations outside the 99% region shown as individual points."
 of <- oldfaithful |>
   filter(duration < 7000)
-kde(of$duration, h = kde_bandwidth(of$duration, method = "double")) |>
-  autoplot(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
+dist_kde(of$duration, h = kde_bandwidth(of$duration, method = "double")) |>
+  gg_density(show_hdr = TRUE, prob = c(0.5, 0.99), show_points = 0.99)
 ```
 
 The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
