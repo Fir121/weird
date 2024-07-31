@@ -566,10 +566,10 @@
     },
     "bitops": {
       "Package": "bitops",
-      "Version": "1.0-7",
+      "Version": "1.0-8",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "b7d8d8ee39869c18d8846a184dd8a1af"
+      "Hash": "da69e6b6f8feebec0827205aad3fdbd8"
     },
     "blob": {
       "Package": "blob",
@@ -655,7 +655,7 @@
     },
     "bslib": {
       "Package": "bslib",
-      "Version": "0.7.0",
+      "Version": "0.8.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -673,7 +673,7 @@
         "rlang",
         "sass"
       ],
-      "Hash": "8644cc53f43828f19133548195d7e59e"
+      "Hash": "b299c6741ca9746fb227debcb0f9fb6c"
     },
     "cachem": {
       "Package": "cachem",
@@ -713,7 +713,7 @@
     },
     "checkmate": {
       "Package": "checkmate",
-      "Version": "2.3.1",
+      "Version": "2.3.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -721,7 +721,7 @@
         "backports",
         "utils"
       ],
-      "Hash": "c01cab1cb0f9125211a6fc99d540e315"
+      "Hash": "0e14e01ce07e7c88fd25de6d4260d26b"
     },
     "class": {
       "Package": "class",
@@ -1510,7 +1510,7 @@
     },
     "future": {
       "Package": "future",
-      "Version": "1.33.2",
+      "Version": "1.34.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1521,7 +1521,7 @@
         "parallelly",
         "utils"
       ],
-      "Hash": "fd7b1d69d16d0d114e4fa82db68f184c"
+      "Hash": "475771e3edb711591476be387c9a8c2e"
     },
     "future.apply": {
       "Package": "future.apply",
@@ -3824,7 +3824,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "usethis",
       "RemoteRef": "HEAD",
-      "RemoteSha": "6aee0d0aafc29c8f5a59b7881ea2ff6e1293fe47",
+      "RemoteSha": "1047825c052c000222dc5ade79c867961a47558f",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3850,7 +3850,7 @@
         "withr",
         "yaml"
       ],
-      "Hash": "b5a6620c40f33aacbcf311178f2768a4"
+      "Hash": "2880be58b450af01f5a496f3cfeb03ec"
     },
     "utf8": {
       "Package": "utf8",
@@ -3864,13 +3864,13 @@
     },
     "uuid": {
       "Package": "uuid",
-      "Version": "1.2-0",
+      "Version": "1.2-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R"
       ],
-      "Hash": "303c19bfd970bece872f93a824e323d9"
+      "Hash": "34e965e62a41fcafb1ca60e9b142085b"
     },
     "vars": {
       "Package": "vars",
@@ -3998,7 +3998,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "b67ed2c4a74156073f86098045fca396bc009217",
+      "RemoteSha": "8c666acbd1a0b79fc44b759d862d56543d426879",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4022,7 +4022,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "dc2b49d585c58fb519d30d244cae1e83"
+      "Hash": "798dc5b1181b7ff2fa0942492414d2fa"
     },
     "whisker": {
       "Package": "whisker",

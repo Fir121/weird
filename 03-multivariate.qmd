@@ -270,11 +270,8 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 #| fig-cap: Bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-grid <- seq(-3, 3, by = 0.05)
-den <- tidyr::expand_grid(y1 = grid, y2 = grid)
-den$density <- mvtnorm::dmvnorm(den, mu, Sigma)
-as_kde(den) |>
-  autoplot(fill = TRUE) +
+distributional::dist_multivariate_normal(list(mu), list(Sigma)) |>
+  gg_density(fill = TRUE) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
@@ -287,6 +284,7 @@ Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two biv
 #| label: fig-bivariate-mixture
 #| message: false
 #| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
+#| echo: false
 p1 <- p2 <- 0.5
 mu1 <- c(0, 0)
 mu2 <- c(3, 1)
@@ -413,14 +411,12 @@ If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate
 #| dependson: fig-ofdw
 #| echo: false
 #| fig-cap: Bivariate kernel density estimate formed by summing the kernels shown in @fig-ofdw.
-of2021 <- oldfaithful |>
+oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
   head(10) |>
-  select(duration, waiting)
-of2021 |>
-  kde(H = kde_bandwidth(of2021)) |>
-  autoplot() +
-  geom_point(data = of2021, aes(x = duration, y = waiting)) +
+  select(duration, waiting) |>
+  dist_kde() |>
+  gg_density(show_points = TRUE) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
@@ -432,14 +428,11 @@ We will use the `kde()` function, which uses a bivariate Gaussian kernel, and th
 #| label: fig-ofbivariate2
 #| code-fold: false
 #| fig.cap: "Bivariate kernel density estimate with default bandwidths."
-of <- oldfaithful |>
+oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
-  select(duration, waiting)
-of_density <- of |>
-  kde(H = kde_bandwidth(of))
-of_density |>
-  autoplot() +
-  geom_point(aes(duration, waiting), data = of, alpha = 0.15) +
+  select(duration, waiting) |>
+  dist_kde() |>
+  gg_density(show_points = TRUE, alpha = 0.15) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
