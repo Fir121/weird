@@ -2731,7 +2731,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "pkgload",
       "RemoteRef": "HEAD",
-      "RemoteSha": "a20161ecc5b3645a9555832bd0a02fd14c80be82",
+      "RemoteSha": "3fe825829d5468b1e776877b4cd633e1d3d01f1d",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -2745,10 +2745,9 @@
         "processx",
         "rlang",
         "rprojroot",
-        "utils",
-        "withr"
+        "utils"
       ],
-      "Hash": "4e1f27fa98841c88a36304bb036b5b75"
+      "Hash": "262b15d9c5998c6837a3977b1dcaa8c4"
     },
     "plyr": {
       "Package": "plyr",
@@ -3998,7 +3997,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "8c666acbd1a0b79fc44b759d862d56543d426879",
+      "RemoteSha": "7c66e436934b70a23df6827a749b3697a2ec2bfe",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4014,6 +4013,7 @@
         "grDevices",
         "interpolation",
         "ks",
+        "mvtnorm",
         "purrr",
         "rlang",
         "robustbase",
@@ -4022,7 +4022,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "798dc5b1181b7ff2fa0942492414d2fa"
+      "Hash": "d05846016b52ceb6b28bb260f0bbca3a"
     },
     "whisker": {
       "Package": "whisker",
