@@ -429,7 +429,7 @@ oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting) |>
   dist_kde() |>
-  gg_density(show_points = TRUE, alpha = 0.15) +
+  gg_density(show_points = TRUE) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
