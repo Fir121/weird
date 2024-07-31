@@ -284,7 +284,6 @@ Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two biv
 #| label: fig-bivariate-mixture
 #| message: false
 #| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-#| echo: false
 p1 <- p2 <- 0.5
 mu1 <- c(0, 0)
 mu2 <- c(3, 1)
@@ -382,7 +381,6 @@ To illustrate the idea, consider a simple bivariate example of 10 observations: 
 ```{r}
 #| label: fig-ofdw
 #| dependson: bivariatebandwidths
-#| echo: false
 #| warning: false
 #| fig-cap: Contours of bivariate kernels centred over the first ten observations in 2021 from the `oldfaithful` data set.
 h <- sqrt(diag(H))
@@ -409,7 +407,6 @@ If we add the bivariate kernel functions as in @eq-mkde, we obtain the bivariate
 ```{r}
 #| label: fig-ofbivariate1
 #| dependson: fig-ofdw
-#| echo: false
 #| fig-cap: Bivariate kernel density estimate formed by summing the kernels shown in @fig-ofdw.
 oldfaithful |>
   filter(as.Date(time) > "2021-01-01") |>
