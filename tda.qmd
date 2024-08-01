@@ -171,14 +171,8 @@ n <- 1000 - oo
 rho <- sqrt(abs(rnorm(n, mean = 5, sd = 1)))
 theta <- runif(n, 0, 2 * pi)
 X <- bind_rows(
-  tibble(
-    x = rho * cos(theta),
-    y = rho * sin(theta)
-  ),
-  tibble(
-    x = rnorm(oo, mean = 0, sd = 0.2),
-    y = rnorm(oo, mean = 0, sd = 0.2)
-  )
+  tibble(x = rho * cos(theta), y = rho * sin(theta)),
+  tibble(x = rnorm(oo, mean = 0, sd = 0.2), y = rnorm(oo, mean = 0, sd = 0.2))
 )
 phom <- calculate_homology(X, dim = 0)
 top2 <- tail(phom[, "death"], 2)
@@ -209,11 +203,9 @@ $$ {#eq-lookoutH}
 #| label: fig-kdetda
 #| code-fold: false
 #| fig.cap: "Bivariate kernel density estimate with bandwidth chosen using TDA"
-annulus_density <- X |>
-  kde(H = kde_bandwidth(X, method = "lookout"))
-annulus_density |>
-  autoplot() +
-  geom_point(aes(x, y), data = X, alpha = 0.15)
+X |>
+  dist_kde(method = "double") |> # method = "lookout")) |>
+  gg_density(show_points = TRUE, alpha = 0.15)
 ```
 
 We can repeat the bivariate kde for the Old Faithful data, shown in @fig-ofbivariate2, but this time using the bandwidth matrix given by @eq-lookoutH. The resulting density estimate is shown in @fig-kdeogktda. This has captured the two modes of the data, and makes it clear that one is much larger the other; it also highlights the outliers.
@@ -222,17 +214,15 @@ We can repeat the bivariate kde for the Old Faithful data, shown in @fig-ofbivar
 #| label: fig-kdeogktda
 #| code-fold: false
 #| fig.cap: "Bivariate kernel density estimate with bandwidth chosen using TDA"
-of <- oldfaithful |>
+oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
-  select(duration, waiting)
-of_density <- of |>
-  kde(H = kde_bandwidth(of, method = "lookout"))
-of_density |>
-  autoplot(
+  select(duration, waiting) |>
+  dist_kde(method = "double") |> # "lookout")) |>
+  gg_density(
     prob = c(0.5, 0.90, 0.99), fill = TRUE,
-    show_points = TRUE, show_mode = TRUE, show_lookout = TRUE
+    show_points = TRUE, show_mode = TRUE, show_lookout = FALSE #TRUE
   ) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
-The code above also demonstrates some of the arguments of the `autoplot()` function for `kde` objects. The `prob` argument specifies the probability contours to be drawn, while `fill` determines whether the contours are filled or not. The `show_points`, `show_mode` and `show_lookout` arguments determine whether the data points, mode and anomalies are shown on the plot. We will discuss how the `lookout` anomalies are determined in @sec-lookout.
+The code above also demonstrates some of the arguments of the `gg_density()` function for distributional objects. The `prob` argument specifies the probability contours to be drawn, while `fill` determines whether the contours are filled or not. The `show_points`, `show_mode` and `show_lookout` arguments determine whether the data points, mode and anomalies are shown on the plot. We will discuss how the `lookout` anomalies are determined in @sec-lookout.
