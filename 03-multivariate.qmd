@@ -284,18 +284,17 @@ Similarly, we can obtain HDRs for a mixture distribution. Suppose we had two biv
 #| label: fig-bivariate-mixture
 #| message: false
 #| fig-cap: Bivariate mixture distribution of two equally weighted Normal components with means $(0,0)$ and $(3,1)$, and covariance matrices $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ and $\bm{I}_2$ respectively. The HDR contours cover 10%, 20%, $\dots$, 90% of the probability mass.
-p1 <- p2 <- 0.5
 mu1 <- c(0, 0)
 mu2 <- c(3, 1)
 Sigma1 <- rbind(c(1, 0.5), c(0.5, 1))
 Sigma2 <- diag(2)
-# Define the density function on a grid
-mixture_density <- tidyr::expand_grid(y1 = seq(-3, 6, by = 0.05), y2 = seq(-3, 4, by = 0.05))
-mixture_density$density <- p1 * mvtnorm::dmvnorm(mixture_density, mu1, Sigma1) +
-  p2 * mvtnorm::dmvnorm(mixture_density, mu2, Sigma2)
-# Plot the contours
-mixture_plot <- as_kde(mixture_density) |>
-  autoplot(fill = TRUE) +
+mixture_density <- dist_mixture(
+  dist_multivariate_normal(mu = list(mu1), sigma = list(Sigma1)),
+  dist_multivariate_normal(mu = list(mu2), sigma = list(Sigma2)),
+  weights = c(0.5, 0.5)
+)
+mixture_plot <- mixture_density |>
+  gg_density(fill = TRUE) +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
@@ -480,15 +479,18 @@ The conditional pdf can be thought of as slices of the joint pdf, with the value
 #| fig-cap: Conditional distribution of $Y_2|Y_1$, where $(Y_1,Y_2)$ has the joint distribution plotted in @fig-bivariate-mixture. The left plot shows the joint density with the values of $y_2$ where we will condition, while the right plot shows conditional density functions at different values of $y_2$.
 # Conditioning points
 y2_slice <- -2:3
-# Make mixture_density a tibble and grab only slices
-mixture_density <- mixture_density |>
-  filter(round(y2, 2) %in% round(y2_slice, 2))
+# Compute bivariate density over a grid
+df <- expand.grid(
+  y1 = seq(-3, 6, length = 100),
+  y2 = y2_slice
+)
+df$density <- density(mixture_density, at = as.matrix(df))[[1]]
 # Scaling factor for each density
-scale_cond_density <- mixture_density |>
+scale_cond_density <- df |>
   summarise(scale = sum(density), .by = y2) |>
   mutate(scale = scale / max(scale))
 # Scale each conditional density
-mixture_density <- mixture_density |>
+df <- df |>
   left_join(scale_cond_density, by = "y2") |>
   mutate(
     density = density / scale,
@@ -501,7 +503,7 @@ plot1 <- mixture_plot +
   coord_cartesian(xlim = c(-2.6, 5.5), ylim = c(-2.6, 3.6)) +
   geom_hline(aes(yintercept = y2), data = tibble(y2 = y2_slice), color = "#4c93bb")
 # Conditional density plots
-plot2 <- mixture_density |>
+plot2 <- df |>
   ggplot(aes(x = y1, y = density + y2, group = y2)) +
   geom_ribbon(aes(ymin = y2, ymax = density + y2, xmin = -2, xmax = 4),
     col = "#4c93bb", fill = "#4c93bb"

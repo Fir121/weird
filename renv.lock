@@ -744,14 +744,13 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "cli",
       "RemoteUsername": "r-lib",
-      "RemotePkgRef": "r-lib/cli",
       "RemoteRef": "HEAD",
-      "RemoteSha": "d9febb5860083e6d028da42d5f6a3888754c798d",
+      "RemoteSha": "2ddcc1af364cf6737a06cec8a344a52b26dd9afa",
       "Requirements": [
         "R",
         "utils"
       ],
-      "Hash": "3f2e8c7adf8ed95b5c8b50446f6b104e"
+      "Hash": "fef425e5e69d38a439d1a87725fc477b"
     },
     "clipr": {
       "Package": "clipr",
@@ -859,18 +858,17 @@
       "Version": "1.5.3.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "crayon",
       "RemoteUsername": "r-lib",
-      "RemotePkgRef": "r-lib/crayon",
+      "RemoteRepo": "crayon",
       "RemoteRef": "HEAD",
-      "RemoteSha": "1726eb8095453ea648cd508a548c9246de46d8b5",
+      "RemoteSha": "e3e7e88650fd1a714be965fd53fed6569173d089",
+      "RemoteHost": "api.github.com",
       "Requirements": [
         "grDevices",
         "methods",
         "utils"
       ],
-      "Hash": "814661a42d28ce181c551d88b1abea28"
+      "Hash": "524b5f77357c17c7fb7e436f62b04b44"
     },
     "credentials": {
       "Package": "credentials",
@@ -1041,19 +1039,25 @@
     },
     "distributional": {
       "Package": "distributional",
-      "Version": "0.4.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "0.4.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "distributional",
+      "RemoteUsername": "robjhyndman",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "81c551f73fa62e9c99eaa4ecce1b5ce2c8d1121d",
       "Requirements": [
         "generics",
         "lifecycle",
         "numDeriv",
+        "pillar",
         "rlang",
         "stats",
         "utils",
         "vctrs"
       ],
-      "Hash": "3bad76869f2257ea4fd00a3c08c2bcce"
+      "Hash": "1bdee51a2f5006758d0c3699ea04ab06"
     },
     "downlit": {
       "Package": "downlit",
@@ -3178,7 +3182,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "roxygen2",
       "RemoteRef": "HEAD",
-      "RemoteSha": "10ec8deecacac50d4714a03503811b3b9a52e926",
+      "RemoteSha": "9652d15221109917d46768e836eaf55e33c21633",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3199,7 +3203,7 @@
         "withr",
         "xml2"
       ],
-      "Hash": "6c590b0af4571bc2742d9c13a30b8ec5"
+      "Hash": "5337f99480a50b0262bc728da59febd6"
     },
     "rpart": {
       "Package": "rpart",
@@ -3823,7 +3827,7 @@
       "RemoteUsername": "r-lib",
       "RemoteRepo": "usethis",
       "RemoteRef": "HEAD",
-      "RemoteSha": "1047825c052c000222dc5ade79c867961a47558f",
+      "RemoteSha": "1f6d511cda0960f9edd0d822b9906214b45681f5",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3849,7 +3853,7 @@
         "withr",
         "yaml"
       ],
-      "Hash": "2880be58b450af01f5a496f3cfeb03ec"
+      "Hash": "9ee28561bb4b4b0397f5184669edbb0a"
     },
     "utf8": {
       "Package": "utf8",
@@ -3997,7 +4001,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "d1160310b9b48aa4bbf40c982e1cac8a45068d41",
+      "RemoteSha": "7b43851288f35f39f9854cb415f453f6177236b3",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -4022,7 +4026,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "9d95d6aa5b7a0c96dcf909c47a11e9fc"
+      "Hash": "aa68d5fa47b48b3e408e50d2f9160ef0"
     },
     "whisker": {
       "Package": "whisker",
@@ -4033,7 +4037,7 @@
     },
     "withr": {
       "Package": "withr",
-      "Version": "3.0.0",
+      "Version": "3.0.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -4041,7 +4045,7 @@
         "grDevices",
         "graphics"
       ],
-      "Hash": "d31b6c62c10dcf11ec530ca6b0dd5d35"
+      "Hash": "07909200e8bbe90426fbfeb73e1e27aa"
     },
     "xfun": {
       "Package": "xfun",

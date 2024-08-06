@@ -30,15 +30,12 @@ where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 o
 #| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: Density scores for different values of $y$. The dashed line shows the density score $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
 #| fig-asp: 1
 #| echo: false
-den <- list(y = seq(0, 20, l = 501))
-den$density <- dchisq(den$y, 5)
-hdr <- hdr_table(density = den, prob = 0.90)
-interval2 <- c(hdr$lower, hdr$upper)
-falpha <- hdr$density
-yi <- hdr$upper
+den <- dist_chisq(5)
+hdr <- hdr(den, size = 90) |> unlist() %>% `[`(c("lower", "upper"))
+falpha <- density(den, at = hdr["lower"])
 df <- tibble(
   y = seq(0, 15, l = 501),
-  fy = dchisq(y, 5),
+  fy = density(den, at = y)[[1]],
   g = -log(fy)
 )
 p1 <- df |>
@@ -49,23 +46,23 @@ p1 <- df |>
   geom_polygon(
     fill = "#D55E00",
     data = df |>
-      filter(y >= yi) |>
+      filter(y >= hdr[2]) |>
       bind_rows(
-        tibble(y = c(yi, yi, max(df$y)), fy = c(0, falpha, 0))
+        tibble(y = c(hdr[2], hdr[2], max(df$y)), fy = c(0, falpha, 0))
       ) |>
       arrange(fy, y)
   ) +
   geom_polygon(
     fill = "#D55E00",
     data = df |>
-      filter(y <= hdr$lower) |>
+      filter(y <= hdr["lower"]) |>
       bind_rows(
-        tibble(y = c(hdr$lower, hdr$lower, 0), fy = c(0, falpha, 0))
+        tibble(y = c(hdr[1], hdr[1], 0), fy = c(0, falpha, 0))
       ) |>
       arrange(fy, desc(y))
   ) +
   scale_x_continuous(
-    breaks = c(seq(0, 15, by = 5), yi),
+    breaks = c(seq(0, 15, by = 5), hdr[2]),
     labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$y_i$")),
     minor_breaks = NULL
   ) +
@@ -80,11 +77,11 @@ p2 <- df |>
   labs(x = "y", y = "Density score: g(y) = -log f(y)") +
   geom_hline(aes(yintercept = -log(falpha)), col = "#D55E00", linetype = "dashed") +
   geom_line(
-    data = tibble(x = rep(yi, 2), y = c(0, falpha)),
+    data = tibble(x = rep(hdr[2], 2), y = c(0, falpha)),
     aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
   ) +
   scale_x_continuous(
-    breaks = c(seq(0, 15, by = 5), hdr$upper),
+    breaks = c(seq(0, 15, by = 5), hdr[2]),
     labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$y_i$")),
     minor_breaks = NULL
   ) +

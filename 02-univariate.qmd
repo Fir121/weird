@@ -661,7 +661,7 @@ This shows that larger bandwidths are required when $f(y)/[f''(y)]^2$ is relativ
 
 ### Highest kernel density regions
 
-The kernel density estimate can be used to identify regions of highest density in the data. We could simply take the estimated density function and use the `hdr_table()` function to find the HDR regions with specified probability coverage. For example, we can compute the 90% HDR for the `oldfaithful` data set as follows:
+The kernel density estimate can be used to identify regions of highest density in the data. We could simply take the estimated distribution and use the `hdr()` function to find the HDR regions with specified probability coverage. For example, we can compute the 90% HDR for the `oldfaithful` data set as follows:
 
 ```{r}
 #| code-fold: false
