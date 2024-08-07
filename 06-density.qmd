@@ -9,17 +9,17 @@ wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. So one approach to identifying anomalies is to first estimate the probability distribution of the data, and then identify observations that are unlikely to have come from that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations of low probability.
 
-## Density scores {#sec-density-scores}
+## Surprisals {#sec-surprisals}
 
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
 
-The density score of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$. So it is a measure of how anomalous that observation is, given the density $f$. A large value of $p_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low density scores.
+The "surprisal" [@Tribus1961] of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$, measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $g_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
 
-Density scores are commonly used in forecasting and prediction problems, where they are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data $y$ are assumed to come from some distribution, and the density scores are used to assess how well the estimated distribution $f$ matches that distribution. Here we are using density scores in reverse --- we assume $f$ is a good description of the data, and then we use the density scores to identify observations that are unlikely to have come from that distribution.
+Surprisals are commonly used in forecasting and prediction problems, where they known as "log scores", and are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data $y$ are assumed to come from some distribution, and the surprisals are used to assess how well the estimated distribution $f$ matches that distribution. Here we are using surprisals in reverse --- we assume $f$ is a good description of the data, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
 
-If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated density score, a "LOO density score", given by $g_i = -\log f_{-i}(\bm{y}_i)$.
+If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated surprisal, a "LOO surprisal", given by $g_i = -\log f_{-i}(\bm{y}_i)$.
 
-We can use density scores to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
+We can use surprisals to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
 $$
 p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
 $$ {#eq-pi-density}
@@ -27,7 +27,7 @@ where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 o
 
 ```{r}
 #| label: fig-density-scores
-#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: Density scores for different values of $y$. The dashed line shows the density score $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
+#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: surprisals for different values of $y$. The dashed line shows the surprisal $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
 #| fig-asp: 1
 #| echo: false
 den <- dist_chisq(5)
@@ -74,7 +74,7 @@ p1 <- df |>
 p2 <- df |>
   ggplot(aes(x = y, y = g)) +
   geom_line() +
-  labs(x = "y", y = "Density score: g(y) = -log f(y)") +
+  labs(x = "y", y = "surprisal: g(y) = -log f(y)") +
   geom_hline(aes(yintercept = -log(falpha)), col = "#D55E00", linetype = "dashed") +
   geom_line(
     data = tibble(x = rep(hdr[2], 2), y = c(0, falpha)),
@@ -93,7 +93,7 @@ p2 <- df |>
 patchwork::wrap_plots(p1, p2, ncol = 1)
 ```
 
-The function `score_tail_prob()` function will return values of $p_i$ given values of the density scores $g_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
+The function `surprisal_prob()` function will return values of $p_i$ given values of the surprisals $g_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
 ### Symmetric distributions
 
@@ -103,55 +103,52 @@ For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corres
 
 If we do not know what the distribution of the data should be, or if we are unsure about the assumed distribution, we can use extreme value theory to estimate the tail probabilities.
 
-We fit a Generalized Pareto Distribution (GPD) to the largest density scores using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the density scores to obtain the probability of each observation.
+We fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the surprisals to obtain the probability of each observation.
 
-This may seem unnecessary, as we have already used a distribution in computing the density scores, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme density scores will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the assumed density $f$.
+This may seem unnecessary, as we have already used a distribution in computing the surprisals, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme surprisals will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the assumed density $f$.
 
-The approach does require a relatively large number of density scores to be available. We are only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
+The approach does require a relatively large number of surprisals to be available. We are only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
 ### Empirical tail probabilities
 
-An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of density scores larger than $g_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the approximation to hold, we only need that the ordering of $-\log f(y_i)$ and $-\log f^*(y_i)$ is similar in the tails of the distribution.
+An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of surprisals larger than $g_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the approximation to hold, we only need that the ordering of $-\log f(y_i)$ and $-\log f^*(y_i)$ is similar in the tails of the distribution.
 
 ### Example
 
-For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `score_tail_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
+For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `surprisal_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
 
 We will use all three methods described above using the correct density in computing the scores, and then repeat the calculation using an incorrect density. For the incorrect density, we will use a $t_3$ distribution, which has much longer tails than the true $N(0,1)$ distribution.
 
 ```{r}
-#| label: score_tail_prob
+#| label: surprisal_prob
 #| code-fold: false
-# Compute scores of v1 assuming a standard normal distribution and a t4 distribution
+# Compute surprisal probabilities of v1 assuming a standard normal distribution and a t4 distribution
 norm_prob <- tibble(
   y = n01$v1,
-  g = -dnorm(y, log = TRUE),
-  gt = -dt(y, 4, log = TRUE),
-  p = score_tail_prob(g, distributional::dist_normal()),
-  p_gpd = score_tail_prob(g, GPD = TRUE),
-  p_emp = score_tail_prob(g),
-  pt = score_tail_prob(gt, distributional::dist_normal()),
-  pt_gpd = score_tail_prob(gt, GPD = TRUE),
-  pt_emp = score_tail_prob(gt)
+  p = surprisal_prob(y, dist_normal()),
+  p_gpd = surprisal_prob(y, dist_normal(), GPD = TRUE),
+  p_emp = rank(-surprisals(y, dist_normal())) / length(y),
+  pt = surprisal_prob(y, dist_student_t(4)),
+  pt_gpd = surprisal_prob(y, dist_student_t(4), GPD = TRUE),
+  pt_emp = rank(-surprisals(y, dist_student_t(4)))/ length(y)
 )
 norm_prob |> arrange(p)
 ```
 
-The most accurate values are in column `p`, as this uses the correct distribution applied to the correct density scores. Notice that `p_gpd` and `p_emp` are both relatively accurate: the GPD and empirical approximations work. For the probabilities calculated using the incorrect distribution, `pt` is relatively inaccurate, with much larger probabilities than they should be, especially in the extreme tails. But `pt_gpd` and `pt_emp` are both reasonable estimates, despite being based on an incorrect distribution for computing the scores. In fact, `p_emp` and `pt_emp` are identical, because the ordering of the density scores is unchanged despite the incorrect distribution being used.
+The most accurate values are in column `p`, as this uses the correct distribution applied to the correct surprisals. Notice that `p_gpd` and `p_emp` are both relatively accurate: the GPD and empirical approximations work. For the probabilities calculated using the incorrect distribution, `pt` is relatively inaccurate, with much larger probabilities than they should be, especially in the extreme tails. But `pt_gpd` and `pt_emp` are both reasonable estimates, despite being based on an incorrect distribution for computing the scores. In fact, `p_emp` and `pt_emp` are identical, because the ordering of the surprisals is unchanged despite the incorrect distribution being used.
 
-The various estimates are displayed in @fig-score_tail_prob for values of $y$ greater than 2.5, showing how the estimates (other than `pt`) are particularly accurate in the extreme tails, where we need them for anomaly detection.
+The various estimates are displayed in @fig-surprisal_prob for values of $y$ greater than 2.5, showing how the estimates (other than `pt`) are particularly accurate in the extreme tails, where we need them for anomaly detection.
 
 ```{r}
-#| label: fig-score_tail_prob
+#| label: fig-surprisal_prob
 norm_prob |>
   filter(y > 2.5) |>
-  select(-g, -gt) |>
   tidyr::pivot_longer(p:pt_emp, names_to = "Estimate", values_to = "Probability") |>
   ggplot(aes(x = y, y = Probability, col = Estimate)) +
   geom_line()
 ```
 
-In summary, even when we don't know the distribution of the data, we can use either a GPD or the empirical distribution to obtain good estimates of the tail probabilities of the density scores.
+In summary, even when we don't know the distribution of the data, we can use either a GPD or the empirical distribution to obtain good estimates of the tail probabilities of the surprisals.
 
 ## Linear regression {#sec-regression-log-scores}
 
@@ -204,7 +201,7 @@ is the estimated residual variance.
 
 A linear model can be estimated in R using the `stats::lm()` function. The `broom::augment()` function will compute the residuals (named `.resid`), the standardized residuals (named `.std.resid`), and the leverage values (names `.hat`).
 
-The density scores under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
+The surprisals under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
 $$
   g_i = -\log\phi(r_i),
 $$ {#eq-regression-log-score}
@@ -215,10 +212,10 @@ broom::augment(fit) |>
   mutate(f_scores = -dnorm(.std.resid, log = TRUE))
 ```
 
-Equivalently, the `density_scores()` function will compute them:
+Equivalently, the `surprisals()` function will compute them:
 
 ```r
-density_scores(fit)
+surprisals(fit)
 ```
 
 ### LOO residuals
@@ -254,10 +251,10 @@ broom::augment(fit) |>
   )
 ```
 
-More simply, we can just use the `density_scores()` function again:
+More simply, we can just use the `surprisals()` function again:
 
 ```r
-density_scores(fit, type = "loo")
+surprisals(fit, type = "loo")
 ```
 
 ### Example: Shiraz reviews
@@ -309,11 +306,11 @@ wine_aug |>
   scale_color_manual(values = c("#0072B2", "#D55E00", "#AAAAAA"))
 ```
 
-The LOO density scores obtained from this model are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is below, within, or above, the 95% prediction interval.
+The LOO surprisals obtained from this model are shown in @fig-shiraz-regression-scores, using the same colors as @fig-shiraz-regression to indicate whether the observation is below, within, or above, the 95% prediction interval.
 
 ```{r}
 #| label: fig-shiraz-regression-scores
-#| fig.cap: Residuals and density scores for the Shiraz data using a linear regression model. Points are colored to match the 95% prediction intervals in @fig-shiraz-regression.
+#| fig.cap: Residuals and surprisals for the Shiraz data using a linear regression model. Points are colored to match the 95% prediction intervals in @fig-shiraz-regression.
 #| fig.height: 6
 #| fig.asp: 0.8
 wine_aug <- wine_aug |>
@@ -347,7 +344,7 @@ good_buy <- wine_aug |>
   filter(Studentized_residuals == min(Studentized_residuals))
 ```
 
-The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with LOO density scores above 17, and studentized residuals close to 6. The largest LOO density score is for the most over-priced wine (under this model), a 2009 Shiraz from the Henschke winery in the Eden Valley region of South Australia, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`.
+The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with LOO surprisals above 17, and studentized residuals close to 6. The largest LOO surprisal is for the most over-priced wine (under this model), a 2009 Shiraz from the Henschke winery in the Eden Valley region of South Australia, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`.
 
 ```{r}
 #| code-fold: false
@@ -356,7 +353,7 @@ wine_aug |>
   select(country:winery, year, points, price, Studentized_residuals, LOO_fscores)
 ```
 
-The largest LOO density score corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the 2007 Syrah from the Rulo winery in the Columbia Valley in Washington State, USA:
+The largest LOO surprisal corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the 2007 Syrah from the Rulo winery in the Columbia Valley in Washington State, USA:
 
 ```{r}
 #| code-fold: false
@@ -375,7 +372,7 @@ We will compute the tail probabilities for these scores using the empirical dist
 ```{r}
 #| code-fold: false
 wine_aug |>
-  mutate(tail_prob = score_tail_prob(LOO_fscores)) |>
+  mutate(tail_prob = rank(-LOO_fscores) / NROW(wine_aug))) |>
   select(country:winery, year, points, price, LOO_fscores, tail_prob) |>
   arrange(tail_prob)
 ```
@@ -403,7 +400,7 @@ shiraz |>
 ```
 
 
-## GAM density scores
+## GAM surprisals
 
 In some applications, it is not appropriate to assume the conditional density is Gaussian, or that the relationships are linear. One useful model that allows for non-Gaussian densities, and non-linear relationships, is a generalized additive model or GAM. Under this model, the conditional density is given by [@Wood2017gam]
 $$
@@ -470,14 +467,14 @@ notouts_aug |>
   labs(y = "Proportion of not outs")
 ```
 
-Now we can use the fitted model to compute the density scores from the Binomial distribution, and find the most anomalous batters. Unfortunately, there is not a convenient way to compute loo density scores for GAM models, so we will only consider density scores in this example.
+Now we can use the fitted model to compute the surprisals from the Binomial distribution, and find the most anomalous batters. Unfortunately, there is not a convenient way to compute loo surprisals for GAM models, so we will only consider surprisals in this example.
 
 ```{r}
 #| code-fold: false
 #| warning: false
 notouts_aug <- notouts_aug |>
   mutate(
-    fscores = density_scores(fit_notouts),
+    fscores = surprisals(fit_notouts),
     lookout = lookout(fit_notouts)
   ) |>
   select(Player:Country, Innings:NotOuts, prop_no:.fitted, fscores:lookout) |>
@@ -487,14 +484,14 @@ notouts_aug
 
 The most anomalous batters are all "tail-enders" (i.e., not skilled batters) who played for a long time (so they have a large number of innings). Because they batted last, or nearly last, they are more likely to be not out at the end of the team's innings.
 
-The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest density score is for English batter Jimmy Anderson, who has had `r notouts_aug$NotOuts[1]` not outs in `r notouts_aug$Innings[1]` innings, which is much higher than the expected number of not outs of $`r notouts_aug[["Innings"]][1]` \times `r sprintf("%.3f", notouts_aug[[".fitted"]][1])` = `r sprintf("%.1f", notouts_aug[[".fitted"]][1]*notouts_aug[["Innings"]][1])`$. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data. Although Jimmy Anderson was not a great batter, he was good at defence, and was able to bat for a long time without being dismissed, leaving the other batter time to score runs.
+The `.fitted` value is the expected proportion of not outs for each player given the number of innings they have played, while `prop_no` gives the actual proportion of not outs they have had. The largest surprisal is for English batter Jimmy Anderson, who has had `r notouts_aug$NotOuts[1]` not outs in `r notouts_aug$Innings[1]` innings, which is much higher than the expected number of not outs of $`r notouts_aug[["Innings"]][1]` \times `r sprintf("%.3f", notouts_aug[[".fitted"]][1])` = `r sprintf("%.1f", notouts_aug[[".fitted"]][1]*notouts_aug[["Innings"]][1])`$. This anomaly is also seen in @fig-notouts-gam, as being somewhat unusual for that part of the data. Although Jimmy Anderson was not a great batter, he was good at defence, and was able to bat for a long time without being dismissed, leaving the other batter time to score runs.
 
 We have identified an anomaly that is not anomalous in the proportion of not-outs, or in the number of innings, and the difference between the actual proportion and the predicted proportion is not anomalous either compared to some of the other values. However, because we have used a statistical model, we have been able to account for the particular features of this data set, such as the discrete nature of the data, and the changing variance, to identify an observation that is anomalous in the context of the model.
 
 
 ## KDE scores {#sec-kdescores}
 
-Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. Then we call the resulting density scores "kde scores". The kernel density estimate at each observation is (@eq-mkde)
+Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. Then we call the resulting surprisals "kde scores". The kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
@@ -517,15 +514,15 @@ The contribution of the $i$th point to the kernel density estimate at that point
 $$
   f_{-i} = \left[nf_i - K_H(\bm{0})\right]/(n-1),
 $$ {#eq-lookout}
-where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the leave-one-out kernel density scores without needing to re-estimate the density many times.
+where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the leave-one-out kernel surprisals without needing to re-estimate the density many times.
 
 ### The lookout algorithm {#sec-lookout}
 
-The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses density scores to find the probability of each observation being an anomaly. Although it was proposed using density scores from kernel density estimates, it can be applied to scores obtained using any density.
+The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisals to find the probability of each observation being an anomaly. Although it was proposed using surprisals from kernel density estimates, it can be applied to scores obtained using any density.
 
-In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the density scores. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
+In some cases, leave-one-out scores are too difficult to compute, and then the fitted distribution is applied to the surprisals. While this is not quite as accurate, it can still give a useful approximation, especially when there is a large number of observations.
 
-In the following sections, we will discuss how to compute density scores for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
+In the following sections, we will discuss how to compute surprisals for a variety of different density estimates, and then we will apply the lookout algorithm to those scores.
 
 ### Example: Old Faithful eruption durations
 
@@ -536,8 +533,8 @@ For the Old Faithful eruption duration data, we obtain the following LOO kde sco
 #| code-fold: false
 of_scores <- oldfaithful |>
   mutate(
-    score = density_scores(duration, loo = FALSE),
-    loo_score = density_scores(duration, loo = TRUE),
+    score = surprisals(duration, loo = FALSE),
+    loo_score = surprisals(duration, loo = TRUE),
     lookout = lookout(duration)
   )
 of_scores |> arrange(desc(loo_score))
@@ -584,14 +581,14 @@ of <- oldfaithful |>
   filter(duration < 7200, waiting < 7200)
 of |>
   mutate(
-    loo_scores = density_scores(of, loo = TRUE),
+    loo_scores = surprisals(of, loo = TRUE),
     lookout = lookout(of)
   ) |>
   filter(lookout < 0.05) |>
   arrange(lookout, duration)
 ```
 
-Now, `r english::words(sum(lookout(of) < 0.05))` anomalies are identified, with `r english::words(sum(density_scores(of, loo = TRUE) == Inf))` of them having infinite LOO density scores. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
+Now, `r english::words(sum(lookout(of) < 0.05))` anomalies are identified, with `r english::words(sum(surprisals(of, loo = TRUE) == Inf))` of them having infinite LOO surprisals. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
 
 ```{r}
 #| label: fig-ofpot2
