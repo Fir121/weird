@@ -11,15 +11,11 @@ source("before-each-chapter.R")
 #| echo: true
 #| code-fold: false
 #| message: false
-# Construct French male mortality data set
-frmort <- vital::as_vital(demography::fr.mort) |>
-  vital::collapse_ages(max_age = 100) |>
-  filter(Sex == "male") |>
-  as_tibble() |>
-  transmute(Year, Age, logmx = log(Mortality))
-
-# Wide version with ages on columns
-frmort_wide <- frmort |>
+# Wide version of log Mortality with ages on columns
+frmort_wide <- fr_mortality |>
+  filter(Sex == "Male") |>
+  mutate(logmx = log(Mortality)) |>
+  select(-Mortality, -Sex) |>
   tidyr::pivot_wider(names_from = Age, values_from = logmx, names_prefix = "Age")
 
 # Compute first four principal components

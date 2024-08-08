@@ -372,7 +372,7 @@ We will compute the tail probabilities for these scores using the empirical dist
 ```{r}
 #| code-fold: false
 wine_aug |>
-  mutate(tail_prob = rank(-LOO_fscores) / NROW(wine_aug))) |>
+  mutate(tail_prob = rank(-LOO_fscores) / NROW(wine_aug)) |>
   select(country:winery, year, points, price, LOO_fscores, tail_prob) |>
   arrange(tail_prob)
 ```
