@@ -2352,7 +2352,7 @@
     },
     "pcaPP": {
       "Package": "pcaPP",
-      "Version": "2.0-4",
+      "Version": "2.0-4-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2360,7 +2360,7 @@
         "methods",
         "mvtnorm"
       ],
-      "Hash": "55e85f05d479f9c8644f94900bbefd56"
+      "Hash": "f0eb141975494415343006d6e28ec688"
     },
     "pillar": {
       "Package": "pillar",
@@ -3506,7 +3506,7 @@
       "RemoteUsername": "robjhyndman",
       "RemoteRepo": "weird-package",
       "RemoteRef": "HEAD",
-      "RemoteSha": "b3cdf082f347ab3ac11b2991fcbf404a7d63679e",
+      "RemoteSha": "ae5b953d0e3b407761963279eca07e00d1b31f00",
       "RemoteHost": "api.github.com",
       "Requirements": [
         "R",
@@ -3532,7 +3532,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "56ed804f3b93e837f42bb861364e8485"
+      "Hash": "1cbfd57891e5bba2e194a6dc3e83af4f"
     },
     "whisker": {
       "Package": "whisker",
