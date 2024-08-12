@@ -271,7 +271,7 @@ HDRs are equivalent to level sets of the density function, and so can be plotted
 mu <- c(0, 0)
 Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
 distributional::dist_multivariate_normal(list(mu), list(Sigma)) |>
-  gg_density(fill = TRUE) +
+  gg_density(hdr = "fill") +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")
@@ -294,7 +294,7 @@ mixture_density <- dist_mixture(
   weights = c(0.5, 0.5)
 )
 mixture_plot <- mixture_density |>
-  gg_density(fill = TRUE) +
+  gg_density(hdr = "fill") +
   labs(
     x = latex2exp::TeX("$y_1$"), y = latex2exp::TeX("$y_2$"),
     title = latex2exp::TeX("Contours of $f(y_1,y_2)$")

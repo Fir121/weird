@@ -108,7 +108,7 @@ Three t distributions are shown in @fig-t.
 #| label: fig-t
 #| fig-cap: Probability density functions for three $t$ distributions. As the degrees of freedom $k$ increases, the distribution converges to a N(0,1) distribution.
 dist_student_t(c(1, 5, 99)) |>
-  gg_density(ngrid = 3001) +
+  gg_density() +
   coord_cartesian(xlim = c(-8,8)) +
   labs(x = "y", y = "Probability Density Function: f(y)") +
   scale_color_discrete(labels = c(
@@ -677,7 +677,7 @@ The resulting estimate is shown in @fig-of-hdr, along with the 10% of observatio
 #| label: fig-of-hdr
 #| fig-cap: 90% highest density region for the `oldfaithful` data set.
 of_density |>
-  gg_density(show_hdr = TRUE, prob = 0.9, show_points = TRUE, jitter = TRUE, alpha = 0.2) +
+  gg_density(hdr = "fill", prob = 0.9, show_points = TRUE, jitter = TRUE) +
   labs(x = "Duration (seconds)")
 ```
 
