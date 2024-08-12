@@ -382,19 +382,19 @@ Those with the ten smallest tail probabilities are all wines that appear to be o
 ```{r}
 #| code-fold: false
 shiraz <- shiraz |>
-  mutate(lookout_prob = lookout(fit_wine))
+  mutate(prob = surprisal_prob(fit_wine))
 shiraz |>
-  select(country:winery, year, points, price, lookout_prob) |>
-  arrange(lookout_prob)
+  select(country:winery, year, points, price, prob) |>
+  arrange(prob)
 ```
 
-@fig-shiraz-lookout shows the relationship between points and price, with the points colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
+@fig-shiraz-surprisal shows the relationship between points and price, with the points colored according to the surprisal probability. The six blue points are observations with surprisal probabilities less than 0.02.
 
 ```{r}
-#| label: fig-shiraz-lookout
-#| fig.cap: Price vs points for Shiraz wines. Points are colored according to the lookout probability. The six blue points are observations with lookout probabilities less than 0.02.
+#| label: fig-shiraz-surprisal
+#| fig.cap: Price vs points for Shiraz wines. Points are colored according to the surprisal probability. The six blue points are observations with surprisal probabilities less than 0.02.
 shiraz |>
-  ggplot(aes(x = points, y = price, color = lookout_prob < 0.02)) +
+  ggplot(aes(x = points, y = price, color = prob < 0.02)) +
   geom_jitter(height = 0, width = 0.2) +
   scale_y_log10()
 ```
@@ -475,9 +475,9 @@ Now we can use the fitted model to compute the surprisals from the Binomial dist
 notouts_aug <- notouts_aug |>
   mutate(
     fscores = surprisals(fit_notouts),
-    lookout = lookout(fit_notouts)
+    prob = surprisal_prob(fit_notouts)
   ) |>
-  select(Player:Country, Innings:NotOuts, prop_no:.fitted, fscores:lookout) |>
+  select(Player:Country, Innings:NotOuts, prop_no:.fitted, fscores:prob) |>
   arrange(desc(fscores))
 notouts_aug
 ```
