@@ -220,9 +220,9 @@ oldfaithful |>
   dist_kde(method = "double") |> # "lookout")) |>
   gg_density(
     prob = c(0.5, 0.90, 0.99), fill = TRUE,
-    show_points = TRUE, show_mode = TRUE, show_lookout = FALSE #TRUE
+    show_points = TRUE, show_mode = TRUE
   ) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
-The code above also demonstrates some of the arguments of the `gg_density()` function for distributional objects. The `prob` argument specifies the probability contours to be drawn, while `fill` determines whether the contours are filled or not. The `show_points`, `show_mode` and `show_lookout` arguments determine whether the data points, mode and anomalies are shown on the plot. We will discuss how the `lookout` anomalies are determined in @sec-lookout.
+The code above also demonstrates some of the arguments of the `gg_density()` function for distributional objects. The `prob` argument specifies the probability contours to be drawn, while `fill` determines whether the contours are filled or not. The `show_points`, and `show_mode` arguments determine whether the data points, mode and anomalies are shown on the plot. We will discuss how the `lookout` anomalies are determined in @sec-lookout.

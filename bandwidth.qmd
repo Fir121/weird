@@ -153,7 +153,7 @@ of <- oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting)
 gg_hdrboxplot(of, duration, waiting,
-  scatterplot = TRUE, show_lookout = TRUE,
+  scatterplot = TRUE, 
   H = kde_bandwidth(of, multiplier = 3)
 )
 ```
@@ -166,7 +166,7 @@ bat_ave <- cricket_batting |>
   filter(Innings > 20)
 bat_ave |>
   gg_hdrboxplot(Average,
-    show_lookout = TRUE, scatterplot = TRUE,
+    scatterplot = TRUE,
     h = kde_bandwidth(bat_ave$Average, multiplier = 3)
   )
 ```

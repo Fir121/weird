@@ -548,7 +548,7 @@ The two infinite LOO scores correspond to the extreme 2 hour duration, and the t
 #| code-fold: false
 oldfaithful |>
   filter(duration < 7200) |>
-  gg_hdrboxplot(duration, show_anomalies = TRUE)
+  gg_hdrboxplot(duration)
 ```
 
 ### More examples
@@ -590,7 +590,7 @@ Now, `r english::words(sum(surprisal_prob(of) < 0.05))` anomalies are identified
 #| label: fig-ofpot2
 #| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the lookout anomalies highlighted in red."
 of |>
-  gg_hdrboxplot(duration, waiting, scatterplot = TRUE, show_lookout = TRUE)
+  gg_hdrboxplot(duration, waiting, scatterplot = TRUE)
 ```
 
 Next we consider some artificial examples. First, we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
