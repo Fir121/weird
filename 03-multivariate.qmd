@@ -15,7 +15,7 @@ While we will cover anomaly detection in univariate data, most of the methods we
 
 When first thinking about multivariate probability distributions, it can take some time to develop an intuition for how they behave. One way to start developing this intuition is to plot data with increasing numbers of dimensions, starting with the univariate case.
 
-Let's take the `n01` data set, which contains 10 variables, each from independent standard normal distributions. We will consider only the first three variables, but to make the example more interesting, we will consider cumulative sums of these variables. We will also add a couple of anomalies, and then see if we can find them using some data visualizations.
+Let's take the `n01` data set, which contains 10 variables, each from independent standard Normal distributions. We will consider only the first three variables, but to make the example more interesting, we will consider cumulative sums of these variables. We will also add a couple of anomalies, and then see if we can find them using some data visualizations.
 
 ```{r}
 #| label: demo_data

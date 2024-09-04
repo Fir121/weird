@@ -145,13 +145,13 @@ whisker1 <- q1 - 1.5 * iqr
 whisker2 <- q3 + 1.5 * iqr
 ```
 
-To better understand the first problem, imagine if the data comprised $n$ observations from a standard normal distribution N(0,1). @fig-normalboxplot shows an example with 10000 points.
+To better understand the first problem, imagine if the data comprised $n$ observations from a standard Normal distribution N(0,1). @fig-normalboxplot shows an example with 10000 points.
 
 ```{r}
 #| label: fig-normalboxplot
 #| code-fold: false
 #| fig.asp: 0.2
-#| fig.cap: "Boxplot of 10000 draws from a standard normal distribution."
+#| fig.cap: "Boxplot of 10000 draws from a standard Normal distribution."
 tibble(x = rnorm(10000)) |>
   ggplot(aes(x = x)) +
   geom_boxplot() +
@@ -190,13 +190,13 @@ tukey1 <- 2 * (1 - pnorm(q3 + 1.5 * iqr))
 tukey2 <- 2 * (1 - pnorm(q3 + 3 * iqr))
 ```
 
-Under Tukey's boxplot approach to identifying outliers, a **regular outlier** is more than 1.5 IQR beyond the quartiles, while an **extreme outlier** is more than 3 IQR beyond the quartiles. For a normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find at least one spurious anomaly in a normal distribution with probability `r 1 - (1-tukey1)^1000`.
+Under Tukey's boxplot approach to identifying outliers, a **regular outlier** is more than 1.5 IQR beyond the quartiles, while an **extreme outlier** is more than 3 IQR beyond the quartiles. For a Normal distribution, the probability of genuine observations lying beyond these thresholds is `r sprintf("%.4f",tukey1)` and `r sprintf("%.7f",tukey2)` respectively, so for large sample sizes, many spurious anomalies will be identified. Even with 1000 observations, Tukey's approach will find at least one spurious anomaly in a Normal distribution with probability `r 1 - (1-tukey1)^1000`.
 
-@Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of spurious anomalies. @fig-probanomaly shows the probability of identifying at least one spurious anomaly in a normal distribution, using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
+@Barbato2011 proposed a modification to the boxplot approach to identifying outliers, where the IQR in these thresholds is replaced with IQR$[1+0.1\log(n/10)]$. This allows the limits to increase with the sample size, in a way that controls the probability of spurious anomalies. @fig-probanomaly shows the probability of identifying at least one spurious anomaly in a Normal distribution, using Tukey's boxplot approach compared to those obtained using the modified IQR approach of @Barbato2011.
 
 ```{r}
 #| label: fig-probanomaly
-#| fig.cap: "Probability of at least one spurious anomaly identified in a normal distribution, based on the boxplot approach of Tukey, and the modified IQR approach of @Barbato2011."
+#| fig.cap: "Probability of at least one spurious anomaly identified in a Normal distribution, based on the boxplot approach of Tukey, and the modified IQR approach of @Barbato2011."
 tibble(n = exp(seq(log(3), log(1e6), l = 100))) |>
   mutate(
     Tukey1 = 2 * (1 - pnorm(q3 + 1.5 * iqr)),

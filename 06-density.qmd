@@ -97,7 +97,7 @@ The function `surprisal_prob()` function will return values of $p_i$ given value
 
 ### Symmetric distributions
 
-For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function. Therefore, under the normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard normal distribution.
+For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
 
 ### Generalized Pareto tail probabilities {#sec-gpd-tails}
 
@@ -115,14 +115,14 @@ An alternative approach that does not require a GPD is to estimate $p_i$ as the 
 
 ### Example
 
-For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard normal distribution. We can use `surprisal_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
+For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard Normal distribution. We can use `surprisal_prob()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
 
 We will use all three methods described above using the correct density in computing the scores, and then repeat the calculation using an incorrect density. For the incorrect density, we will use a $t_3$ distribution, which has much longer tails than the true $N(0,1)$ distribution.
 
 ```{r}
 #| label: surprisal_prob
 #| code-fold: false
-# Compute surprisal probabilities of v1 assuming a standard normal distribution and a t4 distribution
+# Compute surprisal probabilities of v1 assuming a standard Normal distribution and a t4 distribution
 norm_prob <- tibble(
   y = n01$v1,
   p = surprisal_prob(y, dist_normal()),

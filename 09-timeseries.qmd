@@ -162,7 +162,7 @@ This measures the variation of the series in the neighbourhood of time $t$. The 
 $$|e_t| > \tau$$
 for some threshold $\tau$. A related idea is the Hampel filter, where each anomaly is replaced by the local median $\hat{m}_t$.
 
-The threshold is often set under the assumption of a normal distribution, for which the MAD is equal to 0.67445 times the standard deviation. So it is common to set $\tau = k/0.67445$ where $k$ is the number of standard deviations permitted before an observation is considered an outlier. Because we apply the rule repeatedly over the length of a time series, we need to be careful of the problem of multiple comparisons, where the probability of a false positive overall is much larger than the probability of a false positive for each individual test. However, it is not straightforward to adjust the probabilities because the tests are not independent, and the dependency between them depends on the window size $h$, and the characteristics of the time series. Setting $k=5$ or 6 seems to work quite well for many problems.
+The threshold is often set under the assumption of a Normal distribution, for which the MAD is equal to 0.67445 times the standard deviation. So it is common to set $\tau = k/0.67445$ where $k$ is the number of standard deviations permitted before an observation is considered an outlier. Because we apply the rule repeatedly over the length of a time series, we need to be careful of the problem of multiple comparisons, where the probability of a false positive overall is much larger than the probability of a false positive for each individual test. However, it is not straightforward to adjust the probabilities because the tests are not independent, and the dependency between them depends on the window size $h$, and the characteristics of the time series. Setting $k=5$ or 6 seems to work quite well for many problems.
 
 The `hampel_anomalies()` function implements this algorithm. The code below applies the algorithm to all 172 time series in `fr_mortality`.
 
@@ -275,7 +275,7 @@ fr_scores <- fr_fit |>
 fr_scores
 ```
 
-At this point, we could identify a point as an anomaly if it is more than k standard deviations away from $m_t$, as was done with the Hampel identifier. This is also the approach taken by the `tsoutliers` function from the `forecast` package, which uses 3 IQR as the threshold, equivalent to $k=4.05$ standard deviations. But we will use density scores instead, and compute the corresponding surprisal probabilities assuming the residuals follow a normal distribution.
+At this point, we could identify a point as an anomaly if it is more than k standard deviations away from $m_t$, as was done with the Hampel identifier. This is also the approach taken by the `tsoutliers` function from the `forecast` package, which uses 3 IQR as the threshold, equivalent to $k=4.05$ standard deviations. But we will use density scores instead, and compute the corresponding surprisal probabilities assuming the residuals follow a Normal distribution.
 
 ```{r}
 #| label: fr_scores2
@@ -528,7 +528,7 @@ pbs_fc <- forecast(pbs_fit, h = 1)
 pbs_fc
 ```
 
-The forecasts are in the `Scripts` column. Note that each of them is a normal distribution where the mean and variance has been estimated using the ETS model. The mean of the forecast distribution is given as `.mean`.
+The forecasts are in the `Scripts` column. Note that each of them is a Normal distribution where the mean and variance has been estimated using the ETS model. The mean of the forecast distribution is given as `.mean`.
 
 We can compute the density scores using the `log_likelihood()` function from the `distributional` package, and calculate the lookout probabilities.
 
