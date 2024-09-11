@@ -696,7 +696,7 @@ The resulting estimate is shown in @fig-of-hdr, along with the 10% of observatio
 #| label: fig-of-hdr
 #| fig-cap: 90% highest density region for the `oldfaithful` data set.
 of_density |>
-  gg_density(hdr = "fill", prob = 0.9, show_points = TRUE, jitter = TRUE) +
+  gg_density(hdr = "fill", prob = 0.9, show_points = TRUE, jitter = TRUE, alpha = 0.5) +
   labs(x = "Duration (seconds)")
 ```
 
@@ -754,7 +754,7 @@ $$
   f(z) = n \left[ \Phi(z) \right]^{n-1} \phi(z).
 $$ {#eq-maxn01}
 
-According to the FTG theorem, the distribution of the maximum can be approximated by a Gumbel distribution. We can find the parameters of the Gumbel distribution by estimating them from simulated maximums. We simulate 10000 maximums (each from 1000 N(0,1) draws), and fit a Gumbel distribution to the resulting data. The resulting Gumbel distribution is shown in @fig-evdexample (in blue), along with the true distribution of the maximum given by @eq-maxn01 (in black). The approximation is so good, that it is hard to distinguish the two distributions.
+According to the FTG theorem, the distribution of the maximum can be approximated by a Gumbel distribution. We can find the parameters of the Gumbel distribution by estimating them from simulated maximums. We simulate 2000 maximums (each from 1000 N(0,1) draws), and fit a Gumbel distribution to the resulting data. The resulting Gumbel distribution is shown in @fig-evdexample (in blue), along with the true distribution of the maximum given by @eq-maxn01 (in black). The approximation is so good, that it is hard to distinguish the two distributions.
 
 ```{r}
 #| label: "fig-evdexample"
@@ -785,7 +785,7 @@ When the distribution $F$ satisfies the FTG theorem, then [@coles2001introductio
   $$ {#eq-POT}
 where the domain of $H$ is $\{y: y >0 \text{ and } (1 + \xi y)/\sigma_u >0 \}$, and $\sigma_u = \sigma + \xi(u- \mu)$. The GPD parameters are determined from the associated GEV parameters. In particular, the shape parameter $\xi$ is the same in both distributions.
 
-Continuing the previous example, we now look at the probability distribution of exceedances above 3 from a N(0,1) distribution. We simulate 1 million N(0,1) values and only keep those above 3. Then two GPD estimates are drawn. The orange GPD uses the parameters obtained previously from the GEV estimate, while the blue GPD estimates the parameters from the exceedances.
+Continuing the previous example, we now look at the probability distribution of exceedances above 3 from a N(0,1) distribution. We simulate 100,000 N(0,1) values and only keep those above 3. Then two GPD estimates are drawn. The blue GPD uses the parameters obtained previously from the GEV estimate, while the orange GPD estimates the parameters from the exceedances.
 
 ```{r}
 #| label: fig-pot
