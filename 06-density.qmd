@@ -379,6 +379,8 @@ wine_aug |>
 
 Those with the ten smallest tail probabilities are all wines that appear to be over-priced given their points values.
 
+The preceding analysis shows the calculations of surprisal probabilities in detail. They can be more simply computed using `surprisal_prob()` as follows.
+
 ```{r}
 #| code-fold: false
 shiraz <- shiraz |>
@@ -392,9 +394,9 @@ shiraz |>
 
 ```{r}
 #| label: fig-shiraz-surprisal
-#| fig.cap: Price vs points for Shiraz wines. Points are colored according to the surprisal probability. The six blue points are observations with surprisal probabilities less than 0.02.
+#| fig.cap: Price vs points for Shiraz wines. Points are colored according to the surprisal probability. The eight blue points are observations with surprisal probabilities less than 0.002.
 shiraz |>
-  ggplot(aes(x = points, y = price, color = prob < 0.02)) +
+  ggplot(aes(x = points, y = price, color = prob < 0.002)) +
   geom_jitter(height = 0, width = 0.2) +
   scale_y_log10()
 ```
@@ -418,7 +420,7 @@ p <- sum(df_no$NotOuts) / sum(df_no$Innings)
 
 Consider the number of "not outs" for each batter in the `cricket_batting` data set. A "not out" occurs when a batsman has not been dismissed at the end of the team's innings. Let's consider if there are some batters who have an unusually high proportion of not outs. The data set contains results from `r sum(df_no$Innings)` innings, of which `r sum(df_no$NotOuts)` were not outs. So the overall proportion of not outs is $`r sum(df_no[["NotOuts"]])` / `r sum(df_no[["Innings"]])` = `r sprintf("%.3f", p)`$.
 
-@fig-notouts shows the proportion of not outs for each batter as a function of the number of innings they played. There is some overplotting that occurs due to batters having the same numbers of not-outs and innings, which results in the higher color density of the corresponding plotted points. The unusual structure on the left of each plot is due to the discrete nature of the data. Batters who have played only a smaller number of innings tend to have a higher proportion of not outs on average, and a higher variance, than those who have played a large number of innings.
+@fig-notouts shows the proportion of not outs for each batter as a function of the number of innings they played. The patterns occur because both the number of not outs and the number of innings must be integers. There is some overplotting that occurs due to batters having the same numbers of not-outs and innings, which results in the higher color density of the corresponding plotted points. The unusual structure on the left of each plot is due to the discrete nature of the data. Batters who have played only a smaller number of innings tend to have a higher proportion of not outs on average, and a higher variance, than those who have played a large number of innings.
 
 ```{r}
 #| label: fig-notouts
