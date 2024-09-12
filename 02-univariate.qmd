@@ -45,7 +45,6 @@ The U(0,1) distribution is shown in @fig-uniform.
 ```{r}
 #| label: fig-uniform
 #| fig-cap: Probability density function for a U(0,1) distribution. The mean is 0.5 and the variance is 1/12.
-library(distributional)
 dist_uniform(0,1) |>
   gg_density() +
   labs(x = "y", y = "Probability Density Function: f(y)")

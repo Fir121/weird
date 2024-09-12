@@ -536,7 +536,7 @@ However, the mean and standard deviation may be affected by anomalies, and it wo
 
 ### Robust z-scores
 
-The simplest way to make the scaling robust to anomalies is to use the median instead of the mean, and to use a robust estimate of the standard deviation such as $s_{\text{IQR}} = 0.7413\text{IQR}$ (@sec-robust-univariate). Robust z-scores computed in this way can be obtained using the `mvscale()` function with the argument `cov = NULL`.
+The simplest way to make the scaling robust to anomalies is to use the median instead of the mean, and to use a robust estimate of the standard deviation such as $s_{\text{Qn}}$ (@sec-robust-univariate). Robust z-scores computed in this way can be obtained using the `mvscale()` function with the argument `cov = NULL`.
 
 ### Multivariate z-scores
 

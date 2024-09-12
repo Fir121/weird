@@ -438,39 +438,38 @@ A simple way to define a multivariate median is the "centre of gravity" of all p
 
 In @fig-depthregions, the points of maximum depth are shown in the central green region. The centre of gravity of this region is the yellow point in the middle.
 
-### Convex hull peeling depths
+<!-- ### Convex hull peeling depths -->
 
-Imagine that each of the observations shown in @fig-tukeydepth is a nail hammered into a board and we are looking at it from above. An elastic band wrapped around all observations will form a "convex hull" as shown on the left of @fig-convexhull.
+<!-- Imagine that each of the observations shown in @fig-tukeydepth is a nail hammered into a board and we are looking at it from above. An elastic band wrapped around all observations will form a "convex hull" as shown on the left of @fig-convexhull. -->
 
-```{r}
-#| label: fig-convexhull
-#| fig-cap: "Left: The convex hull containing the 10 bivariate observations from @fig-tukeydepth. Right: The second convex layer formed with the same points."
-hull <- chull(n01[1:10, 1:2])
-hull <- c(hull, hull[1])
-df <- n01[1:10, 1:2] |>
-  mutate(hull = row_number() %in% hull)
-p1 <- df |>
-  ggplot(aes(x = v1, y = v2)) +
-  geom_point() +
-  geom_path(data = n01[hull, 1:2], col = "red") +
-  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
-hull2 <- chull(df[!df$hull, 1:2])
-hull2 <- c(hull2, hull2[1])
-p2 <- df |>
-  ggplot(aes(x = v1, y = v2, col = hull)) +
-  geom_point() +
-  scale_color_manual(values = c(`TRUE` = "gray", `FALSE` = "black")) +
-  geom_path(data = (df[!df$hull, ])[hull2, ], col = "red") +
-  guides(col = "none") +
-  coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1))
-patchwork::wrap_plots(p1, p2, nrow = 1)
-```
+<!-- ```{r} -->
+<!-- #| label: fig-convexhull -->
+<!-- #| fig-cap: "Left: The convex hull containing the 10 bivariate observations from @fig-tukeydepth. Right: The second convex layer formed with the same points." -->
+<!-- hull <- chull(n01[1:10, 1:2]) -->
+<!-- hull <- c(hull, hull[1]) -->
+<!-- df <- n01[1:10, 1:2] |> -->
+<!--   mutate(hull = row_number() %in% hull) -->
+<!-- p1 <- df |> -->
+<!--   ggplot(aes(x = v1, y = v2)) + -->
+<!--   geom_point() + -->
+<!--   geom_path(data = n01[hull, 1:2], col = "red") + -->
+<!--   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1)) -->
+<!-- hull2 <- chull(df[!df$hull, 1:2]) -->
+<!-- hull2 <- c(hull2, hull2[1]) -->
+<!-- p2 <- df |> -->
+<!--   ggplot(aes(x = v1, y = v2, col = hull)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values = c(`TRUE` = "gray", `FALSE` = "black")) + -->
+<!--   geom_path(data = (df[!df$hull, ])[hull2, ], col = "red") + -->
+<!--   guides(col = "none") + -->
+<!--   coord_fixed(xlim = c(-0.85, 1.6), ylim = c(-1.85, 1.1)) -->
+<!-- patchwork::wrap_plots(p1, p2, nrow = 1) -->
+<!-- ``` -->
 
-This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of @fig-convexhull. The third convex layer will consist of the one remaining point that is within the second convex hull.
+<!-- This is the first convex layer. If the points on the perimeter are removed, and the convex hull of the remaining points is constructed, we obtain the second convex layer, shown on the right of @fig-convexhull. The third convex layer will consist of the one remaining point that is within the second convex hull. -->
 
-The "convex hull peeling depth" [@barnett1976ordering] is the level of the convex layer that an observation belongs to. In this data set, points have convex hull peeling depths of 1, 2 or 3.
+<!-- The "convex hull peeling depth" [@barnett1976ordering] is the level of the convex layer that an observation belongs to. In this data set, points have convex hull peeling depths of 1, 2 or 3. -->
 
-In this example, the convex hulls shown in @fig-convexhull are equivalent to the depth regions shown in @fig-depthregions, but that will not always be true.
 
 ## Bagplots
 
@@ -532,10 +531,12 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 ```{r}
 #| label: fig-hdr-faithful
 #| fig.cap: "Kernel density estimate of the duration of Old Faithful eruptions since 2015. Below the density estimate is shown an HDR boxplot of the same data, with the 50% and 99% highest density regions shown as shaded regions, and observations outside the 99% region shown as individual points."
+#| warning: false
 of <- oldfaithful |>
   filter(duration < 7000)
 dist_kde(of$duration, multiplier = 2) |>
-  gg_density(hdr = "fill", prob = c(0.5, 0.99), show_anomalies = TRUE, show_mode = TRUE)
+  gg_density(hdr = "fill", prob = c(0.5, 0.99), show_anomalies = TRUE, show_mode = TRUE) +
+  scale_y_continuous(breaks = NULL) + labs(y = "") + xlim(-10, 320)
 ```
 
 The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
@@ -545,12 +546,13 @@ The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
 #| fig.cap: "HDR boxplot of the duration of Old Faithful eruptions since 2015."
 #| fig.asp: 0.2
 of |> gg_hdrboxplot(duration) +
-  labs(x = "Duration (seconds)")
+  labs(x = "Duration (seconds)") +
+  xlim(-10, 320)
 ```
 
-Points outside the 99% region are shown separately and indicate possible outliers. These points are jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
+Points outside the 99% region are shown separately and indicate possible anomalies These points are jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
-Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily outliers, just observations that occur in the lower probability regions of the space. The red point corresponds to an observation that has been identified as an anomaly under the "lookout" algorithm (discussed in @sec-lookout).
+Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily anomalies, just observations that occur in the lower probability regions of the space. The red point corresponds to an observation that has been identified as an anomaly under the "lookout" algorithm (discussed in @sec-lookout).
 
 The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bivariate HDR boxplot of the duration and waiting times for the Old Faithful data. Here we have filtered out very long durations and waiting times first.
 
