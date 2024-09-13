@@ -493,7 +493,7 @@ We have identified an anomaly that is not anomalous in the proportion of not-out
 
 ## KDE scores {#sec-kdescores}
 
-Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. Then we call the resulting surprisals "kde scores". The kernel density estimate at each observation is (@eq-mkde)
+Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. In fact, when the `surprisals()` or `surprisal_prob()` functions are applied to data without specifying a probability distribution, a kernel density estimate of the data is used is used. Then we call the resulting surprisals "kde scores". The kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
@@ -510,6 +510,7 @@ $$
   -\log(K_h(0)/n) \approx \log(nh\sqrt{2\pi}).
 $$
 
+
 ### Leave-one-out kde scores
 
 The contribution of the $i$th point to the kernel density estimate at that point is $K_H(\bm{0})/n$. Therefore, we can compute leave-one-out kde scores as
@@ -520,11 +521,11 @@ where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compu
 
 ### The lookout algorithm {#sec-lookout}
 
-The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisal probabilities to find the probability of each observation being an anomaly. Unlike the KDE discussed earlier, it uses a TDA method of bandwidth selection.
+The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisal probabilities to find the probability of each observation being an anomaly. Unlike the KDE implementation used in this book, it uses a TDA method of bandwidth selection. Probabilities obtained using this algorithm can be calculated using the `lookout_prob()` function.
 
 ### Example: Old Faithful eruption durations
 
-For the Old Faithful eruption duration data, we obtain the following LOO kde scores.
+For the Old Faithful eruption duration data, we obtain the following results.
 
 ```{r}
 #| label: ofscores
@@ -533,18 +534,18 @@ of_scores <- oldfaithful |>
   mutate(
     score = surprisals(duration, loo = FALSE),
     loo_score = surprisals(duration, loo = TRUE),
-    lookout = lookout_prob(duration)
+    prob = surprisal_prob(duration, loo = FALSE),
   )
 of_scores |> arrange(desc(loo_score))
 ```
 
-The two infinite LOO scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values.
+The two infinite LOO scores correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values. The `prob` column contains the surprisal probabilities using the `loo_score` values. 
 
-@fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points identified as lookout anomalies highlighted in red.
+@fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points with surprisal probabilities less than 0.005 highlighted in black.
 
 ```{r}
 #| label: fig-ofpot
-#| fig.cap: "HDR boxplot of the Old Faithful eruption durations, with the lookout anomalies highlighted in red."
+#| fig.cap: "HDR boxplot of the Old Faithful eruption durations, with the surprisal anomalies highlighted in black."
 #| dependson: ofpot2
 #| fig.asp: 0.2
 #| code-fold: false
@@ -555,19 +556,19 @@ oldfaithful |>
 
 ### More examples
 
-Let's apply the lookout algorithm to the six examples introduced in @sec-examples.
+Let's apply the kde scores method to the six examples introduced in @sec-examples. For this purpose we will use a threshold of 0.001 for the surprisal probabilities.
 
 ```{r}
 #| label: cricket-lookout
 #| code-fold: false
 cricket_batting |>
   filter(Innings > 20) |>
-  mutate(lookout = lookout_prob(Average)) |>
-  filter(lookout < 0.05) |>
-  select(Player, Average, lookout)
+  mutate(prob = surprisal_prob(Average, loo = TRUE)) |>
+  filter(prob < 0.001) |>
+  select(Player, Average, prob)
 ```
 
-Here Bradman is a clear anomaly (with a very low lookout probability), and no-one else is identified as a possible anomaly.
+Here Bradman is a clear anomaly (with a very low surprisal probability), and no-one else is identified as a possible anomaly.
 
 The same algorithm is easily applied in two dimensions. Here we use the `oldfaithful` data set, and consider the distribution of Duration and Waiting time, ignoring those observations that are greater than 2 hours in either dimension.
 
@@ -580,17 +581,17 @@ of <- oldfaithful |>
 of |>
   mutate(
     loo_scores = surprisals(of, loo = TRUE),
-    lookout = lookout_prob(of)
+    prob = surprisal_prob(of, loo = TRUE)
   ) |>
-  filter(lookout < 0.05) |>
-  arrange(lookout, duration)
+  filter(prob < 0.005) |>
+  arrange(prob, duration)
 ```
 
-Now, `r english::words(sum(surprisal_prob(of) < 0.05))` anomalies are identified, with `r english::words(sum(surprisals(of, loo = TRUE) == Inf))` of them having infinite LOO surprisals. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
+Now, `r english::words(sum(surprisal_prob(of) < 0.001))` anomalies are identified, with both of them having infinite LOO surprisals. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
 
 ```{r}
 #| label: fig-ofpot2
-#| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the lookout anomalies highlighted in red."
+#| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the surprisal anomalies highlighted in red."
 of |>
   gg_hdrboxplot(duration, waiting, scatterplot = TRUE)
 ```
@@ -602,9 +603,9 @@ Next we consider some artificial examples. First, we consider the first 48 rows 
 #| code-fold: false
 n01b <- tibble(y = c(n01$v2[1:48], 4, 4.5))
 n01b |>
-  mutate(lookout = surprisal_prob(y)) |>
-  filter(lookout < 0.05) |>
-  arrange(lookout)
+  mutate(prob = surprisal_prob(y)) |>
+  filter(prob < 0.001) |>
+  arrange(prob)
 ```
 
 As expected, only the two genuine anomalies have been identified.
@@ -616,18 +617,18 @@ Finally, we consider 1000 simulated observations from each of the distributions,
 #| code-fold: false
 n01 |>
   select(v1) |>
-  mutate(lookout = surprisal_prob(v1)) |>
-  filter(lookout < 0.05) |>
-  arrange(lookout, v1)
+  mutate(prob = surprisal_prob(v1)) |>
+  filter(prob < 0.001) |>
+  arrange(prob, v1)
 set.seed(1)
 tibble(y = rt(1000, df = 3)) |>
-  mutate(lookout = surprisal_prob(y)) |>
-  filter(lookout < 0.05) |>
-  arrange(lookout, y)
+  mutate(prob = surprisal_prob(y)) |>
+  filter(prob < 0.001) |>
+  arrange(prob, y)
 tibble(y = rchisq(1000, df = 4)) |>
-  mutate(lookout = surprisal_prob(y)) |>
-  filter(lookout < 0.05) |>
-  arrange(lookout, y)
+  mutate(prob = surprisal_prob(y)) |>
+  filter(prob < 0.001) |>
+  arrange(prob, y)
 ```
 
 The algorithm has found a small number of spurious anomalies in each case, out of the 1000 observations included. Notably, the results do not appear to deteriorate with the heavier-tailed or skewed distributions.

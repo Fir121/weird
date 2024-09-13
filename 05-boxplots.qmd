@@ -535,7 +535,8 @@ Let's illustrate the idea with univariate data. In @sec-kde, we estimated the de
 of <- oldfaithful |>
   filter(duration < 7000)
 dist_kde(of$duration, multiplier = 2) |>
-  gg_density(hdr = "fill", prob = c(0.5, 0.99), show_anomalies = TRUE, show_mode = TRUE) +
+  gg_density(hdr = "fill", prob = c(0.5, 0.99), 
+    show_points = TRUE, jitter = TRUE, show_mode = TRUE) +
   scale_y_continuous(breaks = NULL) + labs(y = "") + xlim(-10, 320)
 ```
 
@@ -545,14 +546,14 @@ The HDR shown here can also be produced using the `gg_hdrboxplot()` function.
 #| label: fig-of-hdrboxplot
 #| fig.cap: "HDR boxplot of the duration of Old Faithful eruptions since 2015."
 #| fig.asp: 0.2
-of |> gg_hdrboxplot(duration) +
+of |> gg_hdrboxplot(duration, show_anomalies = FALSE) +
   labs(x = "Duration (seconds)") +
   xlim(-10, 320)
 ```
 
-Points outside the 99% region are shown separately and indicate possible anomalies These points are jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
+Points outside the 99% region are shown separately and jittered vertically to reduce overplotting. This type of boxplot has the advantage that it allows for multimodal distributions, and can identify "inliers" that occur in regions of low density between regions of high density.
 
-Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily anomalies, just observations that occur in the lower probability regions of the space. The red point corresponds to an observation that has been identified as an anomaly under the "lookout" algorithm (discussed in @sec-lookout).
+Of course, by definition, 1% of points will lie outside the 99% region, so the points shown are not necessarily anomalies, just observations that occur in the lower probability regions of the space. By setting `show_anomalies = TRUE`, some of the points are highlighted as potential anomalies, using the method described in @sec-kdescores.
 
 The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bivariate HDR boxplot of the duration and waiting times for the Old Faithful data. Here we have filtered out very long durations and waiting times first.
 
@@ -562,7 +563,7 @@ The idea naturally extends to higher dimensions. @fig-hdr-faithful2 shows the bi
 of2 <- oldfaithful |>
   filter(duration < 7000, waiting < 7000) |>
   select(duration, waiting)
-of2 |> gg_hdrboxplot(duration, waiting) +
+of2 |> gg_hdrboxplot(duration, waiting, show_anomalies = FALSE) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
@@ -573,7 +574,7 @@ As with bagplots, there is a variation that shows the individual points colored 
 ```{r}
 #| label: fig-hdr-faithful3
 #| fig.cap: "Bivariate HDR boxplot of the duration and waiting times of Old Faithful eruptions since 2015, excluding durations and waiting times longer than 2 hours. Individual points are colored according to the HDR region in which they fall."
-of2 |> gg_hdrboxplot(duration, waiting, scatterplot = TRUE) +
+of2 |> gg_hdrboxplot(duration, waiting, show_anomalies = FALSE, scatterplot = TRUE) +
   labs(x = "Duration (seconds)", y = "Waiting time (seconds)")
 ```
 
