@@ -15,11 +15,11 @@ Any density-based method of anomaly detection first requires that we have a dens
 
 The "surprisal" [@Tribus1961] of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$, measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $g_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
 
-Surprisals are commonly used in forecasting and prediction problems, where they known as "log scores", and are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data $y$ are assumed to come from some distribution, and the surprisals are used to assess how well the estimated distribution $f$ matches that distribution. Here we are using surprisals in reverse --- we assume $f$ is a good description of the data, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
+Surprisals are commonly used in forecasting and prediction problems, where they known as "log scores", and are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data are thought to represent the "truth". Once the data $y$ are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the data (in other words, the "truth"), and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
 
 If the density $f$ has been estimated from the data, then it is sometimes useful to consider the leave-one-out (LOO) estimate given by $f_{-i}$. That is, $f_{-i}$ is the density estimate using all observations other than the $i$th observation. Then an unusual observation can't influence the density estimate, giving us a better measure of how anomalous it is. Then we will call the associated surprisal, a "LOO surprisal", given by $g_i = -\log f_{-i}(\bm{y}_i)$.
 
-We can use surprisals to compute the probability of an observation being as anomalous as $y_i$ under the distribution $f$:
+We can use surprisals to compute the probability of an observation being at least as anomalous as $y_i$ under the distribution $f$:
 $$
 p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
 $$ {#eq-pi-density}
@@ -28,7 +28,8 @@ where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 o
 ```{r}
 #| label: fig-density-scores
 #| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: surprisals for different values of $y$. The dashed line shows the surprisal $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
-#| fig-asp: 1
+#| fig-asp: 1.5
+#| out-width: "80%"
 #| echo: false
 den <- dist_chisq(5)
 hdr <- hdr(den, size = 90) |> unlist() %>% `[`(c("lower", "upper"))
@@ -36,8 +37,10 @@ falpha <- density(den, at = hdr["lower"])
 df <- tibble(
   y = seq(0, 15, l = 501),
   fy = density(den, at = y)[[1]],
-  g = -log(fy)
+  g = -log(fy),
+  p = surprisal_prob(y, den)
 )
+palpha <- surprisal_prob(hdr["lower"], den)
 p1 <- df |>
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
@@ -77,7 +80,7 @@ p2 <- df |>
   labs(x = "y", y = "surprisal: g(y) = -log f(y)") +
   geom_hline(aes(yintercept = -log(falpha)), col = "#D55E00", linetype = "dashed") +
   geom_line(
-    data = tibble(x = rep(hdr[2], 2), y = c(0, falpha)),
+    data = tibble(x = rep(hdr[2], 2), y = c(0, -log(falpha))),
     aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
   ) +
   scale_x_continuous(
@@ -90,10 +93,29 @@ p2 <- df |>
     labels = latex2exp::TeX(c(seq(0, 7, by = 2), "$g(y_i)$")),
     minor_breaks = NULL
   )
-patchwork::wrap_plots(p1, p2, ncol = 1)
+p3 <- df |>
+  ggplot(aes(x = y, y = p)) +
+  geom_line() +
+  labs(x = "y", y = "surprisal probability: Pr(g(y) > -log f(y))") +
+  geom_hline(aes(yintercept = palpha), col = "#D55E00", linetype = "dashed") +
+  geom_line(
+    data = tibble(x = rep(hdr[2], 2), y = c(0, palpha)),
+    aes(x = x, y = y), col = "#D55E00", linetype = "dashed"
+  ) +
+  scale_x_continuous(
+    breaks = c(seq(0, 15, by = 5), hdr[2]),
+    labels = latex2exp::TeX(c(seq(0, 15, by = 5), "$y_i$")),
+    minor_breaks = NULL
+  ) +
+  scale_y_continuous(
+    breaks = c(seq(0, 1, by = .2), palpha),
+    labels = latex2exp::TeX(c(seq(0, 1, by = .2), "$p_i$")),
+    minor_breaks = NULL
+  )
+patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 ```
 
-The function `surprisal_prob()` function will return values of $p_i$ given values of the surprisals $g_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
+The function `surprisal_prob()` function will return values of $p_i$ given values of the data $y_i$, where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
 ### Symmetric distributions
 
