@@ -252,7 +252,7 @@
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
-      "Version": "14.0.0-1",
+      "Version": "14.0.2-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -262,7 +262,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "a711769be34214addf7805278b72d56b"
+      "Hash": "edff747eebfb8f2e18eed194e000caa1"
     },
     "RcppCGAL": {
       "Package": "RcppCGAL",
@@ -323,7 +323,7 @@
     },
     "abind": {
       "Package": "abind",
-      "Version": "1.4-5",
+      "Version": "1.4-8",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -331,7 +331,7 @@
         "methods",
         "utils"
       ],
-      "Hash": "4f57884290cc75ab22f4af9e9d4ca862"
+      "Hash": "2288423bb0f20a457800d7fc47f6aa54"
     },
     "anytime": {
       "Package": "anytime",
@@ -790,11 +790,11 @@
       "Version": "0.4.0.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteUsername": "robjhyndman",
-      "RemoteRepo": "distributional",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "6a48bbb58e90f0bbc98c0db9a65f4544ff09e4ce",
       "RemoteHost": "api.github.com",
+      "RemoteRepo": "distributional",
+      "RemoteUsername": "mitchelloharawild",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "ba8e22fbf7ce181589388377d097cc783073153e",
       "Requirements": [
         "generics",
         "lifecycle",
@@ -805,7 +805,7 @@
         "utils",
         "vctrs"
       ],
-      "Hash": "e2fbbbe7604966a6af590601626a8377"
+      "Hash": "9860d7432e71951a367a3247ee0757b1"
     },
     "downlit": {
       "Package": "downlit",
@@ -1468,7 +1468,7 @@
     },
     "httr2": {
       "Package": "httr2",
-      "Version": "1.0.3",
+      "Version": "1.0.4",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1485,7 +1485,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "10d93e97faad6b629301bb3a2fd23378"
+      "Hash": "836e9564fbeca3bb390bb429a53cd401"
     },
     "ids": {
       "Package": "ids",
@@ -1799,10 +1799,10 @@
     },
     "lpSolve": {
       "Package": "lpSolve",
-      "Version": "5.6.20",
+      "Version": "5.6.21",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "2801c8082e89ed84cc0dbe43de850d31"
+      "Hash": "730a90bdc519fb0caff03df11218ddd8"
     },
     "lubridate": {
       "Package": "lubridate",
@@ -2184,14 +2184,14 @@
     },
     "ps": {
       "Package": "ps",
-      "Version": "1.7.7",
+      "Version": "1.8.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "utils"
       ],
-      "Hash": "878b467580097e9c383acbb16adab57a"
+      "Hash": "4b9c8485b0c7eecdf0a9ba5132a45576"
     },
     "purrr": {
       "Package": "purrr",
@@ -3058,11 +3058,11 @@
       "Version": "1.0.2.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteUsername": "robjhyndman",
-      "RemoteRepo": "weird-package",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "d5ece9b36a4bdbebd42d53b37eee3ddfdd45bb96",
       "RemoteHost": "api.github.com",
+      "RemoteRepo": "weird-package",
+      "RemoteUsername": "robjhyndman",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "e091ab2572f6f8bb6948bcf1fabdf5c91c207601",
       "Requirements": [
         "R",
         "aplpack",
@@ -3087,7 +3087,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "25957ae3eae8c80060649f0a28b4c3b6"
+      "Hash": "fdc7982fca1ba81132064f3fedd76aaa"
     },
     "whisker": {
       "Package": "whisker",

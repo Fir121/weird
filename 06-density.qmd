@@ -13,7 +13,11 @@ Anomalies are observations that are unlikely to have come from the same distribu
 
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
 
-The "surprisal" [@Tribus1961] of an observation $\bm{y}_i$, is defined as $g_i = -\log f(\bm{y}_i)$, measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $g_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
+The "surprisal" [@Tribus1961] of an observation $\bm{y}_i$, is defined as 
+$$
+  g_i = -\log f(\bm{y}_i),
+$$ {#eq-surprisal}
+measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $g_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
 
 Surprisals are commonly used in forecasting and prediction problems, where they known as "log scores", and are used to assess whether an estimated distribution $f$ provides a good description of the future values $y$ [@Gneiting2014]. In that context, the data are thought to represent the "truth". Once the data $y$ are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the data (in other words, the "truth"), and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
 
@@ -21,14 +25,14 @@ If the density $f$ has been estimated from the data, then it is sometimes useful
 
 We can use surprisals to compute the probability of an observation being at least as anomalous as $y_i$ under the distribution $f$:
 $$
-p_i = \int f(u) 𝟙(-\log f(u) > g_i) du,
+p_i = \int f(u) 𝟙(-\log f(u) > g_i) du = \int f(u) 𝟙(f(u) < f(y_i)) du,
 $$ {#eq-pi-density}
 where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise. This probability is related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $y_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
 
 ```{r}
 #| label: fig-density-scores
-#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Bottom: surprisals for different values of $y$. The dashed line shows the surprisal $g(y_i) = -\\log f(y_i)$, corresponding to $y_i$."
-#| fig-asp: 1.5
+#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Middle: surprisals for different values of $y$. Bottom: surprisal probabilities for different values of $y$. In this example, $p_i = 0.1$."
+#| fig-asp: 1.3
 #| out-width: "80%"
 #| echo: false
 den <- dist_chisq(5)
@@ -40,7 +44,7 @@ df <- tibble(
   g = -log(fy),
   p = surprisal_prob(y, den)
 )
-palpha <- surprisal_prob(hdr["lower"], den)
+palpha <- 0.1
 p1 <- df |>
   ggplot(aes(x = y, y = fy)) +
   geom_line() +
@@ -77,7 +81,7 @@ p1 <- df |>
 p2 <- df |>
   ggplot(aes(x = y, y = g)) +
   geom_line() +
-  labs(x = "y", y = "surprisal: g(y) = -log f(y)") +
+  labs(x = "y", y = "Surprisal: -log f(y)") +
   geom_hline(aes(yintercept = -log(falpha)), col = "#D55E00", linetype = "dashed") +
   geom_line(
     data = tibble(x = rep(hdr[2], 2), y = c(0, -log(falpha))),
@@ -90,13 +94,13 @@ p2 <- df |>
   ) +
   scale_y_continuous(
     breaks = c(seq(0, 7, by = 2), -log(falpha)),
-    labels = latex2exp::TeX(c(seq(0, 7, by = 2), "$g(y_i)$")),
+    labels = latex2exp::TeX(c(seq(0, 7, by = 2), "$g_i$")),
     minor_breaks = NULL
   )
 p3 <- df |>
   ggplot(aes(x = y, y = p)) +
   geom_line() +
-  labs(x = "y", y = "surprisal probability: Pr(g(y) > -log f(y))") +
+  labs(x = "y", y = "Surprisal Probability: p") +
   geom_hline(aes(yintercept = palpha), col = "#D55E00", linetype = "dashed") +
   geom_line(
     data = tibble(x = rep(hdr[2], 2), y = c(0, palpha)),
@@ -119,7 +123,7 @@ The function `surprisal_prob()` function will return values of $p_i$ given value
 
 ### Symmetric distributions
 
-For any symmetric distribution, $p_i = 2[1 - F(|y_i|)]$, where $F$ is the corresponding distribution function. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
+For any symmetric distribution, $p_i = 2[1 - F(c+|y_i-c|)]$, where $F$ is the corresponding distribution function centered at $c$. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function. In this case, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
 
 ### Generalized Pareto tail probabilities {#sec-gpd-tails}
 
@@ -127,9 +131,9 @@ If we do not know what the distribution of the data should be, or if we are unsu
 
 We fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile as the threshold. Then we apply the fitted distribution to the surprisals to obtain the probability of each observation.
 
-This may seem unnecessary, as we have already used a distribution in computing the surprisals, so why do we need to estimate another distribution? The main reason is that our assumed distribution $f$ may not be correct, or may be difficult to estimate in the extreme tails. But even under the incorrect distribution, the extreme surprisals will still follow a Generalized Pareto Distribution regardless of how accurately $f$ has been estimated. So it is a safe choice when we are not confident in the assumed density $f$.
+This may seem unnecessary, as we have already used a distribution in computing the surprisals, so why do we need to estimate another distribution? We might choose to do this if we are not confident that our assumed distribution $f$ is correct, or if it is difficult to estimate $f$. Even when $f$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution. So it is a safe choice.
 
-The approach does require a relatively large number of surprisals to be available. We are only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
+The approach does require a relatively large number of surprisals to be available. We are typically only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
 ### Empirical tail probabilities
 
