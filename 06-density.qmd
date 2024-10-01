@@ -582,6 +582,8 @@ $$
 $$ {#eq-lookkde}
 where $f_i$ is the kde estimate at $\bm{y}_i$ using all data. Thus, we can compute the leave-one-out kernel surprisals without needing to re-estimate the density many times.
 
+The largest possible LOO kde surprisal is infinite, occuring when there are no observations nearby, so that $nf_i = K_H(\bm{0})$.
+
 ### The lookout algorithm {#sec-lookout}
 
 The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisal probabilities based on a GPD approximation. Unlike the KDE implementation used in this book, it uses a TDA method of bandwidth selection. Probabilities obtained using this algorithm can be calculated using the `lookout_prob()` function.
@@ -595,14 +597,29 @@ For the Old Faithful eruption duration data, we obtain the following results.
 #| code-fold: false
 of_surprisals <- oldfaithful |>
   mutate(
-    kde_surprisal = surprisals(duration, loo = FALSE, probability = FALSE),
     loo_kde_surprisal = surprisals(duration, loo = TRUE, probability = FALSE),
     prob = surprisals(duration, loo = TRUE),
   )
 of_surprisals |> arrange(desc(loo_kde_surprisal))
 ```
 
-The two infinite LOO surprisals correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values. The `prob` column contains the surprisal probabilities using the `loo_kde_surprisal` values.
+The two infinite LOO surprisals correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The `prob` column contains the LOO surprisal probabilities based on the KDE.
+
+If we omit the two extreme values, we obtain different results.
+
+```{r}
+#| label: ofscores2
+#| code-fold: false
+of_surprisals <- oldfaithful |>
+  filter(duration > 1, duration < 7000) |>
+  mutate(
+    loo_kde_surprisal = surprisals(duration, loo = TRUE, probability = FALSE),
+    prob = surprisals(duration, loo = TRUE),
+  )
+of_surprisals |> arrange(desc(loo_kde_surprisal))
+```
+
+Now there are five points with probabilities less than 0.005, two at 155, and three above 300.
 
 @fig-ofpot shows an HDR boxplot of the data (other than the maximum), with those points with surprisal probabilities less than 0.005 highlighted in black.
 
@@ -613,9 +630,11 @@ The two infinite LOO surprisals correspond to the extreme 2 hour duration, and t
 #| fig.asp: 0.2
 #| code-fold: false
 oldfaithful |>
-  filter(duration < 7200) |>
+  filter(duration > 1, duration < 7000) |>
   gg_hdrboxplot(duration)
 ```
+
+This illustrates that the results are sensitive to anomalies in the data as those anomalies affect the kernel density estimate.
 
 ### More examples
 
