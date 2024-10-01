@@ -284,7 +284,7 @@ At this point, we could identify a point as an anomaly if it is more than k stan
 fr_scores <- fr_scores |>
   mutate(
     s = -dnorm(e, log = TRUE),
-    prob = surprisal_prob(s)
+    prob = surprisals(s)
   )
 fr_scores |> arrange(prob)
 ```
@@ -540,7 +540,7 @@ pbs_scores <- pbs_fc |>
   left_join(pbs |> filter(t == 37), by = c("Month", "ATC2")) |>
   mutate(
     s = -distributional::log_likelihood(fcast, Scripts),
-    prob = surprisal_prob(s)
+    prob = surprisals(s)
   )
 pbs_scores
 ```
@@ -572,7 +572,7 @@ compute_pbs_scores <- function(pbs) {
         newmean = mean(fcast),
         newvar = distributional::variance(fcast),
         news = -distributional::log_likelihood(fcast, Scripts),
-        newprob = surprisal_prob(news)
+        newprob = surprisals(news)
       ) |>
       select(Month, ATC2, news, newprob, newmean, newvar)
     # Add scores to pbs data set
