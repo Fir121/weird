@@ -131,7 +131,7 @@ For any symmetric distribution, $p_i = 2[1 - F(c+|y_i-c|)]$, where $F$ is the co
 
 ### Connection to z-scores
 
-The above result shows that when $f$ is a normal density, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
+The above result shows that when $f$ is a Normal density, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
 
 ### LOO surprisals
 
@@ -143,11 +143,9 @@ The `surprisals()` function has a `loo` argument for specifying whether we want 
 
 If we do not know what the distribution of the data should be, or if we think our assumed distribution is incorrect for some reason, there are some ways to find approximate surprisal probabilities that are still accurate even when the assumed distribution $f$ is not.
 
-Let $f^*$ denote the assumed (and possibly incorrect) distribution. It might be a poor estimate of the true distribution, or it might just be a distribution on the same sample space as the data. Using this assumed distribution, we can compute the surprisals, $g_i = -\log f^*(\bm{y}_i)$.
+Let $f^*$ denote the assumed (and possibly incorrect) density function. It might be a poor estimate of the true density, or it might just be a density on the same sample space as the data. Using this assumed density, we can compute the surprisals, $s_i = -\log f^*(\bm{y}_i)$.
 
-Then we fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile as the threshold. We apply the fitted GPD distribution to the surprisals to obtain the surprisal probability of each observation.
-
-Even when $f^*$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution. So it is a safe choice.
+Then we can fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile of $s_i$ values as the threshold. We apply the fitted GPD distribution to the surprisals to obtain the surprisal probability of each observation. Even when $f^*$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution. So it is a safe choice.
 
 The approach does require a relatively large number of surprisals to be available. We are typically only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
@@ -155,7 +153,7 @@ The `surprisals()` function has an approximation argument for specifying if we w
 
 ### Approximate empirical surprisal probabilities
 
-An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of surprisals larger than $s_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution $f^*$ is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the $p_i$ values to be accurate, we only need that the ordering of $-\log f(y_i)$ and $-\log f^*(y_i)$ to be similar in the tails of the distribution.
+An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of surprisals larger than $s_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution $f^*$ is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the $p_i$ values to be accurate, we only need the ordering of $-\log f(y_i)$ to be similar to $-\log f^*(y_i)$ in the tails of the distribution. This approach can work well for moderate values of $p_i$, but we need a large number of available surprisals in order to estimate small values of $p_i$.
 
 The approximation argument of `surprisals()` can also be used to specify if we want to use the empirical surprisal probabilities.
 
@@ -239,7 +237,7 @@ The residuals from the model are given by
 $$
   \bm{e} = \bm{y} - \hat{\bm{y}} = (\bm{I} - \bm{H})\bm{y}.
 $$ {#eq-residual-distribution}
-Note that the residuals have the distribution $\bm{e}\mid\bm{X} \sim N(\bm{0}, \sigma^2(\bm{I} - \bm{H}))$, which is not quite the same as the distribution of the errors given by @eq-error-distribution. However, the two distributions are asymptotically equivalent as $n\rightarrow\infty$. Often, we need standardized residuals, which are obtained by dividing each residual by its estimated standard deviation, giving
+Note that the residuals have the distribution $\bm{e}\mid\bm{X} \sim N(\bm{0}, \sigma^2(\bm{I} - \bm{H}))$, which is not quite the same as the distribution of the errors given by @eq-error-distribution. However, as $n\rightarrow\infty$, $\bm{H}\rightarrow\bm{I}$, so the two distributions are asymptotically equivalent. Often, we need standardized residuals, which are obtained by dividing each residual by its estimated standard deviation, giving
 $$ r_i = \frac{e_i}{\hat{\sigma}\sqrt{1-h_i}}, \qquad i = 1,\dots, n,
 $$
 where
@@ -269,25 +267,32 @@ surprisals(fit, probability = FALSE)
 
 ### LOO residuals
 
-The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the predicted value obtained using a model fitted to all observations except the $i$th observation. At first, this appears to involve a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained from a linear regression model without actually having to re-estimate the model many times. It can be shown [@Montgomery2012, Appendix C.7] that the leave-one-out (LOO) residuals are given by
+The leave-one-out residual for the $i$th observation is defined as the difference between $\bm{y}_i$ and the predicted value obtained using a model fitted to all observations except the $i$th observation. In this context, LOO residuals are often called PRESS (prediction error sum of squares) residuals. At first, it appears that calculating LOO residuals involves a lot of computation --- estimating $n$ separate models. However, the leave-one-out residuals are easily obtained without actually having to re-estimate the model many times. It can be shown [@Montgomery2012, Appendix C.7] that the leave-one-out (LOO) residuals are given by
 $$
   e_{-i}  = e_{i}/(1-h_{i}),
 $$ {#eq-loo-residuals}
-where $e_{i}$ is the residual obtained from fitting the model to *all* observations. If we divide the LOO residuals by $\hat\sigma$ from @eq-residual-variance, we obtain the "standardized" residuals.
+where $e_{i}$ is the residual obtained from fitting the model to *all* observations.
 
-In the context of anomaly detection, it often makes more sense to standardize each LOO residual by the standard deviation estimated from the model fitted to all other observations, rather than by $\hat\sigma$. If we leave out the $i$th observation, and fit a regression model to the remaining observations, then the estimated variance of the residuals is given by [@Montgomery2012, Appendix C.8]
+The variance of $e_{-i}$ is given by
 $$
-  \hat\sigma_{-i}^2 = \frac{1}{n-p-2}\left[(n-p-1)\hat\sigma^2 - e_{i}^2/(1-h_i)\right].
+  \frac{\text{Var}(e_i)}{(1-h_i)^2} = \frac{\sigma^2}{1-h_i},
+$$
+so we can standardize each LOO residual to obtain
+$$
+ \frac{e_i / (1-h_i)}{\sigma/\sqrt{1-h_i}} = \frac{e_i}{\sigma \sqrt{1-h_i}}
+$$
+To avoid any anomalies affecting the estimate of $\sigma$, we consider again the leave-one-out models. If we leave out the $i$th observation, and fit a regression model to the remaining observations, then the estimated variance of the residuals is given by [@Montgomery2012, Appendix C.8]
+$$
+  \hat\sigma_{-i}^2 = \frac{1}{n-p-2}\left[(n-p-1)\hat\sigma^2 - e_{i}^2/(1-h_i)\right],
 $$ {#eq-loo-residual-variance}
-These are computed by `broom::augment()` and the values of $\hat\sigma_{-i}$ are returned in the column `.sigma`.
-
-If we standardize each residual using $\sigma_{-i}$, we obtain the "studentized" residuals
+where $\hat\sigma^2$ is given by @eq-residual-variance. These are computed by `broom::augment()` and are returned in the column `.sigma`.
+Thus the standardized LOO residuals (also known as "externally studentized residuals") are given by
 $$
-  r_{-i} = \frac{e_{i}}{\hat\sigma_{-i}\sqrt{1-h_i}},
-$$ {#eq-studentized-residuals}
-from which we obtain the log-LOO regression surprisals given by
+ r_{-i} = \frac{e_i}{\hat\sigma_{-i} \sqrt{1-h_i}}.
 $$
-  p_{-i} = -\log \phi(r_{-i})
+Finally, the LOO regression surprisals are given by
+$$
+  s_{-i} = -\log \phi(r_{-i})
 $$ {#eq-log-loo-regression-scores}
 
 If `fit` is the output from `stats::lm()`, then these quantities can be computed as follows.
@@ -295,8 +300,8 @@ If `fit` is the output from `stats::lm()`, then these quantities can be computed
 ```r
 broom::augment(fit) |>
   mutate(
-    studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
-    loo_surprisals = -log(dnorm(studentized_residuals, log = TRUE))
+    std_loo_res = .resid / (.sigma * sqrt(1 - .hat)),
+    loo_surprisals = -log(dnorm(std_loo_res, log = TRUE))
   )
 ```
 
@@ -364,14 +369,17 @@ The LOO surprisals obtained from this model are shown in @fig-shiraz-regression-
 #| fig.asp: 0.8
 wine_aug <- wine_aug |>
   mutate(
-    Studentized_residuals = .resid / (.sigma * sqrt(1 - .hat)),
+    std_loo_res = .resid / (.sigma * sqrt(1 - .hat)),
     surprisals = -dnorm(.std.resid, log = TRUE),
-    LOO_surprisals = -dnorm(Studentized_residuals, log = TRUE)
+    loo_surprisals = -dnorm(std_loo_res, log = TRUE)
   )
 wine_aug |>
-  select(points, Studentized_residuals, LOO_surprisals, location) |>
-  tidyr::pivot_longer(c(Studentized_residuals, LOO_surprisals), names_to = "variable", values_to = "value") |>
-  mutate(variable = factor(variable, levels = c("Studentized_residuals", "LOO_surprisals"))) |>
+  select(points, std_loo_res, loo_surprisals, location) |>
+  tidyr::pivot_longer(c(std_loo_res, loo_surprisals), names_to = "variable", values_to = "value") |>
+  mutate(variable = factor(variable,
+    levels = c("std_loo_res", "loo_surprisals"),
+    label = c("Standardized LOO residuals", "LOO surprisals")
+  )) |>
   ggplot(aes(x = points, y = value, col = location)) +
   facet_grid(variable ~ ., scales = "free_y") +
   geom_jitter(height = 0, width = 0.1, alpha = 0.5) +
@@ -385,12 +393,12 @@ wine_aug |>
 #| label: shiraz-regression-scores
 #| include: false
 most_anomalous <- wine_aug |>
-  filter(LOO_surprisals > 17)
+  filter(loo_surprisals > 17)
 underpriced <- wine_aug |>
-  filter(Studentized_residuals == min(Studentized_residuals))
+  filter(std_loo_res == min(std_loo_res))
 good_buy <- wine_aug |>
   filter(points > 95) |>
-  filter(Studentized_residuals == min(Studentized_residuals))
+  filter(std_loo_res == min(std_loo_res))
 ```
 
 The over-priced wines under this model are shown in blue, while the under-priced wines are shown in orange. This shows that the most anomalous observations are the two with LOO surprisals above 17, and studentized residuals close to 6. The largest LOO surprisal is for the most over-priced wine (under this model), a 2009 Shiraz from the Henschke winery in the Eden Valley region of South Australia, with `r most_anomalous$points[1]` points and a price of $`r most_anomalous$price[1]`.
@@ -398,8 +406,8 @@ The over-priced wines under this model are shown in blue, while the under-priced
 ```{r}
 #| code-fold: false
 wine_aug |>
-  filter(LOO_surprisals == max(LOO_surprisals)) |>
-  select(country:winery, year, points, price, Studentized_residuals, LOO_surprisals)
+  filter(loo_surprisals == max(loo_surprisals)) |>
+  select(country:winery, year, points, price, std_loo_res, loo_surprisals)
 ```
 
 The largest LOO surprisal corresponding to an under-priced wine is for the wine with the lowest residual value, with `r underpriced$points[1]` points and a price of $`r underpriced$price[1]`. Another good buy, at the higher quality end, is the 2007 Syrah from the Rulo winery in the Columbia Valley in Washington State, USA:
@@ -408,8 +416,8 @@ The largest LOO surprisal corresponding to an under-priced wine is for the wine 
 #| code-fold: false
 wine_aug |>
   filter(points > 95) |>
-  filter(Studentized_residuals == min(Studentized_residuals)) |>
-  select(country:winery, year, points:price, Studentized_residuals, LOO_surprisals)
+  filter(std_loo_res == min(std_loo_res)) |>
+  select(country:winery, year, points:price, std_loo_res, loo_surprisals)
 ```
 
 This corresponds to the only orange point in @fig-shiraz-regression that has a point value above 95 and a price below the 95% prediction interval.
@@ -421,8 +429,8 @@ We will compute the surprisal probabilities using the empirical approximation.
 ```{r}
 #| code-fold: false
 wine_aug |>
-  mutate(prob = rank(-LOO_surprisals) / NROW(wine_aug)) |>
-  select(country:winery, year, points, price, LOO_surprisals, prob) |>
+  mutate(prob = rank(-loo_surprisals) / NROW(wine_aug)) |>
+  select(country:winery, year, points, price, loo_surprisals, prob) |>
   arrange(prob)
 ```
 
@@ -450,6 +458,13 @@ shiraz |>
   scale_y_log10()
 ```
 
+```{r}
+#| include: false
+#| label: shiraz-check
+shiraz_surprise <- shiraz |> filter(prob < 0.002)
+if(NROW(shiraz_surprise) != 8L)
+  stop("Something is wrong here.")
+```
 
 ## GAM surprisals
 
@@ -469,7 +484,7 @@ p <- sum(df_no$NotOuts) / sum(df_no$Innings)
 
 Consider the number of "not outs" for each batter in the `cricket_batting` data set. A "not out" occurs when a batsman has not been dismissed at the end of the team's innings. Let's consider if there are some batters who have an unusually high proportion of not outs. The data set contains results from `r sum(df_no$Innings)` innings, of which `r sum(df_no$NotOuts)` were not outs. So the overall proportion of not outs is $`r sum(df_no[["NotOuts"]])` / `r sum(df_no[["Innings"]])` = `r sprintf("%.3f", p)`$.
 
-@fig-notouts shows the proportion of not outs for each batter as a function of the number of innings they played. The patterns occur because both the number of not outs and the number of innings must be integers. There is some overplotting that occurs due to batters having the same numbers of not-outs and innings, which results in the higher color density of the corresponding plotted points. The unusual structure on the left of each plot is due to the discrete nature of the data. Batters who have played only a smaller number of innings tend to have a higher proportion of not outs on average, and a higher variance, than those who have played a large number of innings.
+@fig-notouts shows the proportion of not outs for each batter as a function of the number of innings they played. The unusual patterns on the left of each plot is due to the discrete nature of the data --- both the number of not outs and the number of innings must be integers. There is some overplotting that occurs due to batters having the same numbers of not-outs and innings, which results in the higher color density of the corresponding plotted points. Batters who have played only a few innings tend to have a higher proportion of not outs on average, and a higher variance, than those who have played a large number of innings.
 
 ```{r}
 #| label: fig-notouts
@@ -488,7 +503,7 @@ This suggests that we can construct a GAM for the number of not outs for each ba
 $$
   \text{NotOuts} \mid \text{Innings} \sim \text{Binomial}(n=\text{Innings},~ p),
 $$
-where
+where $p$ denotes the probability of a batter not being dismissed in an innings, and
 $$
   \log(p / (1- p)) = g(\text{Innings})
 $$
@@ -518,7 +533,7 @@ notouts_aug |>
   labs(y = "Proportion of not outs")
 ```
 
-Now we can use the fitted model to compute the surprisals from the Binomial distribution, and find the most anomalous batters. Unfortunately, there is not a convenient way to compute loo surprisals for GAM models, so we will only consider surprisals in this example.
+Now we can use the fitted model to compute the surprisals from the Binomial distribution, and find the most anomalous batters. Unfortunately, there is not a convenient way to compute LOO surprisals for GAM models, so we will only consider regular surprisals in this example. While the Binomial distribution is probably a good first approximation, it does assume that the probability of a batter being dismissed does not change over their career, which is an unlikely assumption as it does not allow for the development of skill, the value of experience, or the effect of ageing. So we will use the GPD approximation to compute the surprisal probabilities.
 
 ```{r}
 #| code-fold: false
@@ -542,7 +557,7 @@ We have identified an anomaly that is not anomalous in the proportion of not-out
 
 ## KDE surprisals {#sec-kdescores}
 
-Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. In fact, when the `surprisals()` functions is applied to data without specifying a probability distribution, a kernel density estimate of the data is used. The kernel density estimate at each observation is (@eq-mkde)
+Suppose, instead of a regression or a GAM, we estimate $f$ using a kernel density estimate. In fact, when the `surprisals()` functions is applied to data without specifying a probability distribution, a kernel density estimate of the data is used by default. The kernel density estimate at each observation is (@eq-mkde)
 $$
   f_i = \hat{f}(\bm{y}_i) = \frac{1}{n} \sum_{j=1}^n K_H(\bm{y}_i-\bm{y}_j),
 $$ {#eq-kdescores}
@@ -584,7 +599,7 @@ of_surprisals <- oldfaithful |>
     loo_kde_surprisal = surprisals(duration, loo = TRUE, probability = FALSE),
     prob = surprisals(duration, loo = TRUE),
   )
-of_surprisals |> arrange(desc(loo_score))
+of_surprisals |> arrange(desc(loo_kde_surprisal))
 ```
 
 The two infinite LOO surprisals correspond to the extreme 2 hour duration, and the tiny 1 second duration. These are so improbable given the rest of the data, that the scores are effectively infinite. The regular kde scores (with `loo = FALSE`) are at their maximum values. The `prob` column contains the surprisal probabilities using the `loo_kde_surprisal` values.

@@ -452,7 +452,7 @@
     },
     "broom": {
       "Package": "broom",
-      "Version": "1.0.6",
+      "Version": "1.0.7",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -468,7 +468,7 @@
         "tibble",
         "tidyr"
       ],
-      "Hash": "a4652c36d1f8abfc3ddf4774f768c934"
+      "Hash": "8fcc818f3b9887aebaf206f141437cc9"
     },
     "bslib": {
       "Package": "bslib",
@@ -869,7 +869,7 @@
     },
     "fable": {
       "Package": "fable",
-      "Version": "0.3.4",
+      "Version": "0.4.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -885,7 +885,7 @@
         "tsibble",
         "utils"
       ],
-      "Hash": "143f72e07e384851f2f2f94a04444793"
+      "Hash": "c0d483fecb4ea17420795160dc0bdd92"
     },
     "fabletools": {
       "Package": "fabletools",
@@ -942,7 +942,7 @@
     },
     "feasts": {
       "Package": "feasts",
-      "Version": "0.4.0",
+      "Version": "0.4.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -963,7 +963,7 @@
         "utils",
         "vctrs"
       ],
-      "Hash": "523b0834d07de440e08fb62224062f62"
+      "Hash": "276b81269ccbe43e7ad23fe8d4b4cadd"
     },
     "fontawesome": {
       "Package": "fontawesome",
@@ -1423,7 +1423,7 @@
     },
     "httr2": {
       "Package": "httr2",
-      "Version": "1.0.4",
+      "Version": "1.0.5",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1440,7 +1440,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "836e9564fbeca3bb390bb429a53cd401"
+      "Hash": "d84e4c33206aaace37714901ac2b00c3"
     },
     "ids": {
       "Package": "ids",
@@ -1731,7 +1731,7 @@
         "ggplot2",
         "tidyr"
       ],
-      "Hash": "97b836ed2f12204aeebedefc861b267c"
+      "Hash": "e9926303d8e5f655d39a92af30b670bb"
     },
     "lpSolve": {
       "Package": "lpSolve",
@@ -2265,13 +2265,13 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "1.0.8",
+      "Version": "1.0.9",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "utils"
       ],
-      "Hash": "e082251834fa427514e68bec8afc8fda"
+      "Hash": "ef233f0e9064fc88c898b340c9add5c2"
     },
     "reprex": {
       "Package": "reprex",
@@ -2363,7 +2363,7 @@
     },
     "robustbase": {
       "Package": "robustbase",
-      "Version": "0.99-4",
+      "Version": "0.99-4-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2374,7 +2374,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "dc2014ed526bc05ecdf68d9e4717d15a"
+      "Hash": "c4aa31d38787b63bddb050b175f52e3d"
     },
     "roxygen2": {
       "Package": "roxygen2",
@@ -2998,7 +2998,7 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "weird-package",
       "RemoteUsername": "robjhyndman",
-      "RemoteSha": "e8de85e77d573e94b9c0c100d2dc9a02a903a2e3",
+      "RemoteSha": "8c5aa2cfd8599d67ae95f59bdb11de7b709bf5c8",
       "Requirements": [
         "R",
         "aplpack",
@@ -3023,7 +3023,7 @@
         "tibble",
         "vctrs"
       ],
-      "Hash": "d04de5ebfa237d8c1db699b2a98a3657"
+      "Hash": "de8444dbefab91191765c3222d9a2472"
     },
     "whisker": {
       "Package": "whisker",
