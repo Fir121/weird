@@ -9,25 +9,66 @@ wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 
 Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. One method to identify anomalies is to estimate the probability distribution of the data and then find observations that are improbable under that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations with low probability.
 
-## Surprisals {#sec-surprisals}
-
 Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
 
-The "surprisal" [@Tribus1961] of an observation $\bm{y}_i$, is defined as
+## Surprisals {#sec-surprisals}
+
+A "surprisal" is a term coined by @Tribus1961 in the context of information theory. In the statistical literature it is better known as a "log score". But since we are considering anomaly detection, "surprisal" seems a more appropriate word to use here.
+
+The surprisal of an observation $\bm{y}_i$, is defined as
 $$
   s_i = -\log f(\bm{y}_i),
 $$ {#eq-surprisal}
 measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
 
-Surprisals are commonly used in forecasting and prediction problems, where they known as "log scores", and are used to assess whether an estimated distribution $f$ provides a good description of the future data values $y$ [@Gneiting2014]. In that context, the data are thought to be a reliable reflection of the underlying processes, and once the data are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the underlying processes, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
+Surprisals are commonly used in forecasting and prediction problems (where they are called log scores) to assess whether an estimated distribution $f$ provides a good description of the future data values $y$ [@Gneiting2014]. In that context, the data are thought to be a reliable reflection of the underlying processes, and once the data are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the underlying processes, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
 
-### Surprisal probabilities
+Let's look at some specific examples.
 
-We can use surprisals to compute the probability of an observation being at least as anomalous as $y_i$ under the distribution $f$:
+### N(0,1) distribution
+Suppose our observations come from a N(0,1) distribution, and that $f$ denotes the corresponding density function. Then
 $$
-p_i = \int f(u) 𝟙(-\log f(u) > s_i) du = \int f(u) 𝟙(f(u) < f(y_i)) du,
+  s_i = - \log\left(\frac{1}{\sqrt{2\pi}} e^{-y_i^2/2}\right)
+      = \frac12 y_i^2 + \frac12\log(2\pi).
+$$
+So the surprisals for a normal distribution are simply equal to half the squared observations plus a constant.
+
+### $\chi^2_k$ distribution
+
+Similarly, for a $\chi^2_k$ distribution, a surprisal is given by
+$$
+  s_i = -\log\left(\frac{y_i^{k/2-1}e^{-y_i/2}}{2^{k/2}\Gamma(k/2)}\right)
+      = \frac{1}{2} y_i - (k/2-1)\log(y_i) + c_k
+$$
+where $c_k$ is a constant.
+
+### Poisson($\lambda$) distribution
+
+Surprisals can also be computed for discrete distributions. For a Poisson($\lambda$) distribution, a surprisal is given by
+$$
+  s_i = -\log\left(\frac{\lambda^{y_i} e^{-\lambda}}{y_i!}\right)
+  = \log(y_i!) - y_i\log(\lambda) + \lambda
+$$
+
+### Multivariate standard normal distribution
+
+The definition of a surprisal also works for multivariate distributions. For a $d$-dimensional N$(\bm{0}, \bm{\Sigma})$ distribution, a surprisal is given by
+$$
+s_i = -\log\left(
+ (2\pi)^{-d/2}|\bm{\Sigma}|^{-1/2} \exp\Big\{-\frac{1}{2}\bm{y}_i'\bm{\Sigma}^{-1}\bm{y}\Big\} \right) =
+\frac{1}{2} \bm{y}_i'\bm{\Sigma}^{-1}\bm{y}_i + \frac{d}{2}\log(2\pi) + \frac{1}{2} \log|\bm{\Sigma}|
+$$
+When $\bm{\Sigma} = \bm{I}$, this is simply the sum of surprisals for each of the marginal distributions.
+
+## Surprisal probabilities
+
+We can use surprisals to compute the probability of an observation being at least as anomalous as $\bm{y}_i$ under the distribution $f$:
+$$
+p_i = \int f(\bm{u}) 𝟙(-\log f(\bm{u}) > s_i) d\bm{u} = \int f(\bm{u}) 𝟙(f(\bm{u}) < f(y_i)) d\bm{u},
 $$ {#eq-pi-density}
 where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 otherwise.
+
+@fig-density-scores shows the calculation for a $\chi^2_5$ distribution.
 
 ```{r}
 #| label: fig-density-scores
@@ -119,15 +160,15 @@ p3 <- df |>
 patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 ```
 
-The `surprisals()` function takes values of the data $y_i$ and returns values of either $s_i$ or $p_i$ (depending on the `probability` argument), where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
+The `surprisals()` function takes values of the data $\bm{y}_i$ and returns values of either $s_i$ or $p_i$ (depending on the `probability` argument), where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
 ### Connection to Highest Density Regions
 
-Surprisal probabilities are related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $y_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $y_i$ as an anomaly if $p_i < \alpha$.
+Surprisal probabilities are related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $\bm{y}_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $\bm{y}_i$ as an anomaly if $p_i < \alpha$.
 
-### Symmetric distributions
+### Symmetric univariate distributions
 
-For any symmetric distribution, $p_i = 2[1 - F(c+|y_i-c|)]$, where $F$ is the corresponding distribution function centered at $c$. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function.
+For any symmetric univariate distribution, $p_i = 2[1 - F(c+|y_i-c|)]$, where $F$ is the corresponding distribution function centered at $c$. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function.
 
 ### Connection to z-scores
 
@@ -141,13 +182,21 @@ The `surprisals()` function has a `loo` argument for specifying whether we want 
 
 ### Approximate GPD surprisal probabilities {#sec-gpd-tails}
 
-If we do not know what the distribution of the data should be, or if we think our assumed distribution is incorrect for some reason, there are some ways to find approximate surprisal probabilities that are still accurate even when the assumed distribution $f$ is not.
+If we do not know what the distribution of the data should be, or if we think our assumed distribution is incorrect for some reason, there are some ways to find approximate surprisal probabilities that are still accurate even when the assumed distribution is not.
 
 Let $f^*$ denote the assumed (and possibly incorrect) density function. It might be a poor estimate of the true density, or it might just be a density on the same sample space as the data. Using this assumed density, we can compute the surprisals, $s_i = -\log f^*(\bm{y}_i)$.
 
-Then we can fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. For example, we may fit a GPD using the $90^{\text{th}}$ percentile of $s_i$ values as the threshold. We apply the fitted GPD distribution to the surprisals to obtain the surprisal probability of each observation. Even when $f^*$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution. So it is a safe choice.
+Then we can fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. Even when $f^*$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution.
 
-The approach does require a relatively large number of surprisals to be available. We are typically only using the top 10% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
+Let $\beta$ denote the tail probability used in the GPD threshold, and let $u$ denote the $1-\beta$ sample quantile of surprisal values. For example, $\beta = 0.1$ is a common choice, and then $u$ is the $90^{\text{th}}$ percentile of $s_i$ values. We estimate a GPD distribution using the surprisals above $u$. Then we can compute the approximate surprisal probability of each  observation with $s_i>u$ by
+$$
+\hat{p}_i = \beta\int_{s_i}^\infty \hat g(s) ds,
+$$ {#eq-pi-gpd}
+where $\hat g()$ denotes the estimated GPD density function. This approximation only gives us surprisal probabilities for the surprisals above the threshold $u$. For any $s_i \le u$, all we can say is that $\hat{p}_i \ge \beta$.
+
+For those surprisals above $u$, this approximation ?????
+
+The approach does require a relatively large number of surprisals to be available. We are typically only using the top $\beta = 10$% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
 
 The `surprisals()` function has an approximation argument for specifying if we want to use the GPD approximation in computing surprisal probabilities.
 
