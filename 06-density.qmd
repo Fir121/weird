@@ -21,7 +21,9 @@ $$
 $$ {#eq-surprisal}
 measuring the surprise in seeing the observation. So it is a measure of how anomalous (or surprising) that observation is, given the density $f$. A large value of $s_i$ indicates that $\bm{y}_i$ is not a likely value, and so is a potential anomaly. On the other hand, typical values will have low surprisals. In information theory, the average surprisal is known as the entropy of a random variable [@Cover2006;@Stone2022], and provides a measure of uncertainty.
 
-Surprisals are commonly used in forecasting and prediction problems (where they are called log scores) to assess whether an estimated distribution $f$ provides a good description of the future data values $y$ [@Gneiting2014]. In that context, the data are thought to be a reliable reflection of the underlying processes, and once the data are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the underlying processes, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
+Although the term "surprisal" may not be in common use amongst statisticians and other data scientists, the underlying idea is widely used. For example, if $f$ is obtained from a model with parameters that need to be estimated from the data, then the sum of the surprisals is equal to minus the log likelihood of the data. Therefore, finding parameters that minimize the sum of the surprisals is equivalent to maximum likelihood estimation.
+
+Surprisals are also commonly used in forecasting and prediction problems (where they are called log scores) to assess whether an estimated distribution $f$ provides a good description of the future data values $y$ [@Gneiting2014]. In that context, the data are thought to be a reliable reflection of the underlying processes, and once the data are observed, the surprisal is used to assess how well the estimated distribution $f$ matches what actually happened. In this book, we are using surprisals in reverse --- we assume $f$ is a good description of the underlying processes, and then we use the surprisals to identify observations that are unlikely to have come from that distribution.
 
 Let's look at some specific examples.
 
@@ -72,7 +74,7 @@ where $𝟙(z)$ is an indicator function taking value 1 when $z$ is true and 0 o
 
 ```{r}
 #| label: fig-density-scores
-#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. Middle: surprisals for different values of $y$. Bottom: surprisal probabilities for different values of $y$. In this example, $p_i = 0.1$."
+#| fig-cap: "Top: Density with one observation shown at $y_i$. The shaded area shows the area where $f(y) < f(y_i)$, corresponding to $p_i$. In this example, $p_i = 0.1$, so the region between the orange shaded segments is a 90% HDR. Middle: surprisals for different values of $y$. Bottom: surprisal probabilities for different values of $y$."#|
 #| fig-asp: 1.3
 #| out-width: "80%"
 #| echo: false
@@ -166,13 +168,11 @@ The `surprisals()` function takes values of the data $\bm{y}_i$ and returns valu
 
 Surprisal probabilities are related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $\bm{y}_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $\bm{y}_i$ as an anomaly if $p_i < \alpha$.
 
-### Symmetric univariate distributions
+### Connection to $z$-scores
 
 For any symmetric univariate distribution, $p_i = 2[1 - F(c+|y_i-c|)]$, where $F$ is the corresponding distribution function centered at $c$. Therefore, under the Normal distribution $N(\mu, \sigma^2)$, $p_i = 2[1-\Phi(|y_i-\mu|/\sigma)]$, where $\Phi$ is the standard Normal distribution function.
 
-### Connection to z-scores
-
-The above result shows that when $f$ is a Normal density, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
+This shows that when $f$ is a Normal density, identifying anomalies as observations with $p_i < \alpha$ is equivalent to a z-score test (@sec-zscores) with the threshold set to the $1-\alpha/2$ quantile of the standard Normal distribution.
 
 ### LOO surprisals
 
@@ -188,21 +188,38 @@ Let $f^*$ denote the assumed (and possibly incorrect) density function. It might
 
 Then we can fit a Generalized Pareto Distribution (GPD) to the largest surprisals using the POT approach discussed in @sec-evt. Even when $f^*$ is incorrect or poorly estimated, the extreme surprisals will still follow a Generalized Pareto Distribution.
 
-Let $\beta$ denote the tail probability used in the GPD threshold, and let $u$ denote the $1-\beta$ sample quantile of surprisal values. For example, $\beta = 0.1$ is a common choice, and then $u$ is the $90^{\text{th}}$ percentile of $s_i$ values. We estimate a GPD distribution using the surprisals above $u$. Then we can compute the approximate surprisal probability of each  observation with $s_i>u$ by
+Let $\beta$ denote the tail probability used in the GPD threshold, and let $u$ denote the $1-\beta$ sample quantile of the surprisal values. For example, $\beta = 0.1$ is a common choice, and then $u$ is the $90^{\text{th}}$ percentile of the $s_i$ values. We estimate a GPD distribution using the surprisals above $u$, and then compute the approximate surprisal probability of each observation with $s_i>u$ by
 $$
 \hat{p}_i = \beta\int_{s_i}^\infty \hat g(s) ds,
 $$ {#eq-pi-gpd}
 where $\hat g()$ denotes the estimated GPD density function. This approximation only gives us surprisal probabilities for the surprisals above the threshold $u$. For any $s_i \le u$, all we can say is that $\hat{p}_i \ge \beta$.
 
-For those surprisals above $u$, this approximation ?????
+::: {.callout-important}
+# Need some theory here
+What can we say about the quality of the approximation for those surprisals above $u$?
 
-The approach does require a relatively large number of surprisals to be available. We are typically only using the top $\beta = 10$% of observations in estimating the GPD, so we would normally need at least a few hundred observations to start with.
+Is it true that the FTG theorem holds for all surprisal values, or do we need conditions on $f$?
 
-The `surprisals()` function has an approximation argument for specifying if we want to use the GPD approximation in computing surprisal probabilities.
+e.g., if the surprisal ranks under $f$ and $f^*$ are equal, I think this should work ok. That should be true for any distribution where $u$ is greater than the largest mode of $f$.
+:::
+
+The approach does require a relatively large number of surprisals to be available, in order to adequately estimate the GPD from the top $\beta$ of the observations. So we would normally need at least a few hundred observations to start with.
+
+The `surprisals()` function has an approximation argument for specifying if we want to use the GPD approximation in computing surprisal probabilities. The argument `threshold_probability` is used to specify $\beta$, with the default value of 0.1.
 
 ### Approximate empirical surprisal probabilities
 
-An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of surprisals larger than $s_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution $f^*$ is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. Then for the $p_i$ values to be accurate, we only need the ordering of $-\log f(y_i)$ to be similar to $-\log f^*(y_i)$ in the tails of the distribution. This approach can work well for moderate values of $p_i$, but we need a large number of available surprisals in order to estimate small values of $p_i$.
+An alternative approach that does not require a GPD is to estimate $p_i$ as the proportion of surprisals larger than $s_i$. For large $n$, this provides a quick and convenient estimate of $p_i$ that is accurate even when the assumed distribution $f^*$ is not. Suppose $f$ is the true (unknown) density, and $f^*$ is the assumed (possibly incorrect) density. This approach can work well for moderate values of $p_i$, but we need a large number of available surprisals in order to estimate small values of $p_i$.
+
+
+::: {.callout-important}
+# Need some theory here
+What can we say about the quality of the approximation for those surprisals above $u$?
+
+If the surprisal ranks under $f$ and $f^*$ are equal, this is obviously ok. That should be true for any distribution where $u$ is greater than the largest mode of $f$.
+
+Can we say anything else?
+:::
 
 The approximation argument of `surprisals()` can also be used to specify if we want to use the empirical surprisal probabilities.
 
@@ -210,7 +227,7 @@ The approximation argument of `surprisals()` can also be used to specify if we w
 
 For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard Normal distribution. We can use `surprisals()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
 
-We will use all three methods described above using the correct density in computing the surprisals, and then repeat the calculation using an incorrect density. For the incorrect density, we will use a $t_3$ distribution, which has much longer tails than the true $N(0,1)$ distribution.
+We will use all three methods described above, first using the correct density in computing the surprisals, and then repeating the calculation using an incorrect density. For the incorrect density, we will use a $t_3$ distribution, which has much longer tails than the true $N(0,1)$ distribution.
 
 ```{r}
 #| label: surprisal_prob
@@ -297,7 +314,7 @@ is the estimated residual variance.
 
 A linear model can be estimated in R using the `stats::lm()` function. The `broom::augment()` function will compute the residuals (named `.resid`), the standardized residuals (named `.std.resid`), and the leverage values (names `.hat`).
 
-The surprisals under the Gaussian linear regression model @eq-gaussian-regression can be estimated using these standardized residuals, giving
+The surprisals under the Gaussian linear regression model [@eq-gaussian-regression] can be estimated using these standardized residuals, giving
 $$
   s_i = -\log\phi(r_i),
 $$ {#eq-regression-log-score}
