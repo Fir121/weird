@@ -764,8 +764,8 @@ Next we consider some artificial examples. First, we consider the first 48 rows 
 #| code-fold: false
 n01b <- tibble(y = c(n01$v2[1:48], 4, 4.5))
 n01b |>
-  mutate(prob = surprisals(y)) |>
-  filter(prob < 0.001) |>
+  mutate(prob = surprisals(y, loo = TRUE)) |>
+  filter(prob < 0.05) |>
   arrange(prob)
 ```
 
@@ -778,16 +778,16 @@ Finally, we consider 1000 simulated observations from each of the distributions,
 #| code-fold: false
 n01 |>
   select(v1) |>
-  mutate(prob = surprisals(v1)) |>
+  mutate(prob = surprisals(v1, loo = TRUE)) |>
   filter(prob < 0.001) |>
   arrange(prob, v1)
 set.seed(1)
 tibble(y = rt(1000, df = 3)) |>
-  mutate(prob = surprisals(y)) |>
+  mutate(prob = surprisals(y, loo = TRUE)) |>
   filter(prob < 0.001) |>
   arrange(prob, y)
 tibble(y = rchisq(1000, df = 4)) |>
-  mutate(prob = surprisals(y)) |>
+  mutate(prob = surprisals(y, loo = TRUE)) |>
   filter(prob < 0.001) |>
   arrange(prob, y)
 ```
