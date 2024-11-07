@@ -259,7 +259,7 @@ A good reference on multivariate probability distributions is @JKmulticontinuous
 As with univariate distributions, a **highest density region** for a multivariate distribution is defined as the region of the sample space where the density is higher than a given threshold. Suppose we have a multivariate random variable $\bm{Y}$ with a smooth, continuous density function $f$. Then the $100(1-\alpha)$% HDR is the set
 $$
   R_\alpha = \{\bm{y}: f(\bm{y}) \ge f_\alpha\}
-$$
+$$ {#eq-mhdr}
 where $P(\bm{Y} \in R_\alpha) = 1-\alpha$.
 
 HDRs are equivalent to level sets of the density function, and so can be plotted as contours for bivariate density functions. For example, the bivariate Normal distribution with mean $(0,0)$ and covariance matrix $\Sigma = \begin{bmatrix} 1 & 0.5 \\ 0.5 & 1 \end{bmatrix}$ is shown in @fig-bivariate as a series of HDR contours, each containing an additional 10% of the probability mass.
