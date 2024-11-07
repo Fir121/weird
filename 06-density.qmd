@@ -7,13 +7,13 @@ source("before-each-chapter.R")
 wine_reviews <- fetch_wine_reviews() |> cache("wine_reviews")
 ```
 
-Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. One method to identify anomalies is to estimate the probability distribution of the data and then find observations that are improbable under that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations with low probability.
+Anomalies are observations that are unlikely to have come from the same distribution as the rest of the data. One method to identify anomalies is to first estimate the probability distribution of the data, and then find observations that are improbable under that distribution. This is the approach taken by density-based methods, where anomalies are defined as observations with low probability.
 
-Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will assume that $f$ represents a probability density function that is appropriate for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
+Any density-based method of anomaly detection first requires that we have a density estimate at each observation, which we will denote by $f(\bm{y}_i)$. This may be an assumed density, or estimated from the data; it may be a parametric function, or a nonparametric estimate; it may be a conditional density or a marginal density. Wherever it comes from, we will treat $f$ as an appropriate probability density function for the data set. When $\bm{y}_i$ takes values on a discrete space (such as the integers), then $f$ is a probability mass function, but we will call it a "density" for convenience when discussing methods that can apply to both discrete and continuous data. In many cases, $f(\bm{y}_i)$ is the estimated *likelihood* of the observation from a given model.
 
 ## Surprisals {#sec-surprisals}
 
-A "surprisal" is a term coined by @Tribus1961 in the context of information theory. In the statistical literature it is better known as a "log score". But since we are considering anomaly detection, "surprisal" seems a more appropriate word to use here.
+"Surprisal" is a term coined by American engineer Myron @Tribus1961 in the context of information theory. In the statistical literature it is better known as a "log score". But since we are considering anomaly detection, "surprisal" seems a more appropriate word to use here.
 
 The surprisal of an observation $\bm{y}_i$, is defined as
 $$
@@ -27,15 +27,15 @@ Surprisals are also commonly used in forecasting and prediction problems (where 
 
 Let's look at some specific examples.
 
-### N(0,1) distribution
+### Normal distribution
 Suppose our observations come from a N(0,1) distribution, and that $f$ denotes the corresponding density function. Then
 $$
   s_i = - \log\left(\frac{1}{\sqrt{2\pi}} e^{-y_i^2/2}\right)
       = \frac12 y_i^2 + \frac12\log(2\pi).
 $$
-So the surprisals for a normal distribution are simply equal to half the squared observations plus a constant.
+So the surprisals are simply equal to half the squared observations plus a constant. This is easily extended to any normal distribution, showing that surprisals are equal to half the squared *scaled* observations plus a constant.
 
-### $\chi^2_k$ distribution
+### $\chi^2$ distribution
 
 Similarly, for a $\chi^2_k$ distribution, a surprisal is given by
 $$
@@ -44,7 +44,7 @@ $$
 $$
 where $c_k$ is a constant.
 
-### Poisson($\lambda$) distribution
+### Poisson distribution
 
 Surprisals can also be computed for discrete distributions. For a Poisson($\lambda$) distribution, a surprisal is given by
 $$
@@ -60,7 +60,7 @@ s_i = -\log\left(
  (2\pi)^{-d/2}|\bm{\Sigma}|^{-1/2} \exp\Big\{-\frac{1}{2}\bm{y}_i'\bm{\Sigma}^{-1}\bm{y}\Big\} \right) =
 \frac{1}{2} \bm{y}_i'\bm{\Sigma}^{-1}\bm{y}_i + \frac{d}{2}\log(2\pi) + \frac{1}{2} \log|\bm{\Sigma}|
 $$
-When $\bm{\Sigma} = \bm{I}$, this is simply the sum of surprisals for each of the marginal distributions.
+When $\bm{\Sigma} = \bm{I}$, this is simply the sum of surprisals computed on each of the marginal distributions.
 
 ## Surprisal probabilities
 
@@ -164,9 +164,23 @@ patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 
 The `surprisals()` function takes values of the data $\bm{y}_i$ and returns values of either $s_i$ or $p_i$ (depending on the `probability` argument), where the assumed density $f$ can be provided as a distribution object from the `distributional` package.
 
-### Connection to Highest Density Regions
+```{r}
+#| label: surprisals_eg
+#| code-fold: false
+tibble(
+  y = -5:5,
+  s = surprisals(y, distribution = dist_normal(), probability = FALSE),
+  p = surprisals(y, distribution = dist_normal(), probability = TRUE)
+)
+```
 
-Surprisal probabilities are related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $\bm{y}_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. Therefore, if we want a false positive rate of $\alpha$, we can label $\bm{y}_i$ as an anomaly if $p_i < \alpha$.
+The default value of the `probability` argument is `TRUE`.
+
+The value of $p_i$ is the probability of an observation being at least as anomalous as $\bm{y}_i$​ if the observations come from the distribution $f$. So if we label points as anomalous when $p_i < \alpha$, we will have a false positive rate of $\alpha$.
+
+### Connection to Highest density regions
+
+Surprisal probabilities are related to highest density regions discussed in @sec-hdr and @sec-mhdr. If $\bm{y}_i$ lies on the boundary of the $100(1-\alpha)\%$ highest density region, then $p_i = 1-\alpha$. This should be clear by comparing @eq-pi-density with @eq-mhdr.
 
 ### Connection to $z$-scores
 
@@ -214,16 +228,16 @@ An alternative approach that does not require a GPD is to estimate $p_i$ as the 
 
 ::: {.callout-important}
 # Need some theory here
-What can we say about the quality of the approximation for those surprisals above $u$?
+What can we say about the quality of the approximation?
 
-If the surprisal ranks under $f$ and $f^*$ are equal, this is obviously ok. That should be true for any distribution where $u$ is greater than the largest mode of $f$.
+If the surprisal ranks under $f$ and $f^*$ are equal, this is obviously ok. That should be true in the tails of any distribution --- i.e., when $y_i$ is greater than the largest mode of $f$, or less than the smallest mode of $f$.
 
 Can we say anything else?
 :::
 
 The approximation argument of `surprisals()` can also be used to specify if we want to use the empirical surprisal probabilities.
 
-### Example
+### Example: Standard normal values
 
 For example, consider the 1000 values contained in the first column of `n01`. These were generated from a standard Normal distribution. We can use `surprisals()` to identify anomalies with probability less than 1%. This is equivalent to z-scores greater than `r sprintf("%.3f", qnorm(1-0.01/2))` in absolute value.
 
@@ -652,7 +666,7 @@ The largest possible LOO kde surprisal is infinite, occuring when there are no o
 
 ### The lookout algorithm {#sec-lookout}
 
-The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisal probabilities based on a GPD approximation. Unlike the KDE implementation used in this book, it uses a TDA method of bandwidth selection. Probabilities obtained using this algorithm can be calculated using the `lookout_prob()` function.
+The **"lookout" algorithm** (standing for Leave-One-Out Kernel density estimates for OUTlier detection) was proposed by @lookout2021 and uses surprisal probabilities based on a GPD approximation. Unlike the KDE implementation used in this book, it uses a method of bandwidth selection based on topological data analysis. Probabilities obtained using this algorithm can be calculated using the `lookout_prob()` function.
 
 ### Example: Old Faithful eruption durations
 
@@ -700,25 +714,7 @@ oldfaithful |>
   gg_hdrboxplot(duration)
 ```
 
-This illustrates that the results are sensitive to anomalies in the data as those anomalies affect the kernel density estimate.
-
-### More examples
-
-Let's apply the kde surprisals method to the six examples introduced in @sec-examples. For this purpose we will use a threshold of 0.001 for the surprisal probabilities.
-
-```{r}
-#| label: cricket-lookout
-#| code-fold: false
-cricket_batting |>
-  filter(Innings > 20) |>
-  mutate(prob = surprisals(Average, loo = TRUE)) |>
-  filter(prob < 0.001) |>
-  select(Player, Average, prob)
-```
-
-Here Bradman is a clear anomaly (with a very low surprisal probability), and no-one else is identified as a possible anomaly.
-
-The same algorithm is easily applied in two dimensions. Here we use the `oldfaithful` data set, and consider the distribution of Duration and Waiting time, ignoring those observations that are greater than 2 hours in either dimension.
+The same algorithm is easily applied in two dimensions. For example, we can consider the bivariate distribution of Duration and Waiting time, ignoring those observations that are greater than 2 hours in either dimension.
 
 ```{r}
 #| label: lookout2
@@ -735,14 +731,31 @@ of |>
   arrange(prob, duration)
 ```
 
-Now, `r english::words(sum(surprisals(of) < 0.001))` anomalies are identified, with both of them having infinite LOO surprisals. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2.
+Now, `r english::words(sum(surprisals(of) < 0.001))` anomalies are identified, with both of them having infinite LOO surprisals. We can visualize them in an HDR scatterplot, shown in @fig-ofpot2. 
 
 ```{r}
 #| label: fig-ofpot2
-#| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the surprisal anomalies highlighted in red."
+#| code-fold: false
+#| fig.cap: "HDR scatterplot of the Old Faithful eruption durations and waiting times, with the surprisal anomalies highlighted in black."
 of |>
   gg_hdrboxplot(duration, waiting, scatterplot = TRUE)
 ```
+### More examples
+
+Let's apply the kde surprisals method to the six examples introduced in @sec-examples. For this purpose we will use a threshold of 0.001 for the surprisal probabilities.
+
+```{r}
+#| label: cricket-lookout
+#| code-fold: false
+cricket_batting |>
+  filter(Innings > 20) |>
+  mutate(prob = surprisals(Average, loo = TRUE)) |>
+  filter(prob < 0.001) |>
+  select(Player, Average, prob)
+```
+
+Here Bradman is a clear anomaly (with a very low surprisal probability), and no-one else is identified as a possible anomaly.
+
 
 Next we consider some artificial examples. First, we consider the first 48 rows of the second variable in the `n01` data, along with the values 4.0 and 4.5.
 
