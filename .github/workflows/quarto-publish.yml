@@ -61,6 +61,9 @@ jobs:
       #     CONNECT_SERVER: enter-the-server-url-here
       #     CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
 
+      - name: Install and initialize renv
+        run: R -e "install.packages('rlang', 'jsonlite', 'renv'); renv::init()"
+
       # NOTE: If Publishing to GitHub Pages, set the permissions correctly (see top of this yaml)
       - name: Publish to GitHub Pages (and render)
         uses: quarto-dev/quarto-actions/publish@v2
