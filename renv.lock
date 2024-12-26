@@ -2319,7 +2319,7 @@
     },
     "rgl": {
       "Package": "rgl",
-      "Version": "1.3.12",
+      "Version": "1.3.14",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2337,7 +2337,10 @@
         "stats",
         "utils"
       ],
-      "Hash": "983b99c0be0dd052350c6aa359c960a3"
+      "Hash": "983b99c0be0dd052350c6aa359c960a3",
+      "CommandLineArgs": [
+      "--disable-opengl"
+      ]
     },
     "rlang": {
       "Package": "rlang",
