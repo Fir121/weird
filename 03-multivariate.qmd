@@ -5,8 +5,8 @@
 #| cache: false
 source("before-each-chapter.R")
 # Set up for using rgl
-options(rgl.useNULL = TRUE)
-rgl::setupKnitr()
+# options(rgl.useNULL = TRUE)
+# rgl::setupKnitr()
 ```
 
 While we will cover anomaly detection in univariate data, most of the methods we will discuss are for multivariate data. We will therefore need to understand some basic concepts of multivariate probability distributions.
@@ -81,10 +81,10 @@ To visualise trivariate relationships, we need to use a 3d-scatterplot. It is ea
 #| webgl: true
 #| code-fold: false
 #| cache: false
-rgl::plot3d(df[, 1:3],
-  size = 5,
-  col = c(rep("#999999", 998), rep("#D55E00", 2))
-)
+# rgl::plot3d(df[, 1:3],
+#   size = 5,
+#   col = c(rep("#999999", 998), rep("#D55E00", 2))
+# )
 ```
 
 :::
@@ -140,10 +140,10 @@ df <- tibble(
   within_sphere = (x^2 + y^2 + z^2) < 1,
   color = if_else(within_sphere, "#777777", "#D55E00")
 )
-rgl::plot3d(df[, 1:3],
-  size = 5,
-  col = df$color
-)
+# rgl::plot3d(df[, 1:3],
+#   size = 5,
+#   col = df$color
+# )
 ```
 
 :::

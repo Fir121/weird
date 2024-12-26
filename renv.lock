@@ -2317,31 +2317,6 @@
       ],
       "Hash": "ae34cd56890607370665bee5bd17812f"
     },
-    "rgl": {
-      "Package": "rgl",
-      "Version": "1.3.14",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "R6",
-        "base64enc",
-        "grDevices",
-        "graphics",
-        "htmltools",
-        "htmlwidgets",
-        "jsonlite",
-        "knitr",
-        "magrittr",
-        "mime",
-        "stats",
-        "utils"
-      ],
-      "Hash": "983b99c0be0dd052350c6aa359c960a3",
-      "CommandLineArgs": [
-      "--disable-opengl"
-      ]
-    },
     "rlang": {
       "Package": "rlang",
       "Version": "1.1.4",
